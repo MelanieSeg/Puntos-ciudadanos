@@ -9,6 +9,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityI
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import MissionSkeleton from '../../components/skeletons/MissionSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useAvailableMissions } from '../../hooks/useUserData';
 
@@ -193,6 +194,45 @@ function EarnScreenComponent({ navigation: navigationProp }) {
       return `Debes esperar ${diffMinutes} minuto${diffMinutes > 1 ? 's' : ''} para completar esta misión de nuevo`;
     }
   };
+
+  const renderSkeleton = () => {
+    return <MissionSkeleton />;
+  };
+
+  // Mostrar skeleton mientras carga datos iniciales
+  if (loading && missions.length === 0) {
+    return (
+      <ScreenWrapper bgColor={COLORS.light} safeArea={false} maxWidth={false} padding={0}>
+        <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
+          <FlatList
+            data={[1, 2, 3, 4, 5]}
+            renderItem={renderSkeleton}
+            keyExtractor={(item) => `skeleton-${item}`}
+            contentContainerStyle={styles.listContent}
+            numColumns={Platform.OS === 'web' ? 3 : 1}
+            key={Platform.OS === 'web' ? 'grid' : 'list'}
+          />
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  // Mostrar pantalla de error con retry
+  if (error && missions.length === 0) {
+    return (
+      <ScreenWrapper bgColor={COLORS.white}>
+        <View style={styles.centerContent}>
+          <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
+          <Text style={styles.errorTitle}>Sin conexión</Text>
+          <Text style={styles.errorText}>No pudimos cargar las misiones</Text>
+          <TouchableOpacity style={styles.retryButtonLarge} onPress={refetch}>
+            <MaterialCommunityIcons name="refresh" size={20} color={COLORS.white} />
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   return (
     <ScreenWrapper bgColor={COLORS.light} safeArea={false} maxWidth={false} padding={0}>
@@ -420,17 +460,33 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.body2,
     color: COLORS.gray,
   },
+  errorTitle: {
+    fontSize: TYPOGRAPHY.h5,
+    fontWeight: '700',
+    color: COLORS.dark,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
   errorText: {
-    fontSize: TYPOGRAPHY.body1,
-    color: COLORS.error,
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
     textAlign: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.xl,
   },
   retryButton: {
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     borderRadius: LAYOUT.borderRadius.md,
+  },
+  retryButtonLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: 8,
   },
   retryText: {
     color: COLORS.white,

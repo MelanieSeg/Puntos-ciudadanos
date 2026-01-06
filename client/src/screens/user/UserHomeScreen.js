@@ -13,6 +13,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import HomeSkeleton from '../../components/skeletons/HomeSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
@@ -173,12 +174,29 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     ]);
   };
 
+  // Mostrar skeleton mientras carga datos iniciales
   if (loading && !user) {
     return (
+      <ScreenWrapper bgColor={COLORS.light} padding={0} maxWidth={Platform.OS === 'web'} safeArea={Platform.OS !== 'web'}>
+        <HomeSkeleton />
+      </ScreenWrapper>
+    );
+  }
+
+  // Mostrar pantalla de error con retry
+  if (error && !user) {
+    return (
       <ScreenWrapper bgColor={COLORS.white}>
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando datos...</Text>
+        <View style={styles.errorContainer}>
+          <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
+          <Text style={styles.errorTitle}>Sin conexión</Text>
+          <Text style={styles.errorMessage}>
+            {getErrorMessage(error)}
+          </Text>
+          <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+            <MaterialCommunityIcons name="refresh" size={20} color={COLORS.white} />
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       </ScreenWrapper>
     );
@@ -389,6 +407,39 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     color: COLORS.gray,
     fontSize: TYPOGRAPHY.body2,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  errorTitle: {
+    fontSize: TYPOGRAPHY.h5,
+    fontWeight: '700',
+    color: COLORS.dark,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  errorMessage: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
   },
   emptyText: {
     color: COLORS.gray,

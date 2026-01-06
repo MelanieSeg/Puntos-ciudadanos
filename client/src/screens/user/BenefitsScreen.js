@@ -9,6 +9,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityI
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import BenefitCardSkeleton from '../../components/skeletons/BenefitCardSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { AuthContext } from '../../context/AuthContext';
 import { getErrorMessage } from '../../utils/errorHandler';
@@ -181,12 +182,62 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
     );
   };
 
-  if (loading) {
+  const renderSkeleton = () => {
+    return <BenefitCardSkeleton />;
+  };
+
+  if (loading && !allBenefits.length) {
     return (
       <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando beneficios...</Text>
+        <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
+          <View style={styles.filtersContainer}>
+            <View style={styles.filterHeader}>
+              <View style={styles.filterTitleRow}>
+                <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
+                <Text style={styles.filterLabel}>Filtrar Recompensas</Text>
+              </View>
+              <View style={styles.filterButtons}>
+                {['Todos', 'Comida', 'Servicios'].map((filter) => {
+                  const isActive = activeFilter === filter;
+                  return (
+                    <TouchableOpacity
+                      key={filter}
+                      style={[styles.filterButton, isActive && styles.filterButtonActive]}
+                      disabled
+                    >
+                      <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+                        {filter}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+          <FlatList
+            data={[1, 2, 3, 4, 5, 6]}
+            renderItem={renderSkeleton}
+            keyExtractor={(item) => `skeleton-${item}`}
+            contentContainerStyle={styles.listContent}
+            numColumns={Platform.OS === 'web' ? 3 : 1}
+            key={Platform.OS === 'web' ? 'grid' : 'list'}
+          />
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  if (error && !allBenefits.length) {
+    return (
+      <ScreenWrapper bgColor={COLORS.white}>
+        <View style={styles.centerErrorContainer}>
+          <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
+          <Text style={styles.errorTitle}>Sin conexión</Text>
+          <Text style={styles.errorMessage}>{getErrorMessage(error)}</Text>
+          <TouchableOpacity style={styles.retryButtonLarge} onPress={onRefresh}>
+            <MaterialCommunityIcons name="refresh" size={20} color={COLORS.white} />
+            <Text style={styles.retryButtonText}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       </ScreenWrapper>
     );
@@ -236,17 +287,18 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
 
         {error && (
           <View style={styles.errorContainer}>
-            <MaterialCommunityIcons name="alert-circle" size={24} color={COLORS.error} />
+            <MaterialCommunityIcons name="wifi-off" size={48} color={COLORS.gray} />
             <Text style={styles.errorText}>{getErrorMessage(error)}</Text>
             <TouchableOpacity style={styles.retryButton} onPress={onRefresh}>
+              <MaterialCommunityIcons name="refresh" size={18} color={COLORS.white} />
               <Text style={styles.retryButtonText}>Reintentar</Text>
             </TouchableOpacity>
           </View>
         )}
 
         <FlatList
-          data={benefits}
-          renderItem={renderBenefit}
+          data={isLoadingBenefits && !allBenefits.length ? [1, 2, 3, 4, 5, 6] : benefits}
+          renderItem={isLoadingBenefits && !allBenefits.length ? renderSkeleton : renderBenefit}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           scrollEnabled={true}
@@ -533,16 +585,47 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: TYPOGRAPHY.body2,
-    color: COLORS.error,
+    color: COLORS.gray,
     marginTop: SPACING.sm,
     textAlign: 'center',
   },
+  centerErrorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  errorTitle: {
+    fontSize: TYPOGRAPHY.h5,
+    fontWeight: '700',
+    color: COLORS.dark,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  errorMessage: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+  },
   retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
     marginTop: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     backgroundColor: COLORS.primary,
     borderRadius: LAYOUT.borderRadius.md,
+  },
+  retryButtonLarge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: 8,
   },
   retryButtonText: {
     color: COLORS.white,

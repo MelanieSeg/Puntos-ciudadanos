@@ -11,6 +11,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
+import MerchantDashboardSkeleton from '../../components/skeletons/MerchantDashboardSkeleton';
 import api from '../../services/api';
 
 export default function MerchantDashboardScreen({ navigation }) {
@@ -114,9 +115,21 @@ export default function MerchantDashboardScreen({ navigation }) {
   if (loading && !stats) {
     return (
       <SafeAreaView style={styles.container}>
+        <MerchantDashboardSkeleton />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#FF9800" />
-          <Text style={styles.loadingText}>Cargando dashboard...</Text>
+          <Text style={styles.errorIcon}>📶</Text>
+          <Text style={styles.errorTitle}>Error de conexión</Text>
+          <Text style={styles.errorText}>No se pudo cargar el dashboard</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchStats}>
+            <Text style={styles.retryButtonText}>🔄 Reintentar</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -198,11 +211,43 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 32,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
     color: '#666',
+  },
+  errorIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: '#FF9800',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',
