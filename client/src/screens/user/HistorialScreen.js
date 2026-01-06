@@ -8,6 +8,7 @@ import {
   Platform,
   ActivityIndicator,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -19,6 +20,8 @@ import { useInfiniteTransactions } from '../../hooks/useUserData';
 export default function HistorialScreen() {
   const navigation = useNavigation();
   const [activeFilter, setActiveFilter] = useState('Todos');
+  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   // React Query Infinite Query - Paginación de 20 items por página
   const {
@@ -119,8 +122,16 @@ export default function HistorialScreen() {
   };
 
   const handleViewRedemption = (item) => {
-    // Navegar a la pantalla de QR con los datos del canje
-    // TODO: Implementar navegación a pantalla de QR
+    navigation.navigate('QRCode', {
+      qrCode: item.metadata?.qrCode,
+      benefitName: item.title,
+      benefitId: item.benefitId,
+    });
+  };
+
+  const handleViewEarnedDetail = (item) => {
+    setSelectedDetail(item);
+    setShowDetailModal(true);
   };
 
   const handleLoadMore = () => {
@@ -145,7 +156,9 @@ export default function HistorialScreen() {
         <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle}>{item.title}</Text>
+        <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode="tail">
+          {item.title}
+        </Text>
         <Text style={styles.itemDescription}>{item.description}</Text>
         <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
       </View>
@@ -162,6 +175,15 @@ export default function HistorialScreen() {
           </View>
         )}
       </View>
+      {item.type === 'EARNED' && (
+        <TouchableOpacity 
+          style={[styles.detailButton, { backgroundColor: item.color }]}
+          onPress={() => handleViewEarnedDetail(item)}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons name="eye" size={20} color={COLORS.white} />
+        </TouchableOpacity>
+      )}
       {item.type === 'SPENT' && item.metadata?.qrCode && (
         <TouchableOpacity 
           style={styles.qrButton}
@@ -266,6 +288,97 @@ export default function HistorialScreen() {
         updateCellsBatchingPeriod={50}
         windowSize={10}
       />
+
+      {/* Modal de Detalle de Transacción */}
+      <Modal
+        visible={showDetailModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowDetailModal(false)}
+        statusBarTranslucent={true}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <MaterialCommunityIcons 
+                name={selectedDetail?.icon || 'information'} 
+                size={28} 
+                color={selectedDetail?.color || COLORS.primary} 
+              />
+              <Text style={styles.modalTitle}>Detalle de Transacción</Text>
+              <TouchableOpacity 
+                onPress={() => setShowDetailModal(false)}
+                style={styles.closeButton}
+              >
+                <MaterialCommunityIcons name="close" size={24} color={COLORS.dark} />
+              </TouchableOpacity>
+            </View>
+
+            {selectedDetail && (
+              <View style={styles.detailContent}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Título</Text>
+                  <Text style={styles.detailValue}>{selectedDetail.title}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Descripción</Text>
+                  <Text style={styles.detailValue}>{selectedDetail.description}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Puntos</Text>
+                  <Text style={[styles.detailValue, { color: selectedDetail.color, fontWeight: '700' }]}>
+                    {selectedDetail.points}
+                  </Text>
+                </View>
+
+                {selectedDetail.metadata?.submittedAt && (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Fecha de Solicitud</Text>
+                    <Text style={styles.detailValue}>
+                      {new Date(selectedDetail.metadata.submittedAt).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </Text>
+                  </View>
+                )}
+
+                {selectedDetail.metadata?.approvedAt && (
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Fecha de Aprobación</Text>
+                    <Text style={styles.detailValue}>
+                      {new Date(selectedDetail.metadata.approvedAt).toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </Text>
+                  </View>
+                )}
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Fecha de Transacción</Text>
+                  <Text style={styles.detailValue}>{formatDate(selectedDetail.date)}</Text>
+                </View>
+              </View>
+            )}
+
+            <TouchableOpacity 
+              style={styles.acceptButton}
+              onPress={() => setShowDetailModal(false)}
+            >
+              <Text style={styles.acceptButtonText}>Aceptar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 }
@@ -399,9 +512,9 @@ const styles = StyleSheet.create({
   },
   historialItem: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    alignItems: 'center',
     gap: SPACING.md,
-    paddingVertical: 0,
+    paddingVertical: SPACING.md,
     paddingLeft: SPACING.md,
     paddingRight: 0,
     backgroundColor: COLORS.white,
@@ -416,11 +529,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: SPACING.md,
   },
   itemContent: {
     flex: 1,
-    paddingVertical: SPACING.md,
   },
   itemTitle: {
     fontSize: 14,
@@ -441,7 +552,6 @@ const styles = StyleSheet.create({
   pointsContainer: {
     alignItems: 'flex-end',
     gap: SPACING.xs,
-    paddingVertical: SPACING.md,
   },
   itemPoints: {
     fontWeight: '700',
@@ -458,10 +568,22 @@ const styles = StyleSheet.create({
   },
   qrButton: {
     width: 50,
-    height: '100%',
+    alignSelf: 'stretch',
+    marginVertical: -SPACING.md,
+    marginRight: -1,
     borderTopRightRadius: 7,
     borderBottomRightRadius: 7,
     backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailButton: {
+    width: 50,
+    alignSelf: 'stretch',
+    marginVertical: -SPACING.md,
+    marginRight: -1,
+    borderTopRightRadius: 7,
+    borderBottomRightRadius: 7,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -473,5 +595,80 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: TYPOGRAPHY.body2,
     color: COLORS.gray,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 400,
+    padding: SPACING.xl,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 8,
+      },
+      web: {
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+      },
+    }),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.light,
+  },
+  modalTitle: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.h6,
+    fontWeight: '700',
+    color: COLORS.dark,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  detailContent: {
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  detailRow: {
+    gap: SPACING.xs,
+  },
+  detailLabel: {
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.gray,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontSize: TYPOGRAPHY.body1,
+    color: COLORS.dark,
+    lineHeight: 22,
+  },
+  acceptButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  acceptButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
   },
 });

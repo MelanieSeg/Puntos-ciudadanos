@@ -6,7 +6,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Share, Dimensions, Platform, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'react-native-qrcode-svg';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 
@@ -57,20 +57,12 @@ export default function QRCodeScreen({ route, navigation }) {
         {/* Código QR - Redención */}
         <View style={styles.qrContainer}>
           <View style={styles.qrBox}>
-            {Platform.OS === 'web' ? (
-              <QRCodeSVG 
-                value={displayQRCode}
-                size={240}
-                level="H"
-                includeMargin={true}
-              />
-            ) : (
-              <View style={styles.qrPlaceholder}>
-                <MaterialCommunityIcons name="qrcode" size={80} color={COLORS.light} />
-                <Text style={styles.qrText}>Código QR</Text>
-                <Text style={styles.qrSubtext}>(Requiere librería nativa)</Text>
-              </View>
-            )}
+            <QRCode 
+              value={displayQRCode}
+              size={240}
+              color={COLORS.dark}
+              backgroundColor={COLORS.white}
+            />
           </View>
         </View>
 

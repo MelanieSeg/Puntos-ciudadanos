@@ -155,6 +155,14 @@ router.post(
         type: 'EARNED',
         amount: submission.mission.points,
         description: `Misión aprobada: ${submission.mission.name}`,
+        metadata: {
+          submissionId: submission.id,
+          missionId: submission.missionId,
+          missionName: submission.mission.name,
+          submittedAt: submission.createdAt.toISOString(),
+          approvedAt: updatedSubmission.validatedAt.toISOString(),
+          approvedBy: req.user.id,
+        },
       },
     });
 
