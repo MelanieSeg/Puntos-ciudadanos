@@ -94,7 +94,11 @@ router.get(
   isMerchantOrAdmin,
   async (req, res) => {
     try {
-      const { limit = 50, offset = 0 } = req.query;
+      const { limit = 20, offset = 0 } = req.query;
+
+      // Convertir limit y offset a números
+      const limitNum = parseInt(limit, 10);
+      const offsetNum = parseInt(offset, 10);
 
       const redemptions = await prisma.benefitRedemption.findMany({
         where: {

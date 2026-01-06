@@ -6,10 +6,10 @@
  * - Tabs separadas por tipo de usuario (Ciudadanos/Comercios/Admins)
  * - Búsqueda en tiempo real por nombre/email
  * - Ordenamiento flexible (nombre, fecha, puntos)
- * - Diseño escalable para miles de usuarios
+ * - Paginación infinita para escalar a miles de usuarios
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -24,22 +24,18 @@ import {
   TextInput,
   ScrollView,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { adminAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
+import { useInfiniteUsers } from '../../hooks/useUserData';
 
 export default function UsersManagementScreen() {
   const { authState } = React.useContext(AuthContext);
   const currentUserRole = authState?.user?.role;
-  const [allUsers, setAllUsers] = useState([]); // Todos los usuarios cargados
-  const [filteredUsers, setFilteredUsers] = useState([]); // Usuarios después de filtros
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   
-  // Tab activa (USER, MERCHANT, ADMIN)
+  // Tab activa (USER, MERCHANT, MASTER_ADMIN)
   const [activeTab, setActiveTab] = useState('USER');
   
   // Búsqueda
@@ -51,6 +47,66 @@ export default function UsersManagementScreen() {
   
   // Filtro de estado (ACTIVE, INACTIVE, BANNED, null=todos)
   const [filterStatus, setFilterStatus] = useState(null);
+
+  // Paginación infinita por rol
+  const roleForQuery = activeTab === 'MASTER_ADMIN' ? null : activeTab; // null carga todos los admins
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteUsers(roleForQuery, filterStatus, 50); // 50 usuarios por página
+
+  // Aplanar todas las páginas
+  const allUsers = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.data);
+  }, [data]);
+
+  // Aplicar filtros locales (búsqueda, tab de admin, ordenamiento)
+  const filteredUsers = useMemo(() => {
+    let result = [...allUsers];
+
+    // 1. Filtrar por tab activa (para MASTER_ADMIN que muestra MASTER_ADMIN + SUPPORT_ADMIN)
+    if (activeTab === 'MASTER_ADMIN') {
+      result = result.filter(user => user.role === 'MASTER_ADMIN' || user.role === 'SUPPORT_ADMIN');
+    }
+
+    // 2. Aplicar búsqueda
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(user =>
+        user.name.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query)
+      );
+    }
+
+    // 3. Aplicar ordenamiento
+    result.sort((a, b) => {
+      let compareValue = 0;
+
+      switch (sortBy) {
+        case 'name':
+          compareValue = a.name.localeCompare(b.name);
+          break;
+        case 'createdAt':
+          compareValue = new Date(a.createdAt) - new Date(b.createdAt);
+          break;
+        case 'balance':
+          compareValue = (a.wallet?.balance || 0) - (b.wallet?.balance || 0);
+          break;
+        default:
+          compareValue = 0;
+      }
+
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+
+    return result;
+  }, [allUsers, activeTab, searchQuery, sortBy, sortOrder]);
 
   // Modal de confirmación de acción
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -74,90 +130,21 @@ export default function UsersManagementScreen() {
     userType: '',
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      loadUsers();
-    }, [])
-  );
-
-  // Efecto para aplicar filtros cuando cambian las dependencias
-  useEffect(() => {
-    applyFilters();
-  }, [allUsers, activeTab, searchQuery, sortBy, sortOrder, filterStatus]);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      // Cargar TODOS los usuarios sin filtro de rol en el backend
-      const response = await adminAPI.getUsers(null, null);
-      setAllUsers(response.data.data.users || []);
-    } catch (error) {
-      Alert.alert('Error', 'No pudimos cargar los usuarios');
-    } finally {
-      setLoading(false);
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  };
-
-  const applyFilters = () => {
-    let result = [...allUsers];
-
-    // 1. Filtrar por tab activa (rol)
-    // La tab MASTER_ADMIN muestra tanto MASTER_ADMIN como SUPPORT_ADMIN
-    if (activeTab === 'MASTER_ADMIN') {
-      result = result.filter(user => user.role === 'MASTER_ADMIN' || user.role === 'SUPPORT_ADMIN');
-    } else {
-      result = result.filter(user => user.role === activeTab);
-    }
-
-    // 2. Filtrar por estado si está seleccionado
-    if (filterStatus) {
-      result = result.filter(user => user.status === filterStatus);
-    }
-
-    // 3. Aplicar búsqueda
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      result = result.filter(user =>
-        user.name.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query)
-      );
-    }
-
-    // 4. Aplicar ordenamiento
-    result.sort((a, b) => {
-      let compareValue = 0;
-
-      switch (sortBy) {
-        case 'name':
-          compareValue = a.name.localeCompare(b.name);
-          break;
-        case 'createdAt':
-          compareValue = new Date(a.createdAt) - new Date(b.createdAt);
-          break;
-        case 'balance':
-          compareValue = (a.wallet?.balance || 0) - (b.wallet?.balance || 0);
-          break;
-        default:
-          compareValue = 0;
-      }
-
-      return sortOrder === 'asc' ? compareValue : -compareValue;
-    });
-
-    setFilteredUsers(result);
   };
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await loadUsers();
-    setRefreshing(false);
+    await refetch();
   };
 
   const handleChangeStatus = (userId, currentStatus, userName) => {
     // Determinar el nuevo estado
     let newStatus;
     let actionText;
-    
+    refetch(); // Recargar con React Query
     if (currentStatus === 'ACTIVE') {
       newStatus = 'INACTIVE';
       actionText = 'desactivar';
@@ -267,7 +254,7 @@ export default function UsersManagementScreen() {
 
       setShowAddModal(false);
       setNewUserForm({ name: '', email: '', password: '' });
-      await loadUsers();
+      await refetch(); // Recargar con React Query
     } catch (error) {
       const errorMsg = error.response?.data?.data?.message || error.response?.data?.message || 'Error al crear usuario';
       Alert.alert('Error', errorMsg);
@@ -468,7 +455,7 @@ export default function UsersManagementScreen() {
     </View>
   );
 
-  if (loading) {
+  if (isLoading && !allUsers.length) {
     return (
       <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
         <View style={styles.centered}>
@@ -602,21 +589,43 @@ export default function UsersManagementScreen() {
         data={filteredUsers}
         keyExtractor={(item) => item.id}
         renderItem={renderUserCard}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={isLoading && !isFetchingNextPage} onRefresh={onRefresh} />}
         contentContainerStyle={styles.listContent}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        removeClippedSubviews={true}
+        windowSize={10}
+        maxToRenderPerBatch={10}
+        ListFooterComponent={() => {
+          if (isFetchingNextPage) {
+            return (
+              <View style={styles.loadingFooter}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+                <Text style={styles.loadingFooterText}>Cargando más usuarios...</Text>
+              </View>
+            );
+          }
+          return null;
+        }}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="account-off" size={64} color={COLORS.gray} />
-            <Text style={styles.emptyText}>
-              {searchQuery ? 'No se encontraron usuarios con ese criterio' : 'No hay usuarios en esta categoría'}
-            </Text>
+          isLoading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+              <Text style={styles.emptyText}>Cargando usuarios...</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <MaterialCommunityIcons name="account-off" size={64} color={COLORS.gray} />
+              <Text style={styles.emptyText}>
+                {searchQuery ? 'No se encontraron usuarios con ese criterio' : 'No hay usuarios en esta categoría'}
+              </Text>
             {searchQuery && (
               <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchButton}>
                 <Text style={styles.clearSearchText}>Limpiar búsqueda</Text>
               </TouchableOpacity>
             )}
           </View>
-        }
+        )}
       />
 
       {/* Botón Flotante (FAB) para agregar usuarios */}
@@ -1112,6 +1121,15 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginTop: SPACING.md,
     textAlign: 'center',
+  },
+  loadingFooter: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  loadingFooterText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    marginTop: SPACING.sm,
   },
   clearSearchButton: {
     marginTop: SPACING.md,

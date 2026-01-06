@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { authAPI, setGlobalLogoutHandler } from '../services/api';
 import api from '../services/api';
 import { getErrorMessage, logError } from '../utils/errorHandler';
@@ -31,6 +32,8 @@ const secureStorage = {
 };
 
 export const AuthProvider = ({ children }) => {
+  const queryClient = useQueryClient();
+  
   const [authState, setAuthState] = useState({
     token: null,
     authenticated: false,
@@ -93,6 +96,9 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      // Limpiar cache de React Query antes de hacer login para evitar datos del usuario anterior
+      queryClient.clear();
+
       setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
       const response = await authAPI.login(email, password);
@@ -181,6 +187,9 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
+      // Limpiar cache de React Query (elimina todos los datos cacheados)
+      queryClient.clear();
+
       // Limpiar SecureStore
       await secureStorage.removeItem('userToken');
       await secureStorage.removeItem('userData');

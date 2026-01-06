@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
@@ -14,19 +14,29 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
-import { useAllTransactions } from '../../hooks/useUserData';
+import { useInfiniteTransactions } from '../../hooks/useUserData';
 
 export default function HistorialScreen() {
   const navigation = useNavigation();
   const [activeFilter, setActiveFilter] = useState('Todos');
 
-  // React Query hook - caché de 2 minutos para transacciones
+  // React Query Infinite Query - Paginación de 20 items por página
   const {
-    data: transactions = [],
-    isLoading: loading,
+    data,
+    isLoading,
     error,
     refetch,
-  } = useAllTransactions(100);
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteTransactions(20);
+
+  // Aplanar todas las páginas de transacciones
+  const transactions = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.data);
+  }, [data]);
+
   // Procesar y formatear transacciones con useMemo
   const allHistorial = useMemo(() => {
     return transactions.map(t => {
@@ -110,17 +120,119 @@ export default function HistorialScreen() {
 
   const handleViewRedemption = (item) => {
     // Navegar a la pantalla de QR con los datos del canje
-    const metadata = item.metadata || {};
-    navigation.navigate('QRCode', {
-      redemptionId: metadata.redemptionId,
-      qrCode: metadata.qrCode,
-      benefitName: metadata.benefitTitle || item.title.replace('Canje: ', ''),
-      benefitId: item.benefitId || metadata.benefitId,
-      expiresAt: metadata.expiresAt,
-    });
+    // TODO: Implementar navegación a pantalla de QR
   };
 
-  if (loading && !transactions.length) {
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        <Text style={styles.footerText}>Cargando más transacciones...</Text>
+      </View>
+    );
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.historialItem}>
+      <View style={[styles.itemIcon, { backgroundColor: item.color + '20' }]}>
+        <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
+      </View>
+      <View style={styles.itemContent}>
+        <Text style={styles.itemTitle}>{item.title}</Text>
+        <Text style={styles.itemDescription}>{item.description}</Text>
+        <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
+      </View>
+      <View style={styles.pointsContainer}>
+        <Text style={[styles.itemPoints, { color: item.color }]}>{item.points}</Text>
+        {item.type === 'EARNED' && (
+          <View style={[styles.typeBadge, { backgroundColor: '#E8F5E9' }]}>
+            <Text style={[styles.typeBadgeText, { color: '#4CAF50' }]}>Ganado</Text>
+          </View>
+        )}
+        {item.type === 'SPENT' && (
+          <View style={[styles.typeBadge, { backgroundColor: '#FFEBEE' }]}>
+            <Text style={[styles.typeBadgeText, { color: '#f44336' }]}>Gastado</Text>
+          </View>
+        )}
+      </View>
+      {item.type === 'SPENT' && item.metadata?.qrCode && (
+        <TouchableOpacity 
+          style={styles.qrButton}
+          onPress={() => handleViewRedemption(item)}
+          activeOpacity={0.7}
+        >
+          <MaterialCommunityIcons name="qrcode" size={20} color={COLORS.white} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderListHeader = () => (
+    <>
+      {/* Filtros */}
+      <View style={styles.filtersContainer}>
+        <View style={styles.filterHeader}>
+          <View style={styles.filterTitleRow}>
+            <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
+            <Text style={styles.filterLabel}>Filtrar Transacciones</Text>
+          </View>
+          <View style={styles.filterButtons}>
+            {['Todos', 'EARNED', 'SPENT'].map((filter) => {
+              const isActive = activeFilter === filter;
+              const displayName = filter === 'Todos' ? 'Todos' : filter === 'EARNED' ? 'Ganado' : 'Gastado';
+              const count = filter === 'Todos' ? allHistorial.length : 
+                           allHistorial.filter(item => item.type === filter).length;
+              
+              return (
+                <TouchableOpacity
+                  key={filter}
+                  style={[styles.filterButton, isActive && styles.filterButtonActive]}
+                  onPress={() => applyFilter(filter)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+                    {displayName}
+                  </Text>
+                  {filter === 'Todos' && (
+                    <View style={[styles.countBadge, isActive && styles.countBadgeActive]}>
+                      <Text style={styles.countText}>{count}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
+      {error && (
+        <View style={styles.errorContainer}>
+          <MaterialCommunityIcons name="alert-circle" size={24} color={COLORS.error} />
+          <Text style={styles.errorText}>{getErrorMessage(error)}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+            <Text style={styles.retryText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+    </>
+  );
+
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <MaterialCommunityIcons name="history" size={64} color={COLORS.gray} />
+      <Text style={styles.emptyText}>No hay transacciones aún</Text>
+      <Text style={styles.emptySubtext}>Comienza a ganar puntos completando misiones</Text>
+    </View>
+  );
+
+  if (isLoading && !transactions.length) {
     return (
       <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
         <View style={styles.centerContainer}>
@@ -133,109 +245,36 @@ export default function HistorialScreen() {
 
   return (
     <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={loading && transactions.length > 0} onRefresh={onRefresh} />}
-      >
-        {/* Filtros */}
-        <View style={styles.filtersContainer}>
-          <View style={styles.filterHeader}>
-            <View style={styles.filterTitleRow}>
-              <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-              <Text style={styles.filterLabel}>Filtrar Transacciones</Text>
-            </View>
-            <View style={styles.filterButtons}>
-              {['Todos', 'EARNED', 'SPENT'].map((filter) => {
-                const isActive = activeFilter === filter;
-                const displayName = filter === 'Todos' ? 'Todos' : filter === 'EARNED' ? 'Ganado' : 'Gastado';
-                const count = filter === 'Todos' ? allHistorial.length : 
-                             allHistorial.filter(item => item.type === filter).length;
-                
-                return (
-                  <TouchableOpacity
-                    key={filter}
-                    style={[styles.filterButton, isActive && styles.filterButtonActive]}
-                    onPress={() => applyFilter(filter)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
-                      {displayName}
-                    </Text>
-                    {filter === 'Todos' && (
-                      <View style={[styles.countBadge, isActive && styles.countBadgeActive]}>
-                        <Text style={styles.countText}>{count}</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-
-        {error && (
-          <View style={styles.errorContainer}>
-            <MaterialCommunityIcons name="alert-circle" size={24} color={COLORS.error} />
-            <Text style={styles.errorText}>{getErrorMessage(error)}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={refetch}>
-              <Text style={styles.retryText}>Reintentar</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {!error && historial.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="history" size={64} color={COLORS.gray} />
-            <Text style={styles.emptyText}>No hay transacciones aún</Text>
-            <Text style={styles.emptySubtext}>Comienza a ganar puntos completando misiones</Text>
-          </View>
-        )}
-
-        <View style={styles.listContainer}>
-          {historial.map((item) => (
-            <View key={item.id} style={styles.historialItem}>
-              <View style={[styles.itemIcon, { backgroundColor: item.color + '20' }]}>
-                <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
-              </View>
-              <View style={styles.itemContent}>
-                <Text style={styles.itemTitle}>{item.title}</Text>
-                <Text style={styles.itemDescription}>{item.description}</Text>
-                <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
-              </View>
-              <View style={styles.pointsContainer}>
-                <Text style={[styles.itemPoints, { color: item.color }]}>{item.points}</Text>
-                {item.type === 'EARNED' && (
-                  <View style={[styles.typeBadge, { backgroundColor: '#E8F5E9' }]}>
-                    <Text style={[styles.typeBadgeText, { color: '#4CAF50' }]}>Ganado</Text>
-                  </View>
-                )}
-                {item.type === 'SPENT' && (
-                  <View style={[styles.typeBadge, { backgroundColor: '#FFEBEE' }]}>
-                    <Text style={[styles.typeBadgeText, { color: '#f44336' }]}>Gastado</Text>
-                  </View>
-                )}
-              </View>
-              {item.type === 'SPENT' && item.metadata?.qrCode && (
-                <TouchableOpacity 
-                  style={styles.qrButton}
-                  onPress={() => handleViewRedemption(item)}
-                  activeOpacity={0.7}
-                >
-                  <MaterialCommunityIcons name="qrcode" size={20} color={COLORS.white} />
-                </TouchableOpacity>
-              )}
-            </View>
-          ))}
-        </View>
-      </ScrollView>
+      <FlatList
+        data={historial}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id}
+        ListHeaderComponent={renderListHeader}
+        ListEmptyComponent={!error ? renderEmpty : null}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl 
+            refreshing={isLoading && transactions.length > 0} 
+            onRefresh={onRefresh} 
+          />
+        }
+        contentContainerStyle={styles.flatListContent}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={10}
+      />
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
+  flatListContent: {
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.md,
+    flexGrow: 1,
   },
   filtersContainer: {
     backgroundColor: COLORS.white,
@@ -425,5 +464,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  footerLoader: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  footerText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
   },
 });

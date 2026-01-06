@@ -1,9 +1,10 @@
 /**
  * SubmissionsApprovalScreen - Bandeja de Aprobaciones
  * Pantalla crítica para administrador: revisar y aprobar/rechazar envíos de usuarios
+ * Ahora con paginación infinita para manejar miles de envíos
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,58 +17,61 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { adminAPI } from '../../services/api';
+import { useInfiniteSubmissions } from '../../hooks/useUserData';
 
 export default function SubmissionsApprovalScreen({ navigation }) {
-  const [submissions, setSubmissions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState('PENDING'); // PENDING, APPROVED, REJECTED
   
+  // React Query Infinite Query - Paginación de 20 envíos por página
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteSubmissions(filter, 20);
+
   // Modal de confirmación
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // { type: 'approve'|'reject', submissionId, reason? }
 
-  useFocusEffect(
-    useCallback(() => {
-      loadSubmissions();
-    }, [filter])
-  );
-  const loadSubmissions = async () => {
-    try {
-      setLoading(true);
-      const response = await adminAPI.getSubmissions(filter);
-      
-      // Mapear respuesta a formato compatible con la pantalla
-      const formattedSubmissions = (response.data.data.submissions || []).map(sub => ({
-        id: sub.id,
-        userId: sub.userId,
-        userName: sub.user?.name || 'Usuario desconocido',
-        userEmail: sub.user?.email || 'sin email',
-        missionId: sub.missionId,
-        missionName: sub.mission?.name || 'Misión desconocida',
-        evidenceUrl: sub.evidenceUrl,
-        observation: sub.observation || '',
-        status: sub.status,
-        submittedAt: sub.createdAt,
-        points: sub.mission?.points || 0,
-      }));
-      
-      setSubmissions(formattedSubmissions);
-    } catch (error) {
-      Alert.alert('Error', 'No pudimos cargar los envíos pendientes');
-    } finally {
-      setLoading(false);
+  // Aplanar todas las páginas
+  const rawSubmissions = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.data);
+  }, [data]);
+
+  // Formatear datos
+  const submissions = useMemo(() => {
+    return rawSubmissions.map(sub => ({
+      id: sub.id,
+      userId: sub.userId,
+      userName: sub.user?.name || 'Usuario desconocido',
+      userEmail: sub.user?.email || 'sin email',
+      missionId: sub.missionId,
+      missionName: sub.mission?.name || 'Misión desconocida',
+      evidenceUrl: sub.evidenceUrl,
+      observation: sub.observation || '',
+      status: sub.status,
+      submittedAt: sub.createdAt,
+      points: sub.mission?.points || 0,
+    }));
+  }, [rawSubmissions]);
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
+
   const onRefresh = async () => {
-    setRefreshing(true);
-    await loadSubmissions();
-    setRefreshing(false);
+    await refetch();
   };
 
   const handleApprove = (submissionId) => {
@@ -101,15 +105,11 @@ export default function SubmissionsApprovalScreen({ navigation }) {
 
   const approveSubmissionDirectly = async (submissionId) => {
     try {
-      const response = await adminAPI.approveSubmission(submissionId, null);
-      
-      setSubmissions(submissions.filter(s => s.id !== submissionId));
+      await adminAPI.approveSubmission(submissionId, null);
       Alert.alert('Éxito', 'Envío aprobado y puntos otorgados');
       
-      // Recargar la lista
-      setTimeout(() => {
-        loadSubmissions();
-      }, 500);
+      // Recargar la lista completa
+      await refetch();
     } catch (error) {
       Alert.alert('Error', error.response?.data?.data?.message || error.response?.data?.message || error.message || 'Error al aprobar');
     }
@@ -118,9 +118,10 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   const rejectSubmissionDirectly = async (submissionId, reason) => {
     try {
       await adminAPI.rejectSubmission(submissionId, reason);
-      setSubmissions(submissions.filter(s => s.id !== submissionId));
       Alert.alert('Éxito', 'Envío rechazado');
-      await loadSubmissions();
+      
+      // Recargar la lista completa
+      await refetch();
     } catch (error) {
       Alert.alert('Error', error.response?.data?.data?.message || error.response?.data?.message || 'Error al rechazar');
     }
@@ -220,7 +221,17 @@ export default function SubmissionsApprovalScreen({ navigation }) {
     </View>
   );
 
-  if (loading) {
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        <Text style={styles.footerText}>Cargando más envíos...</Text>
+      </View>
+    );
+  };
+
+  if (isLoading && !submissions.length) {
     return (
       <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
         <View style={styles.centerContainer}>
@@ -257,7 +268,31 @@ export default function SubmissionsApprovalScreen({ navigation }) {
           </TouchableOpacity>
         ))}
       </View>
-      <FlatList data={submissions} renderItem={renderSubmissionCard} keyExtractor={item => item.id} contentContainerStyle={styles.listContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} ListEmptyComponent={<View style={styles.emptyContainer}><MaterialCommunityIcons name="inbox-multiple" size={48} color={COLORS.light} /><Text style={styles.emptyText}>No hay envíos pendientes</Text></View>} />
+      <FlatList 
+        data={submissions} 
+        renderItem={renderSubmissionCard} 
+        keyExtractor={item => item.id} 
+        contentContainerStyle={styles.listContent} 
+        ListFooterComponent={renderFooter}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={
+          <RefreshControl 
+            refreshing={isLoading && submissions.length > 0} 
+            onRefresh={onRefresh} 
+          />
+        }
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <MaterialCommunityIcons name="inbox-multiple" size={48} color={COLORS.light} />
+            <Text style={styles.emptyText}>No hay envíos {filter === 'PENDING' ? 'pendientes' : filter === 'APPROVED' ? 'aprobados' : 'rechazados'}</Text>
+          </View>
+        }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        windowSize={10}
+      />
       <Modal visible={showConfirmModal} transparent={true} animationType="fade" onRequestClose={cancelAction}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -559,5 +594,14 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body2,
     fontWeight: '600',
+  },
+  footerLoader: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    marginTop: SPACING.sm,
   },
 });

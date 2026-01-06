@@ -20,13 +20,17 @@ router.get(
   authenticate,
   authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
   asyncHandler(async (req, res) => {
-    const { status = 'PENDING' } = req.query;
+    const { status = 'PENDING', limit = 20, offset = 0 } = req.query;
 
     // Validar estado
     const validStatuses = ['PENDING', 'APPROVED', 'REJECTED'];
     if (!validStatuses.includes(status)) {
       return errorResponse(res, 'Estado inválido', 400);
     }
+
+    // Convertir limit y offset a números
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = parseInt(offset, 10);
 
     const submissions = await prisma.missionSubmission.findMany({
       where: {
@@ -59,6 +63,8 @@ router.get(
       orderBy: {
         createdAt: 'desc',
       },
+      take: limitNum,
+      skip: offsetNum,
     });
 
     successResponse(
@@ -225,11 +231,15 @@ router.get(
   authenticate,
   authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
   asyncHandler(async (req, res) => {
-    const { role, status } = req.query;
+    const { role, status, limit = 20, offset = 0 } = req.query;
 
     const whereClause = {};
     if (role) whereClause.role = role;
     if (status) whereClause.status = status;
+
+    // Convertir limit y offset a números
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = parseInt(offset, 10);
 
     const users = await prisma.user.findMany({
       where: whereClause,
@@ -257,6 +267,8 @@ router.get(
       orderBy: {
         createdAt: 'desc',
       },
+      take: limitNum,
+      skip: offsetNum,
     });
 
     successResponse(

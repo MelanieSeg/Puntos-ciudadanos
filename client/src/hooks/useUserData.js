@@ -3,8 +3,8 @@
  * Elimina la necesidad de useEffect, useState y setInterval
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { walletAPI, benefitsAPI, pointsAPI, missionsAPI } from '../services/api';
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { walletAPI, benefitsAPI, pointsAPI, missionsAPI, adminAPI, merchantAPI } from '../services/api';
 
 /**
  * Hook para obtener el balance y datos del usuario
@@ -40,6 +40,7 @@ export function useRecentTransactions(limit = 5) {
 
 /**
  * Hook para obtener todas las transacciones (para historial completo)
+ * DEPRECATED: Usar useInfiniteTransactions para paginación
  * staleTime: 2 minutos - Las transacciones son dinámicas
  */
 export function useAllTransactions(limit = 100) {
@@ -48,6 +49,33 @@ export function useAllTransactions(limit = 100) {
     queryFn: async () => {
       const response = await pointsAPI.getTransactions(limit, 0);
       return response.data?.data || [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutos
+    retry: 2,
+  });
+}
+
+/**
+ * Hook para paginación infinita de transacciones
+ * Carga 20 transacciones por página, ideal para FlatList con onEndReached
+ * staleTime: 2 minutos - Las transacciones son dinámicas
+ */
+export function useInfiniteTransactions(pageSize = 20) {
+  return useInfiniteQuery({
+    queryKey: ['transactions', 'infinite', pageSize],
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await pointsAPI.getTransactions(pageSize, pageParam);
+      return {
+        data: response.data?.data || [],
+        nextOffset: pageParam + pageSize,
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      // Si la última página tiene menos datos que pageSize, no hay más páginas
+      if (lastPage.data.length < pageSize) {
+        return undefined;
+      }
+      return lastPage.nextOffset;
     },
     staleTime: 1000 * 60 * 2, // 2 minutos
     retry: 2,
@@ -117,6 +145,84 @@ export function useBenefit(benefitId) {
     },
     enabled: !!benefitId,
     staleTime: 1000 * 60 * 30,
+    retry: 2,
+  });
+}
+
+/**
+ * Hook para paginación infinita de usuarios (Admin)
+ * Carga 20 usuarios por página
+ * staleTime: 1 minuto - Los usuarios pueden cambiar con frecuencia
+ */
+export function useInfiniteUsers(role = null, status = null, pageSize = 20) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'users', 'infinite', role, status, pageSize],
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await adminAPI.getUsers(role, status, pageSize, pageParam);
+      return {
+        data: response.data?.data?.users || [],
+        nextOffset: pageParam + pageSize,
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.data.length < pageSize) {
+        return undefined;
+      }
+      return lastPage.nextOffset;
+    },
+    staleTime: 1000 * 60, // 1 minuto
+    retry: 2,
+  });
+}
+
+/**
+ * Hook para paginación infinita de envíos de misiones (Admin)
+ * Carga 20 envíos por página
+ * staleTime: 30 segundos - Los envíos pendientes deben actualizarse frecuentemente
+ */
+export function useInfiniteSubmissions(status = 'PENDING', pageSize = 20) {
+  return useInfiniteQuery({
+    queryKey: ['admin', 'submissions', 'infinite', status, pageSize],
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await adminAPI.getSubmissions(status, pageSize, pageParam);
+      return {
+        data: response.data?.data?.submissions || [],
+        nextOffset: pageParam + pageSize,
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.data.length < pageSize) {
+        return undefined;
+      }
+      return lastPage.nextOffset;
+    },
+    staleTime: 1000 * 30, // 30 segundos
+    retry: 2,
+  });
+}
+
+/**
+ * Hook para paginación infinita de historial de comerciante
+ * Carga 20 validaciones por página
+ * staleTime: 2 minutos - El historial cambia con menos frecuencia
+ */
+export function useInfiniteMerchantHistory(pageSize = 20) {
+  return useInfiniteQuery({
+    queryKey: ['merchant', 'history', 'infinite', pageSize],
+    queryFn: async ({ pageParam = 0 }) => {
+      const response = await merchantAPI.getHistory(pageSize, pageParam);
+      return {
+        data: response.data?.data?.redemptions || [],
+        nextOffset: pageParam + pageSize,
+      };
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.data.length < pageSize) {
+        return undefined;
+      }
+      return lastPage.nextOffset;
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutos
     retry: 2,
   });
 }

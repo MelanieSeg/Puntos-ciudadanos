@@ -1,56 +1,53 @@
 /**
  * HistoryScreen - Historial de validaciones para Comercios
- * Muestra el registro de cupones validados
+ * Muestra el registro de cupones validados con paginación infinita
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl, Platform } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
-import { merchantAPI } from '../../services/api';
+import { useInfiniteMerchantHistory } from '../../hooks/useUserData';
 
 export default function HistoryScreen() {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState(null);
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteMerchantHistory(20);
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
+  // Aplanar todas las páginas
+  const redemptions = useMemo(() => {
+    if (!data?.pages) return [];
+    return data.pages.flatMap(page => page.data);
+  }, [data]);
 
-  const loadHistory = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await merchantAPI.getHistory(50, 0);
-      const redemptions = response.data?.data?.redemptions || [];
-      
-      // Formatear datos para el componente
-      const formatted = redemptions.map(r => ({
-        id: r.id,
-        userId: r.user?.id || 'N/A',
-        userEmail: r.user?.email || 'Sin correo',
-        userName: r.user?.name || 'Usuario',
-        benefitTitle: r.benefit?.title || 'Beneficio',
-        points: r.benefit?.pointsCost || 0,
-        date: new Date(r.redeemedAt),
-      }));
+  // Formatear datos
+  const transactions = useMemo(() => {
+    return redemptions.map(r => ({
+      id: r.id,
+      userId: r.user?.id || 'N/A',
+      userEmail: r.user?.email || 'Sin correo',
+      userName: r.user?.name || 'Usuario',
+      benefitTitle: r.benefit?.title || 'Beneficio',
+      points: r.benefit?.pointsCost || 0,
+      date: new Date(r.redeemedAt),
+    }));
+  }, [redemptions]);
 
-      setTransactions(formatted);
-    } catch (err) {
-      console.error('[HistoryScreen] Error cargando historial:', err);
-      setError('No se pudo cargar el historial');
-    } finally {
-      setLoading(false);
+  const handleLoadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
   };
 
   const onRefresh = async () => {
-    setRefreshing(true);
-    await loadHistory();
-    setRefreshing(false);
+    await refetch();
   };
 
   const formatDate = (date) => {
@@ -99,7 +96,7 @@ export default function HistoryScreen() {
     </View>
   );
 
-  if (loading) {
+  if (isLoading && !redemptions.length) {
     return (
       <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
         <View style={styles.centerContainer}>
@@ -140,11 +137,27 @@ export default function HistoryScreen() {
             contentContainerStyle={styles.listContainer}
             refreshControl={
               <RefreshControl 
-                refreshing={refreshing} 
+                refreshing={isLoading && !isFetchingNextPage} 
                 onRefresh={onRefresh}
                 colors={[COLORS.merchant]}
               />
             }
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
+            ListFooterComponent={() => {
+              if (isFetchingNextPage) {
+                return (
+                  <View style={styles.loadingFooter}>
+                    <ActivityIndicator size="small" color={COLORS.merchant} />
+                    <Text style={styles.loadingFooterText}>Cargando más validaciones...</Text>
+                  </View>
+                );
+              }
+              return null;
+            }}
+            removeClippedSubviews={true}
+            windowSize={10}
+            maxToRenderPerBatch={10}
           />
         )}
       </View>
@@ -279,5 +292,23 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginTop: SPACING.xs,
     textAlign: 'center',
+  },
+  loadingFooter: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  loadingFooterText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    marginTop: SPACING.sm,
+  },
+  footerLoader: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    marginTop: SPACING.sm,
   },
 });

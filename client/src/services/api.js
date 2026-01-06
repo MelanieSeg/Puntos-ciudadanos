@@ -128,7 +128,7 @@ export const benefitsAPI = {
 export const merchantAPI = {
   validateQR: (qrCode) => api.post('/merchant/validate-qr', { qrCode }),
   getStats: () => api.get('/merchant/stats'),
-  getHistory: (limit = 50, offset = 0) => 
+  getHistory: (limit = 20, offset = 0) => 
     api.get(`/merchant/history?limit=${limit}&offset=${offset}`),
 };
 
@@ -142,7 +142,8 @@ export const missionsAPI = {
 
 // Servicios de admin
 export const adminAPI = {
-  getSubmissions: (status = 'PENDING') => api.get(`/admin/submissions?status=${status}`),
+  getSubmissions: (status = 'PENDING', limit = 20, offset = 0) => 
+    api.get(`/admin/submissions?status=${status}&limit=${limit}&offset=${offset}`),
   approveSubmission: (submissionId, notes) => {
     console.log('[API] Calling approveSubmission with submissionId:', submissionId, 'notes:', notes);
     return api.post(`/admin/submissions/${submissionId}/approve`, { notes });
@@ -151,10 +152,12 @@ export const adminAPI = {
     console.log('[API] Calling rejectSubmission with submissionId:', submissionId, 'reason:', reason);
     return api.post(`/admin/submissions/${submissionId}/reject`, { reason });
   },
-  getUsers: (role, status) => {
+  getUsers: (role, status, limit = 20, offset = 0) => {
     const params = new URLSearchParams();
     if (role) params.append('role', role);
     if (status) params.append('status', status);
+    params.append('limit', limit);
+    params.append('offset', offset);
     return api.get(`/admin/users${params.toString() ? '?' + params.toString() : ''}`);
   },
   updateUserStatus: (userId, status) => api.patch(`/admin/users/${userId}/status`, { status }),
