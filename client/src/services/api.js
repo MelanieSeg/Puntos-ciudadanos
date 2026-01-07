@@ -1,11 +1,23 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-const HOST_IP = '192.168.1.82';
+// Configuración de IP según plataforma
+// - Web: localhost
+// - Android: IP de tu PC en red local (funciona para emulador y dispositivo físico)
+// - iOS: localhost (para simulador)
+const HOST_IP = Platform.OS === 'web' 
+  ? 'localhost' 
+  : Platform.OS === 'android'
+    ? '192.168.1.101' // IP de tu PC - funciona con Docker
+    : 'localhost';
+
 const PORT = '3000';
 const API_VERSION = 'v1';
 
 let API_URL = `http://${HOST_IP}:${PORT}/api/${API_VERSION}`;
+
+console.log(`[API Config] Platform: ${Platform.OS}, URL: ${API_URL}`);
 
 // Variable para almacenar la función de logout global
 let globalLogoutHandler = null;
