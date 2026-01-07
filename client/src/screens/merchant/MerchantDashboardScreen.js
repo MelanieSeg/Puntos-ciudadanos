@@ -120,21 +120,6 @@ export default function MerchantDashboardScreen({ navigation }) {
     );
   }
 
-  if (error) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.centerContent}>
-          <Text style={styles.errorIcon}>📶</Text>
-          <Text style={styles.errorTitle}>Error de conexión</Text>
-          <Text style={styles.errorText}>No se pudo cargar el dashboard</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchStats}>
-            <Text style={styles.retryButtonText}>🔄 Reintentar</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const totalPuntosCanjeados = stats?.totalPuntosCanjeados || 2450;
   const qrsValidados = stats?.qrsValidados || 12;
 

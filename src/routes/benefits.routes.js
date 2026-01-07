@@ -13,11 +13,12 @@ const router = Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const { category, active = 'true' } = req.query;
+    const userRole = req.user.role;
 
-    // Generar clave de caché basada en los parámetros
+    // Generar clave de caché basada en los parámetros y rol
     const cacheKey = category 
-      ? `${cacheService.CACHE_KEYS.ALL_BENEFITS}_${category}_${active}`
-      : `${cacheService.CACHE_KEYS.ALL_BENEFITS}_${active}`;
+      ? `${cacheService.CACHE_KEYS.ALL_BENEFITS}_${category}_${active}_${userRole}`
+      : `${cacheService.CACHE_KEYS.ALL_BENEFITS}_${active}_${userRole}`;
 
     // Intentar obtener del caché
     const cachedBenefits = cacheService.get(cacheKey);
@@ -33,8 +34,13 @@ router.get('/', authenticate, async (req, res) => {
     // Si no está en caché, consultar BD
     const where = {
       active: active === 'true',
-      stock: { gt: 0 },
     };
+
+    // FILTRADO INTELIGENTE: Usuarios solo ven beneficios con stock disponible
+    if (userRole === 'USER') {
+      where.stock = { gt: 0 };
+      where.active = true;
+    }
 
     if (category) {
       where.category = category;

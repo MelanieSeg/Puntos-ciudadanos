@@ -11,6 +11,75 @@ import * as cacheService from '../services/cache.service.js';
 const router = express.Router();
 
 /**
+ * POST /api/v1/admin/benefits
+ * Crear nuevo beneficio y asignarlo a un comercio
+ * Solo ADMIN
+ */
+router.post(
+  '/benefits',
+  authenticate,
+  authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
+  asyncHandler(async (req, res) => {
+    const { title, description, pointsCost, stock, category, merchantId, imageUrl } = req.body;
+
+    // Validaciones
+    if (!title || !description || !pointsCost || !stock || !merchantId) {
+      return errorResponse(res, 'Faltan campos requeridos', 400);
+    }
+
+    if (pointsCost < 0 || stock < 0) {
+      return errorResponse(res, 'Los puntos y stock deben ser valores positivos', 400);
+    }
+
+    // Verificar que el merchantId corresponde a un usuario MERCHANT
+    const merchant = await prisma.user.findUnique({
+      where: { id: merchantId },
+    });
+
+    if (!merchant) {
+      return errorResponse(res, 'Comercio no encontrado', 404);
+    }
+
+    if (merchant.role !== 'MERCHANT') {
+      return errorResponse(res, 'El usuario seleccionado no es un comercio', 400);
+    }
+
+    // Crear el beneficio
+    const benefit = await prisma.benefit.create({
+      data: {
+        title,
+        description,
+        pointsCost: parseInt(pointsCost),
+        stock: parseInt(stock),
+        category: category || 'PRODUCT',
+        merchantId,
+        imageUrl: imageUrl || null,
+        active: true,
+      },
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Invalidar caché de beneficios
+    cacheService.delPattern('ALL_BENEFITS');
+
+    successResponse(
+      res,
+      benefit,
+      'Beneficio creado exitosamente',
+      201
+    );
+  })
+);
+
+/**
  * GET /api/v1/admin/submissions
  * Obtener envíos pendientes de aprobación
  * Query params: status (PENDING, APPROVED, REJECTED)

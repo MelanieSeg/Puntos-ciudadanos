@@ -12,6 +12,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import MerchantDashboardScreen from '../screens/merchant/MerchantDashboardScreen';
+import MerchantBenefitsScreen from '../screens/merchant/MerchantBenefitsScreen';
 import ScannerScreen from '../screens/merchant/ScannerScreen';
 import QRScannerScreen from '../screens/merchant/QRScannerScreen';
 import HistoryScreen from '../screens/merchant/HistoryScreen';
@@ -41,6 +42,7 @@ function WebSidebar({ activeTab, onNavigate }) {
 
   const tabs = [
     { id: 'Dashboard', label: 'Dashboard', icon: 'chart-box' },
+    { id: 'Benefits', label: 'Mis Beneficios', icon: 'gift' },
     { id: 'Scanner', label: 'Validar Cupones', icon: 'qrcode-scan' },
     { id: 'History', label: 'Historial', icon: 'history' },
   ];
@@ -144,6 +146,9 @@ function WebLayout() {
         <View style={activeTab === 'Dashboard' ? styles.activeScreen : styles.hiddenScreen}>
           <MerchantDashboardScreen />
         </View>
+        <View style={activeTab === 'Benefits' ? styles.activeScreen : styles.hiddenScreen}>
+          <MerchantBenefitsScreen />
+        </View>
         <View style={activeTab === 'Scanner' ? styles.activeScreen : styles.hiddenScreen}>
           <ScannerScreen />
         </View>
@@ -157,6 +162,7 @@ function WebLayout() {
   const getPageTitle = () => {
     const titles = {
       'Dashboard': 'Panel de Control',
+      'Benefits': 'Mis Beneficios',
       'Scanner': 'Validar Cupones',
       'History': 'Historial de Validaciones',
     };
@@ -220,6 +226,7 @@ function MobileLayout() {
         tabBarIcon: ({ focused }) => {
           const iconMap = {
             Dashboard: 'chart-box',
+            Benefits: 'gift',
             Scanner: 'qrcode-scan',
             History: 'history',
           };
@@ -244,6 +251,11 @@ function MobileLayout() {
         name="Dashboard"
         component={MerchantDashboardScreen}
         options={{ title: 'Dashboard' }}
+      />
+      <Tab.Screen
+        name="Benefits"
+        component={MerchantBenefitsScreen}
+        options={{ title: 'Beneficios' }}
       />
       <Tab.Screen
         name="Scanner"
