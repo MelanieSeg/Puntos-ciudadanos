@@ -14,6 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
@@ -24,7 +25,11 @@ export default function BenefitsManagementScreen() {
   const [benefits, setBenefits] = useState([]);
   const [merchants, setMerchants] = useState([]);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [benefitToDelete, setBenefitToDelete] = useState(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [newBenefit, setNewBenefit] = useState({
     title: '',
     description: '',
@@ -32,7 +37,6 @@ export default function BenefitsManagementScreen() {
     stock: '',
     merchantId: '',
     category: 'PRODUCT',
-    imageUrl: '',
   });
 
   useEffect(() => {
@@ -43,7 +47,8 @@ export default function BenefitsManagementScreen() {
   const fetchBenefits = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/benefits');
+      // Agregar timestamp para evitar caché del navegador
+      const response = await api.get(`/benefits?t=${Date.now()}`);
       setBenefits(response.data.data || []);
     } catch (error) {
       console.error('Error al obtener beneficios:', error);
@@ -59,6 +64,28 @@ export default function BenefitsManagementScreen() {
       setMerchants(response.data.data?.users || []);
     } catch (error) {
       console.error('Error al obtener comercios:', error);
+    }
+  };
+
+  const pickImage = async () => {
+    // Solicitar permisos
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (status !== 'granted') {
+      Alert.alert('Permiso denegado', 'Necesitamos permiso para acceder a tu galería');
+      return;
+    }
+
+    // Abrir selector de imágenes
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled) {
+      setSelectedImage(result.assets[0]);
     }
   };
 
@@ -87,18 +114,59 @@ export default function BenefitsManagementScreen() {
 
     try {
       setCreating(true);
-      await api.post('/admin/benefits', {
-        title: newBenefit.title,
-        description: newBenefit.description,
-        pointsCost: parseInt(newBenefit.pointsCost),
-        stock: parseInt(newBenefit.stock),
-        merchantId: newBenefit.merchantId,
-        category: newBenefit.category,
-        imageUrl: newBenefit.imageUrl || null,
+
+      // Crear FormData para enviar imagen
+      const formData = new FormData();
+      formData.append('title', newBenefit.title);
+      formData.append('description', newBenefit.description);
+      formData.append('pointsCost', parseInt(newBenefit.pointsCost));
+      formData.append('stock', parseInt(newBenefit.stock));
+      formData.append('merchantId', newBenefit.merchantId);
+      formData.append('category', newBenefit.category);
+
+      // Agregar imagen si se seleccionó
+      if (selectedImage) {
+        console.log('📸 Procesando imagen:', selectedImage.uri);
+        const imageUri = selectedImage.uri;
+        const filename = imageUri.split('/').pop();
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+        // En web, necesitamos convertir a Blob
+        if (Platform.OS === 'web') {
+          console.log('🌐 Plataforma web, convirtiendo a Blob...');
+          try {
+            const response = await fetch(imageUri);
+            const blob = await response.blob();
+            console.log('✅ Blob creado:', blob.size, 'bytes, tipo:', blob.type);
+            formData.append('image', blob, filename);
+          } catch (error) {
+            console.error('❌ Error al convertir imagen a Blob:', error);
+            throw error;
+          }
+        } else {
+          formData.append('image', {
+            uri: imageUri,
+            name: filename,
+            type: type,
+          });
+        }
+      } else {
+        console.log('⚠️ No hay imagen seleccionada');
+      }
+
+      console.log('📤 Enviando petición a /admin/benefits...');
+      // Enviar con axios
+      await api.post('/admin/benefits', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
+      console.log('✅ Beneficio creado exitosamente');
 
       Alert.alert('Éxito', 'Beneficio creado exitosamente');
       setShowAddModal(false);
+      setSelectedImage(null);
       setNewBenefit({
         title: '',
         description: '',
@@ -106,7 +174,6 @@ export default function BenefitsManagementScreen() {
         stock: '',
         merchantId: '',
         category: 'PRODUCT',
-        imageUrl: '',
       });
       fetchBenefits(); // Recargar lista
     } catch (error) {
@@ -114,6 +181,44 @@ export default function BenefitsManagementScreen() {
       Alert.alert('Error', error.response?.data?.message || 'No se pudo crear el beneficio');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleDeleteBenefit = async (benefitId, benefitName) => {
+    // Guardar el beneficio a eliminar y mostrar modal
+    setBenefitToDelete({ id: benefitId, name: benefitName });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!benefitToDelete) return;
+
+    try {
+      setDeleting(true);
+      console.log('🗑️ Eliminando beneficio:', benefitToDelete.id);
+      await api.delete(`/admin/benefits/${benefitToDelete.id}`);
+      console.log('✅ Beneficio eliminado');
+      
+      if (Platform.OS === 'web') {
+        alert('Beneficio eliminado exitosamente');
+      } else {
+        Alert.alert('Éxito', 'Beneficio eliminado exitosamente');
+      }
+      
+      setShowDeleteModal(false);
+      setBenefitToDelete(null);
+      fetchBenefits(); // Recargar lista
+    } catch (error) {
+      console.error('❌ Error al eliminar beneficio:', error);
+      const mensaje = error.response?.data?.message || 'No se pudo eliminar el beneficio';
+      
+      if (Platform.OS === 'web') {
+        alert(`Error: ${mensaje}`);
+      } else {
+        Alert.alert('Error', mensaje);
+      }
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -150,6 +255,14 @@ export default function BenefitsManagementScreen() {
           {item.merchant?.name || 'Sin asignar'}
         </Text>
       </View>
+      
+      {/* Botón de eliminar */}
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => handleDeleteBenefit(item.id, item.title)}
+      >
+        <MaterialCommunityIcons name="delete" size={24} color={COLORS.error} />
+      </TouchableOpacity>
     </View>
   );
 
@@ -311,14 +424,32 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>URL de Imagen (Opcional)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    value={newBenefit.imageUrl}
-                    onChangeText={(text) => setNewBenefit({ ...newBenefit, imageUrl: text })}
-                    autoCapitalize="none"
-                  />
+                  <Text style={styles.inputLabel}>Imagen del Beneficio (Opcional)</Text>
+                  
+                  {selectedImage ? (
+                    <View style={styles.imagePreviewContainer}>
+                      <Image
+                        source={{ uri: selectedImage.uri }}
+                        style={styles.imagePreview}
+                        resizeMode="cover"
+                      />
+                      <TouchableOpacity
+                        style={styles.removeImageButton}
+                        onPress={() => setSelectedImage(null)}
+                      >
+                        <MaterialCommunityIcons name="close-circle" size={24} color={COLORS.error} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.imagePickerButton}
+                      onPress={pickImage}
+                    >
+                      <MaterialCommunityIcons name="camera-plus" size={32} color={COLORS.primary} />
+                      <Text style={styles.imagePickerText}>📷 Seleccionar Foto</Text>
+                      <Text style={styles.imagePickerSubtext}>Galería o cámara</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <Text style={styles.noteText}>
@@ -347,6 +478,57 @@ export default function BenefitsManagementScreen() {
                 </TouchableOpacity>
               </View>
             </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de confirmación de eliminación */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !deleting && setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <View style={styles.deleteModalHeader}>
+              <MaterialCommunityIcons name="alert-circle" size={48} color={COLORS.error} />
+              <Text style={styles.deleteModalTitle}>Confirmar eliminación</Text>
+            </View>
+            
+            <Text style={styles.deleteModalMessage}>
+              ¿Estás seguro de que deseas eliminar el beneficio{' '}
+              <Text style={styles.deleteModalBenefitName}>"{benefitToDelete?.name}"</Text>?
+            </Text>
+            
+            <Text style={styles.deleteModalWarning}>
+              Esta acción no se puede deshacer.
+            </Text>
+
+            <View style={styles.deleteModalButtons}>
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
+                onPress={() => setShowDeleteModal(false)}
+                disabled={deleting}
+              >
+                <Text style={styles.deleteModalButtonCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.deleteModalButton, styles.deleteModalButtonDelete]}
+                onPress={confirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <ActivityIndicator color={COLORS.white} />
+                ) : (
+                  <>
+                    <MaterialCommunityIcons name="delete" size={20} color={COLORS.white} />
+                    <Text style={styles.deleteModalButtonDeleteText}>Eliminar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </Modal>
@@ -440,6 +622,15 @@ const styles = StyleSheet.create({
   merchantName: {
     fontSize: TYPOGRAPHY.caption,
     color: COLORS.gray,
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    padding: SPACING.xs,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    ...LAYOUT.shadowMedium,
   },
   benefitActions: {
     justifyContent: 'center',
@@ -587,5 +778,113 @@ const styles = StyleSheet.create({
   picker: {
     width: '100%',
     height: Platform.OS === 'ios' ? 120 : 50,
+  },
+  imagePickerButton: {
+    backgroundColor: COLORS.light,
+    borderRadius: LAYOUT.borderRadius.md,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+    paddingVertical: SPACING.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  imagePickerText: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginTop: SPACING.sm,
+  },
+  imagePickerSubtext: {
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.gray,
+    marginTop: SPACING.xs,
+  },
+  imagePreviewContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 200,
+    borderRadius: LAYOUT.borderRadius.md,
+    overflow: 'hidden',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+  },
+  // Estilos del modal de eliminación
+  deleteModalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: LAYOUT.borderRadius.xl,
+    padding: SPACING.xl,
+    width: '90%',
+    maxWidth: 400,
+    ...LAYOUT.shadowLarge,
+  },
+  deleteModalHeader: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  deleteModalTitle: {
+    fontSize: TYPOGRAPHY.h3,
+    fontWeight: '700',
+    color: COLORS.dark,
+    marginTop: SPACING.md,
+    textAlign: 'center',
+  },
+  deleteModalMessage: {
+    fontSize: TYPOGRAPHY.body1,
+    color: COLORS.dark,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+    lineHeight: 24,
+  },
+  deleteModalBenefitName: {
+    fontWeight: '700',
+    color: COLORS.error,
+  },
+  deleteModalWarning: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: SPACING.xl,
+  },
+  deleteModalButtons: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+  },
+  deleteModalButton: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    borderRadius: LAYOUT.borderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: SPACING.xs,
+  },
+  deleteModalButtonCancel: {
+    backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: COLORS.gray + '40',
+  },
+  deleteModalButtonCancelText: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
+    color: COLORS.dark,
+  },
+  deleteModalButtonDelete: {
+    backgroundColor: COLORS.error,
+  },
+  deleteModalButtonDeleteText: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
+    color: COLORS.white,
   },
 });

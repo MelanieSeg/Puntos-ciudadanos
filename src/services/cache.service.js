@@ -87,6 +87,30 @@ export const delMultiple = (keys) => {
 };
 
 /**
+ * Eliminar todas las claves que coincidan con un patrón
+ * @param {string} pattern - Patrón a buscar (se usa includes, no regex)
+ * @returns {number} - Cantidad de claves eliminadas
+ */
+export const delPattern = (pattern) => {
+  try {
+    const allKeys = cache.keys();
+    console.log(`[CacheService] 🔍 Todas las claves actuales:`, allKeys);
+    const matchingKeys = allKeys.filter(key => key.includes(pattern));
+    console.log(`[CacheService] 🎯 Claves que coinciden con "${pattern}":`, matchingKeys);
+    if (matchingKeys.length === 0) {
+      console.log(`[CacheService] 🔍 No se encontraron claves con patrón: ${pattern}`);
+      return 0;
+    }
+    const count = cache.del(matchingKeys);
+    console.log(`[CacheService] 🗑️ Eliminadas ${count} claves con patrón: ${pattern}`);
+    return count;
+  } catch (error) {
+    console.error(`[CacheService] Error al eliminar patrón ${pattern}:`, error);
+    return 0;
+  }
+};
+
+/**
  * Limpiar todo el caché
  */
 export const flush = () => {
@@ -138,6 +162,7 @@ export default {
   set,
   del,
   delMultiple,
+  delPattern,
   flush,
   getStats,
   keys,

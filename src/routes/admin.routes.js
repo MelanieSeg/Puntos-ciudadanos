@@ -7,20 +7,50 @@ import prisma from '../config/database.js';
 import bcrypt from 'bcrypt';
 import { generateSecurePassword, validatePassword } from '../utils/password.js';
 import * as cacheService from '../services/cache.service.js';
+import upload from '../middlewares/upload.js';
+import cloudinary from '../config/cloudinary.js';
+import { Readable } from 'stream';
 
 const router = express.Router();
+
+/**
+ * Helper: Subir imagen a Cloudinary desde buffer
+ */
+const uploadToCloudinary = (buffer, folder = 'benefits') => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    const readable = Readable.from(buffer);
+    readable.pipe(uploadStream);
+  });
+};
 
 /**
  * POST /api/v1/admin/benefits
  * Crear nuevo beneficio y asignarlo a un comercio
  * Solo ADMIN
+ * Acepta multipart/form-data con imagen opcional
  */
 router.post(
   '/benefits',
   authenticate,
   authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
+  upload.single('image'), // Middleware de multer para procesar la imagen
   asyncHandler(async (req, res) => {
-    const { title, description, pointsCost, stock, category, merchantId, imageUrl } = req.body;
+    const { title, description, pointsCost, stock, category, merchantId } = req.body;
+
+    // Debug: verificar si llega la imagen
+    console.log('📦 req.file:', req.file ? 'Sí hay archivo' : 'No hay archivo');
+    console.log('📝 req.body:', Object.keys(req.body));
 
     // Validaciones
     if (!title || !description || !pointsCost || !stock || !merchantId) {
@@ -44,6 +74,19 @@ router.post(
       return errorResponse(res, 'El usuario seleccionado no es un comercio', 400);
     }
 
+    // Subir imagen a Cloudinary si se proporcionó
+    let imageUrl = null;
+    if (req.file) {
+      try {
+        const result = await uploadToCloudinary(req.file.buffer, 'puntos-ciudadanos/benefits');
+        imageUrl = result.secure_url;
+        console.log('✅ Imagen subida a Cloudinary:', imageUrl);
+      } catch (error) {
+        console.error('❌ Error subiendo imagen a Cloudinary:', error);
+        return errorResponse(res, 'Error al subir la imagen', 500);
+      }
+    }
+
     // Crear el beneficio
     const benefit = await prisma.benefit.create({
       data: {
@@ -53,7 +96,7 @@ router.post(
         stock: parseInt(stock),
         category: category || 'PRODUCT',
         merchantId,
-        imageUrl: imageUrl || null,
+        imageUrl,
         active: true,
       },
       include: {
@@ -68,13 +111,50 @@ router.post(
     });
 
     // Invalidar caché de beneficios
-    cacheService.delPattern('ALL_BENEFITS');
+    cacheService.delPattern('all_benefits');
 
     successResponse(
       res,
       benefit,
       'Beneficio creado exitosamente',
       201
+    );
+  })
+);
+
+/**
+ * DELETE /api/v1/admin/benefits/:id
+ * Eliminar un beneficio
+ * Solo ADMIN
+ */
+router.delete(
+  '/benefits/:id',
+  authenticate,
+  authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+
+    // Verificar que el beneficio existe
+    const benefit = await prisma.benefit.findUnique({
+      where: { id },
+    });
+
+    if (!benefit) {
+      return errorResponse(res, 'Beneficio no encontrado', 404);
+    }
+
+    // Eliminar el beneficio
+    await prisma.benefit.delete({
+      where: { id },
+    });
+
+    // Invalidar caché
+    cacheService.delPattern('all_benefits');
+
+    successResponse(
+      res,
+      null,
+      'Beneficio eliminado exitosamente'
     );
   })
 );

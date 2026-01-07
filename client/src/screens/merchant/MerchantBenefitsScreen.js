@@ -12,6 +12,7 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BenefitCardSkeleton from '../../components/skeletons/BenefitCardSkeleton';
@@ -106,11 +107,19 @@ export default function MerchantBenefitsScreen() {
 
         {/* Imagen del beneficio */}
         <View style={styles.benefitImage}>
-          <MaterialCommunityIcons 
-            name={getBenefitIcon(item.category)} 
-            size={48} 
-            color={COLORS.merchant} 
-          />
+          {item.imageUrl ? (
+            <Image 
+              source={{ uri: item.imageUrl }} 
+              style={styles.benefitImageActual}
+              resizeMode="cover"
+            />
+          ) : (
+            <MaterialCommunityIcons 
+              name={getBenefitIcon(item.category)} 
+              size={48} 
+              color={COLORS.merchant} 
+            />
+          )}
         </View>
 
         {/* Información */}
@@ -379,6 +388,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.md,
+    overflow: 'hidden',
+  },
+  benefitImageActual: {
+    width: '100%',
+    height: '100%',
   },
   benefitInfo: {
     gap: SPACING.xs,

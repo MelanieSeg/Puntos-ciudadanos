@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityIndicator, RefreshControl, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
@@ -110,11 +110,19 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
       >
         {/* Imagen del beneficio */}
         <View style={[styles.benefitImage, { backgroundColor: config.color + '20' }]}>
-          <MaterialCommunityIcons
-            name={config.icon}
-            size={80}
-            color={config.color}
-          />
+          {item.imageUrl ? (
+            <Image 
+              source={{ uri: item.imageUrl }} 
+              style={styles.benefitImageActual}
+              resizeMode="cover"
+            />
+          ) : (
+            <MaterialCommunityIcons
+              name={config.icon}
+              size={80}
+              color={config.color}
+            />
+          )}
           
           {/* Badge de descuento */}
           {discountPercent && (
@@ -438,6 +446,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
+    overflow: 'hidden',
+  },
+  benefitImageActual: {
+    width: '100%',
+    height: '100%',
   },
   
   // Badges flotantes
