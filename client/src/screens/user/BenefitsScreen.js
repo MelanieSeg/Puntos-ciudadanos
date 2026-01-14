@@ -12,6 +12,7 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import BenefitCardSkeleton from '../../components/skeletons/BenefitCardSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { useAvailableBenefits, useUserBalance } from '../../hooks/useUserData';
 
@@ -19,6 +20,7 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
   const hookNavigation = useNavigation();
   const navigation = Platform.OS === 'web' && navigationProp ? navigationProp : hookNavigation;
   const { authState } = useContext(AuthContext);
+  const { theme } = useTheme();
   const [activeFilter, setActiveFilter] = useState('Todos');
 
   // React Query hooks - caché de 30 minutos para beneficios
@@ -104,6 +106,7 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
       <TouchableOpacity
         style={[
           styles.benefitCard,
+          { backgroundColor: theme.card, borderColor: theme.border },
           !isAvailable && styles.benefitCardDisabled,
         ]}
         onPress={() => isAvailable && handleBenefitPress(item)}
@@ -154,19 +157,19 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
           </View>
 
           {/* Título */}
-          <Text style={[styles.benefitName, !isAvailable && styles.benefitNameDisabled]}>
+          <Text style={[styles.benefitName, { color: theme.text }, !isAvailable && styles.benefitNameDisabled]}>
             {item.title}
           </Text>
 
           {/* Comercio */}
           <View style={styles.merchantRow}>
             <MaterialCommunityIcons name="store" size={14} color={COLORS.gray} />
-            <Text style={styles.merchantText}>{merchantName}</Text>
+            <Text style={[styles.merchantText, { color: theme.textSecondary }]}>{merchantName}</Text>
           </View>
 
           {/* Precio */}
           <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>VALOR</Text>
+            <Text style={[styles.priceLabel, { color: theme.textSecondary }]}>VALOR</Text>
             <View style={[styles.priceBadge, !canAfford && styles.priceBadgeDisabled]}>
               <Text style={[styles.priceText, !canAfford && styles.priceTextDisabled]}>
                 {item.pointsCost} pts
@@ -254,14 +257,14 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
         {/* Filtros */}
-        <View style={styles.filtersContainer}>
+        <View style={[styles.filtersContainer, { backgroundColor: theme.surface }]}>
           <View style={styles.filterHeader}>
             <View style={styles.filterTitleRow}>
               <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-              <Text style={styles.filterLabel}>Filtrar Beneficios</Text>
+              <Text style={[styles.filterLabel, { color: theme.text }]}>Filtrar Beneficios</Text>
             </View>
             <View style={styles.filterButtons}>
               {['Todos', 'Comida', 'Descuentos', 'Servicios', 'Productos'].map((filter) => {

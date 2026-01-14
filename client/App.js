@@ -10,6 +10,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
+import { ThemeProvider } from './src/context/ThemeContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SplashScreen from './src/screens/SplashScreen';
 import AuthNavigator from './src/navigation/AuthNavigator';
@@ -160,10 +161,11 @@ export default function App() {
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <SafeAreaProvider>
-          <AuthProvider>
-            <AppContent />
-            <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </ThemeProvider>
         </SafeAreaProvider>
       </QueryClientProvider>
     </ErrorBoundary>

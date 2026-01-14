@@ -13,12 +13,14 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import { useTheme } from '../../context/ThemeContext';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { useInfiniteTransactions } from '../../hooks/useUserData';
 
 export default function HistorialScreen() {
   const navigation = useNavigation();
+  const { theme } = useTheme();
   const [activeFilter, setActiveFilter] = useState('Todos');
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -151,16 +153,16 @@ export default function HistorialScreen() {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.historialItem}>
+    <View style={[styles.historialItem, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={[styles.itemIcon, { backgroundColor: item.color + '20' }]}>
         <MaterialCommunityIcons name={item.icon} size={20} color={item.color} />
       </View>
       <View style={styles.itemContent}>
-        <Text style={styles.itemTitle} numberOfLines={1} ellipsizeMode="tail">
+        <Text style={[styles.itemTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">
           {item.title}
         </Text>
-        <Text style={styles.itemDescription}>{item.description}</Text>
-        <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
+        <Text style={[styles.itemDescription, { color: theme.textSecondary }]}>{item.description}</Text>
+        <Text style={[styles.itemDate, { color: theme.textSecondary }]}>{formatDate(item.date)}</Text>
       </View>
       <View style={styles.pointsContainer}>
         <Text style={[styles.itemPoints, { color: item.color }]}>{item.points}</Text>
@@ -199,11 +201,11 @@ export default function HistorialScreen() {
   const renderListHeader = () => (
     <>
       {/* Filtros */}
-      <View style={styles.filtersContainer}>
+      <View style={[styles.filtersContainer, { backgroundColor: theme.surface }]}>
         <View style={styles.filterHeader}>
           <View style={styles.filterTitleRow}>
             <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-            <Text style={styles.filterLabel}>Filtrar Transacciones</Text>
+            <Text style={[styles.filterLabel, { color: theme.text }]}>Filtrar Transacciones</Text>
           </View>
           <View style={styles.filterButtons}>
             {['Todos', 'EARNED', 'SPENT'].map((filter) => {
@@ -266,7 +268,7 @@ export default function HistorialScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <FlatList
         data={historial}
         renderItem={renderItem}

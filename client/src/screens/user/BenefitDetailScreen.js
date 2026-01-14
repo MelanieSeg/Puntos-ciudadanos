@@ -19,6 +19,7 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { benefitsAPI, pointsAPI, walletAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { getErrorMessage } from '../../utils/errorHandler';
 
 // Helper para alertas multiplataforma
@@ -40,6 +41,7 @@ const showAlert = (title, message, buttons) => {
 export default function BenefitDetailScreen({ route, navigation }) {
   const { benefitId, benefit, userBalance: initialBalance } = route.params || {};
   const { authState } = useContext(AuthContext);
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [userBalance, setUserBalance] = useState(initialBalance || 0);
@@ -193,7 +195,7 @@ export default function BenefitDetailScreen({ route, navigation }) {
   };
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView>
         {/* Header */}
         <View style={styles.header}>

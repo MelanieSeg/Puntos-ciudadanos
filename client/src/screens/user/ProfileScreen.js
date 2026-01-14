@@ -4,15 +4,17 @@
  */
 
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert, Switch } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { walletAPI, pointsAPI } from '../../services/api';
 
 export default function ProfileScreen({ navigation }) {
   const { authState, logout } = useContext(AuthContext);
+  const { isDarkMode, toggleTheme, theme } = useTheme();
   const { user } = authState;
   
   const [stats, setStats] = useState({
@@ -92,15 +94,15 @@ export default function ProfileScreen({ navigation }) {
   };
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
         {/* Header del Perfil */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
             <MaterialCommunityIcons name="account" size={48} color={COLORS.white} />
           </View>
-          <Text style={styles.nameText}>{user?.name || 'Usuario'}</Text>
-          <Text style={styles.emailText}>{user?.email}</Text>
+          <Text style={[styles.nameText, { color: theme.text }]}>{user?.name || 'Usuario'}</Text>
+          <Text style={[styles.emailText, { color: theme.textSecondary }]}>{user?.email}</Text>
           <View style={styles.roleBadge}>
             <Text style={styles.roleText}>
               {user?.role === 'USER' ? '👤 Ciudadano' : 
@@ -117,59 +119,86 @@ export default function ProfileScreen({ navigation }) {
           </View>
         ) : (
           <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
               <MaterialCommunityIcons name="wallet" size={32} color={COLORS.success} />
-              <Text style={styles.statValue}>{stats.totalPoints.toLocaleString()}</Text>
-              <Text style={styles.statLabel}>Puntos Actuales</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.totalPoints.toLocaleString()}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Puntos Actuales</Text>
             </View>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
               <MaterialCommunityIcons name="chart-line" size={32} color={COLORS.primary} />
-              <Text style={styles.statValue}>{stats.monthlyPoints.toLocaleString()}</Text>
-              <Text style={styles.statLabel}>Este Mes</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.monthlyPoints.toLocaleString()}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Este Mes</Text>
             </View>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
               <MaterialCommunityIcons name="trophy" size={32} color={COLORS.warning} />
-              <Text style={styles.statValue}>{stats.missionsCompleted}</Text>
-              <Text style={styles.statLabel}>Misiones</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.missionsCompleted}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Misiones</Text>
             </View>
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surface }]}>
               <MaterialCommunityIcons name="gift" size={32} color={COLORS.error} />
-              <Text style={styles.statValue}>{stats.benefitsRedeemed}</Text>
-              <Text style={styles.statLabel}>Canjeados</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stats.benefitsRedeemed}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Canjeados</Text>
             </View>
           </View>
         )}
 
         {/* Opciones */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Configuración</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Configuración</Text>
           
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity style={[styles.optionItem, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons name="bell" size={24} color={COLORS.primary} style={styles.optionIcon} />
             <View style={styles.optionContent}>
-              <Text style={styles.optionText}>Notificaciones</Text>
-              <Text style={styles.optionSubtext}>Configura tus preferencias</Text>
+              <Text style={[styles.optionText, { color: theme.text }]}>Notificaciones</Text>
+              <Text style={[styles.optionSubtext, { color: theme.textSecondary }]}>Configura tus preferencias</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity style={[styles.optionItem, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons name="lock" size={24} color={COLORS.primary} style={styles.optionIcon} />
             <View style={styles.optionContent}>
-              <Text style={styles.optionText}>Seguridad</Text>
-              <Text style={styles.optionSubtext}>Cambiar contraseña</Text>
+              <Text style={[styles.optionText, { color: theme.text }]}>Seguridad</Text>
+              <Text style={[styles.optionSubtext, { color: theme.textSecondary }]}>Cambiar contraseña</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionItem}>
+          <TouchableOpacity style={[styles.optionItem, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons name="help-circle" size={24} color={COLORS.primary} style={styles.optionIcon} />
             <View style={styles.optionContent}>
-              <Text style={styles.optionText}>Ayuda y Soporte</Text>
-              <Text style={styles.optionSubtext}>Contacta con nosotros</Text>
+              <Text style={[styles.optionText, { color: theme.text }]}>Ayuda y Soporte</Text>
+              <Text style={[styles.optionSubtext, { color: theme.textSecondary }]}>Contacta con nosotros</Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
           </TouchableOpacity>
+        </View>
+
+        {/* Configuración de Apariencia */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Apariencia</Text>
+          
+          <View style={[styles.optionItem, { backgroundColor: theme.surface }]}>
+            <MaterialCommunityIcons 
+              name={isDarkMode ? 'weather-night' : 'weather-sunny'} 
+              size={24} 
+              color={COLORS.primary} 
+              style={styles.optionIcon} 
+            />
+            <View style={styles.optionContent}>
+              <Text style={[styles.optionText, { color: theme.text }]}>Modo Nocturno</Text>
+              <Text style={[styles.optionSubtext, { color: theme.textSecondary }]}>
+                {isDarkMode ? 'Tema oscuro activado' : 'Tema claro activado'}
+              </Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#767577', true: COLORS.primary }}
+              thumbColor={isDarkMode ? COLORS.success : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
+          </View>
         </View>
 
         {/* Botón de Logout - Solo Móvil */}
@@ -181,8 +210,8 @@ export default function ProfileScreen({ navigation }) {
         )}
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Puntos Ciudadanos v1.0.0</Text>
-          <Text style={styles.footerSubtext}>Hecho con ❤️ para nuestra comunidad</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>Puntos Ciudadanos v1.0.0</Text>
+          <Text style={[styles.footerSubtext, { color: theme.textSecondary }]}>Hecho con ❤️ para nuestra comunidad</Text>
         </View>
       </ScrollView>
     </ScreenWrapper>

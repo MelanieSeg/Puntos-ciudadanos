@@ -3,24 +3,29 @@
  * Sistema de Temas Centralizado
  * Colores, tipografía y constantes para toda la app
  * DRY Principle: Una única fuente de verdad
+ * 
+ * NOTA: Este archivo exporta colores estáticos.
+ * Para colores dinámicos según tema (Light/Dark), usar useTheme() hook.
  */
 
+// Colores estáticos que NO cambian con el tema
 export const COLORS = {
-  // Primarios
+  // Primarios (identidad de marca)
   primary: '#4CAF50', // Verde
   secondary: '#FF9800', // Naranja (Merchant)
   accent: '#2196F3', // Azul
 
-  // Estados
+  // Estados (mantienen identidad)
   success: '#4CAF50',
   warning: '#FFC107',
   error: '#F44336',
   info: '#2196F3',
 
-  // Grises
+  // Grises base (para referencias)
   white: '#FFFFFF',
   light: '#F5F5F5',
   lighter: '#F9F9F9',
+  lightGray: '#EEEEEE',
   gray: '#9E9E9E',
   darkGray: '#616161',
   dark: '#212121',
@@ -30,6 +35,10 @@ export const COLORS = {
   user: '#2196F3', // Azul
   merchant: '#FF9800', // Naranja
   admin: '#9C27B0', // Púrpura
+  
+  // Legacy (mantener para compatibilidad)
+  background: '#F5F5F5',
+  textLight: '#9E9E9E',
 };
 
 export const TYPOGRAPHY = {

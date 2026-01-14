@@ -17,6 +17,7 @@ import HomeSkeleton from '../../components/skeletons/HomeSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   useUserBalance,
   useAllTransactions,
@@ -31,6 +32,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
   const hookNavigation = useNavigation();
   const navigation = Platform.OS === 'web' && navigationProp ? navigationProp : hookNavigation;
   const { authState } = useContext(AuthContext);
+  const { theme } = useTheme();
 
   const monthlyGoal = 500;
 
@@ -257,7 +259,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} padding={0} maxWidth={Platform.OS === 'web'} safeArea={Platform.OS !== 'web'}>
+    <ScreenWrapper bgColor={theme.background} padding={0} maxWidth={Platform.OS === 'web'} safeArea={Platform.OS !== 'web'}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -269,7 +271,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
 
         {/* SALUDO */}
         <View style={styles.greeting}>
-          <Text style={styles.greetingText}>Hola, {userData.name} 👋</Text>
+          <Text style={[styles.greetingText, { color: theme.text }]}>Hola, {userData.name} 👋</Text>
         </View>
 
         {/* CONTENEDOR PRINCIPAL (BALANCE + STATS) */}
@@ -277,14 +279,14 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
           {/* COLUMNA IZQUIERDA: BALANCE + GANA PUNTOS */}
           <View style={styles.leftColumn}>
             {/* TARJETA DE BALANCE */}
-            <View style={styles.balanceCard}>
+            <View style={[styles.balanceCard, { backgroundColor: theme.surface }]}>
               <View style={styles.balanceGradientOverlay} />
               <View style={styles.balanceTop}>
                 <View style={styles.balanceInfo}>
                   <Text style={styles.balanceLabel}>BALANCE DISPONIBLE</Text>
                   <View style={styles.balanceRow}>
-                    <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                    <Text style={styles.balanceUnit}>Puntos</Text>
+                    <Text style={[styles.balanceAmount, { color: theme.text }]}>{balance.toLocaleString()}</Text>
+                    <Text style={[styles.balanceUnit, { color: theme.textSecondary }]}>Puntos</Text>
                   </View>
                 </View>
                 <View style={styles.walletIconContainer}>
@@ -307,7 +309,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
               <View style={styles.earnSectionInline}>
                 <View style={styles.earnHeader}>
                   <MaterialCommunityIcons name="lightning-bolt" size={20} color={COLORS.primary} />
-                  <Text style={styles.earnTitle}>Gana Más Puntos Hoy</Text>
+                  <Text style={[styles.earnTitle, { color: theme.text }]}>Gana Más Puntos Hoy</Text>
                 </View>
                 <ScrollView
                   horizontal
@@ -317,7 +319,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
                   {earnOptions.map((option) => (
                     <TouchableOpacity
                       key={option.id}
-                      style={styles.earnCard}
+                      style={[styles.earnCard, { backgroundColor: theme.card }]}
                       onPress={() => navigation.navigate('Earn')}
                     >
                       <View style={styles.earnIconContainer}>
@@ -327,8 +329,8 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
                           color={COLORS.primary}
                         />
                       </View>
-                      <Text style={styles.earnCardTitle} numberOfLines={1} ellipsizeMode="tail">{option.title}</Text>
-                      <Text style={styles.earnCardDesc}>{option.description}</Text>
+                      <Text style={[styles.earnCardTitle, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">{option.title}</Text>
+                      <Text style={[styles.earnCardDesc, { color: theme.textSecondary }]}>{option.description}</Text>
                       <View style={styles.earnCardFooter}>
                         <Text style={styles.earnCardPoints}>{option.points}</Text>
                         <MaterialCommunityIcons name="arrow-right" size={18} color={COLORS.primary} />
@@ -343,9 +345,9 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
           {/* PANEL DERECHO (STATS + ACTIVIDAD) */}
           <View style={styles.sidePanel}>
             {/* PUNTOS ESTE MES */}
-            <View style={styles.statCard}>
+            <View style={[styles.statCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.statHeader}>
-                <Text style={styles.statTitle}>PUNTOS ESTE MES</Text>
+                <Text style={[styles.statTitle, { color: theme.text }]}>PUNTOS ESTE MES</Text>
                 <MaterialCommunityIcons name="trending-up" size={20} color={COLORS.success} />
               </View>
               <Text style={styles.statNumber}>+{monthlyPoints}</Text>
@@ -360,12 +362,12 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
               
               {/* Meta y comparación en la misma línea */}
               <View style={styles.progressInfoRow}>
-                <Text style={styles.progressText}>
+                <Text style={[styles.progressText, { color: theme.textSecondary }]}>
                   Meta: {monthlyGoal} puntos
                 </Text>
                 <View style={styles.comparisonContainer}>
-                  <Text style={styles.comparisonLabel}>Mes pasado: </Text>
-                  <Text style={styles.comparisonValue}>+{lastMonthPoints}</Text>
+                  <Text style={[styles.comparisonLabel, { color: theme.textSecondary }]}>Mes pasado: </Text>
+                  <Text style={[styles.comparisonValue, { color: theme.text }]}>+{lastMonthPoints}</Text>
                   {monthlyPoints > lastMonthPoints ? (
                     <MaterialCommunityIcons name="trending-up" size={12} color={COLORS.success} />
                   ) : monthlyPoints < lastMonthPoints ? (
@@ -386,9 +388,9 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
             </View>
 
             {/* ACTIVIDAD RECIENTE */}
-            <View style={styles.activityCard}>
+            <View style={[styles.activityCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.activityHeader}>
-                <Text style={styles.activityTitle}>Actividad Reciente</Text>
+                <Text style={[styles.activityTitle, { color: theme.text }]}>Actividad Reciente</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('Historial')}>
                   <Text style={styles.seeAllLink}>VER TODO</Text>
                 </TouchableOpacity>
@@ -407,9 +409,9 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
                         />
                       </View>
                       <View style={styles.activityContent}>
-                        <Text style={styles.activityItemTitle}>{activity.title}</Text>
-                        <Text style={styles.activityDesc}>{activity.description}</Text>
-                        <Text style={styles.activityTime}>{activity.time}</Text>
+                        <Text style={[styles.activityItemTitle, { color: theme.text }]}>{activity.title}</Text>
+                        <Text style={[styles.activityDesc, { color: theme.textSecondary }]}>{activity.description}</Text>
+                        <Text style={[styles.activityTime, { color: theme.textSecondary }]}>{activity.time}</Text>
                       </View>
                       <Text style={[styles.activityPoints, { color: activity.pointsColor }]}>
                         {activity.points}
@@ -428,7 +430,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
         {benefits.length > 0 && (
           <View style={styles.benefitsSection}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Beneficios Disponibles</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>Beneficios Disponibles</Text>
               <TouchableOpacity onPress={() => navigation.navigate('Benefits')}>
                 <Text style={styles.seeAllText}>Ver todos →</Text>
               </TouchableOpacity>
@@ -441,15 +443,15 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
               {benefits.map((benefit) => (
                 <TouchableOpacity
                   key={benefit.id}
-                  style={styles.benefitCard}
+                  style={[styles.benefitCard, { backgroundColor: theme.card, borderColor: theme.border }]}
                   onPress={() => navigation.navigate('Benefits')}
                   activeOpacity={0.7}
                 >
                   <View style={styles.benefitIcon}>
                     <MaterialCommunityIcons name="gift" size={24} color={COLORS.primary} />
                   </View>
-                  <Text style={styles.benefitName} numberOfLines={1} ellipsizeMode="tail">{benefit.name}</Text>
-                  <Text style={styles.benefitDesc} numberOfLines={2}>{benefit.description}</Text>
+                  <Text style={[styles.benefitName, { color: theme.text }]} numberOfLines={1} ellipsizeMode="tail">{benefit.name}</Text>
+                  <Text style={[styles.benefitDesc, { color: theme.textSecondary }]} numberOfLines={2}>{benefit.description}</Text>
                   <View style={styles.benefitFooter}>
                     <Text style={styles.benefitCost}>{benefit.pointsCost} pts</Text>
                     <View style={styles.viewDetailsBtn}>

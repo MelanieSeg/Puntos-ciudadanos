@@ -19,9 +19,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { missionsAPI } from '../../services/api';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function MissionSubmissionScreen({ route, navigation }) {
   const { missionId, missionName, missionPoints } = route.params || {};
+  const { theme } = useTheme();
   
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState([]);
@@ -107,7 +109,7 @@ export default function MissionSubmissionScreen({ route, navigation }) {
   };
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Header */}

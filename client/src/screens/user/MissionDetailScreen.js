@@ -15,9 +15,11 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function MissionDetailScreen({ route, navigation }) {
   const { missionId, mission } = route.params || {};
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
 
   React.useEffect(() => {
@@ -55,7 +57,7 @@ export default function MissionDetailScreen({ route, navigation }) {
   const canSubmit = data.hoursRemaining > 0;
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>

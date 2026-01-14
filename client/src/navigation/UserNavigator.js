@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useContext } from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -22,6 +22,7 @@ import BenefitDetailScreen from '../screens/user/BenefitDetailScreen';
 import QRCodeScreen from '../screens/user/QRCodeScreen';
 import WebHeader from '../components/WebHeader';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { COLORS, SPACING } from '../theme/theme';
 
 const Stack = createNativeStackNavigator();
@@ -34,6 +35,7 @@ const isWeb = Platform.OS === 'web';
 // ============================================================================
 function WebSidebar({ activeTab, onNavigate }) {
   const { logout } = useContext(AuthContext);
+  const { isDarkMode, toggleTheme, theme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogoutConfirm = async () => {
@@ -54,13 +56,13 @@ function WebSidebar({ activeTab, onNavigate }) {
   ];
 
   return (
-    <View style={styles.webSidebar}>
+    <View style={[styles.webSidebar, { backgroundColor: theme.sidebarBg }]}>
       {/* Logo */}
       <View style={styles.logoContainer}>
-        <MaterialCommunityIcons name="leaf" size={28} color={COLORS.white} />
+        <MaterialCommunityIcons name="leaf" size={28} color={theme.sidebarText} />
         <View>
-          <Text style={styles.logoMain}>Puntos</Text>
-          <Text style={styles.logoSub}>Ciudadanos</Text>
+          <Text style={[styles.logoMain, { color: theme.sidebarText }]}>Puntos</Text>
+          <Text style={[styles.logoSub, { color: theme.sidebarText }]}>Ciudadanos</Text>
         </View>
       </View>
 
@@ -78,11 +80,12 @@ function WebSidebar({ activeTab, onNavigate }) {
             <MaterialCommunityIcons
               name={tab.icon}
               size={20}
-              color={activeTab === tab.id ? COLORS.primary : COLORS.white}
+              color={activeTab === tab.id ? COLORS.primary : theme.sidebarText}
             />
             <Text
               style={[
                 styles.sidebarLabel,
+                { color: theme.sidebarText },
                 activeTab === tab.id && styles.sidebarLabelActive,
               ]}
             >
@@ -93,9 +96,29 @@ function WebSidebar({ activeTab, onNavigate }) {
       </ScrollView>
 
       <View style={styles.sidebarFooter}>
+        {/* Control de Tema */}
+        <TouchableOpacity style={styles.themeToggleBtn} onPress={toggleTheme} activeOpacity={0.7}>
+          <MaterialCommunityIcons 
+            name={isDarkMode ? 'weather-sunny' : 'weather-night'} 
+            size={20} 
+            color={theme.sidebarText} 
+          />
+          <Text style={[styles.themeToggleText, { color: theme.sidebarText }]}>
+            {isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+          </Text>
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#767577', true: COLORS.primary }}
+            thumbColor={isDarkMode ? COLORS.success : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+          />
+        </TouchableOpacity>
+        
+        {/* Botón de Cerrar Sesión */}
         <TouchableOpacity style={styles.logoutBtn} onPress={() => setShowLogoutModal(true)}>
-          <MaterialCommunityIcons name="logout" size={20} color={COLORS.white} />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          <MaterialCommunityIcons name="logout" size={20} color={theme.sidebarText} />
+          <Text style={[styles.logoutText, { color: theme.sidebarText }]}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
 
@@ -363,14 +386,18 @@ function WebLayout() {
 // COMPONENTE: Stack para Misiones
 // ============================================================================
 function EarnStack() {
+  const { theme } = useTheme();
+  
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: theme.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
         },
-        headerTintColor: COLORS.white,
+        headerTintColor: theme.text,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -399,14 +426,18 @@ function EarnStack() {
 // COMPONENTE: Stack para Beneficios
 // ============================================================================
 function BenefitsStack() {
+  const { theme } = useTheme();
+  
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: theme.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
         },
-        headerTintColor: COLORS.white,
+        headerTintColor: theme.text,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -435,14 +466,18 @@ function BenefitsStack() {
 // COMPONENTE: Historial Stack
 // ============================================================================
 function HistorialStack() {
+  const { theme } = useTheme();
+  
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: true,
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: theme.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
         },
-        headerTintColor: COLORS.white,
+        headerTintColor: theme.text,
         headerTitleStyle: {
           fontWeight: '600',
         },
@@ -467,6 +502,7 @@ function HistorialStack() {
 // ============================================================================
 function MobileLayout() {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   return (
     <Tab.Navigator
@@ -474,9 +510,11 @@ function MobileLayout() {
         headerShown: true,
         headerSafeAreaEnabled: false,
         headerStyle: {
-          backgroundColor: COLORS.primary,
+          backgroundColor: theme.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
         },
-        headerTintColor: COLORS.white,
+        headerTintColor: theme.text,
         headerTitleStyle: {
           fontWeight: '600',
           fontSize: 18,
@@ -640,6 +678,21 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#2a2f46',
     paddingTop: 8,
+    gap: 8,
+  },
+  themeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(74, 144, 226, 0.1)',
+    gap: 12,
+  },
+  themeToggleText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '500',
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -651,7 +704,6 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     marginLeft: 12,
-    color: COLORS.white,
     fontSize: 14,
     fontWeight: '500',
   },

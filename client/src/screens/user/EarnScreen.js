@@ -9,11 +9,13 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityI
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import { useTheme } from '../../context/ThemeContext';
 import MissionSkeleton from '../../components/skeletons/MissionSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useAvailableMissions } from '../../hooks/useUserData';
 
 function EarnScreenComponent({ navigation: navigationProp }) {
+  const { theme } = useTheme();
   // En web usar el prop, en móvil usar el hook
   let navigation;
   if (Platform.OS === 'web') {
@@ -74,7 +76,7 @@ function EarnScreenComponent({ navigation: navigationProp }) {
 
     return (
       <TouchableOpacity
-        style={[styles.missionCard, isLocked && styles.missionCardExpired]}
+        style={[styles.missionCard, { backgroundColor: theme.card, borderColor: theme.border }, isLocked && styles.missionCardExpired]}
         onPress={() => !isLocked && handleMissionPress(item)}
         activeOpacity={isLocked ? 1 : 0.8}
         disabled={isLocked}
@@ -97,12 +99,12 @@ function EarnScreenComponent({ navigation: navigationProp }) {
         </View>
 
         {/* Título */}
-        <Text style={[styles.missionTitle, isLocked && styles.textExpired]}>
+        <Text style={[styles.missionTitle, { color: theme.text }, isLocked && styles.textExpired]}>
           {item.name || item.title}
         </Text>
 
         {/* Descripción */}
-        <Text style={[styles.missionDescription, isLocked && styles.textExpired]} numberOfLines={2}>
+        <Text style={[styles.missionDescription, { color: theme.textSecondary }, isLocked && styles.textExpired]} numberOfLines={2}>
           {item.description}
         </Text>
 
@@ -202,7 +204,7 @@ function EarnScreenComponent({ navigation: navigationProp }) {
   // Mostrar skeleton mientras carga datos iniciales
   if (loading && missions.length === 0) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false} maxWidth={false} padding={0}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} maxWidth={false} padding={0}>
         <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
           <FlatList
             data={[1, 2, 3, 4, 5]}
@@ -220,7 +222,7 @@ function EarnScreenComponent({ navigation: navigationProp }) {
   // Mostrar pantalla de error con retry
   if (error && missions.length === 0) {
     return (
-      <ScreenWrapper bgColor={COLORS.white}>
+      <ScreenWrapper bgColor={theme.background}>
         <View style={styles.centerContent}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
           <Text style={styles.errorTitle}>Sin conexión</Text>
@@ -235,7 +237,7 @@ function EarnScreenComponent({ navigation: navigationProp }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} maxWidth={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} maxWidth={false} padding={0}>
       <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
         {loading && missions.length === 0 ? (
           <View style={styles.centerContent}>

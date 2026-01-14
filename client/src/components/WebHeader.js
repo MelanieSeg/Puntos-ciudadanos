@@ -12,9 +12,11 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING } from '../theme/theme';
 import { walletAPI } from '../services/api';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function WebHeader({ title = 'Puntos Ciudadanos', hideBalance = false }) {
   const { authState } = useContext(AuthContext);
+  const { theme } = useTheme();
   const [userData, setUserData] = useState({ name: 'Usuario', email: '' });
   const [balance, setBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,10 +70,10 @@ export default function WebHeader({ title = 'Puntos Ciudadanos', hideBalance = f
   }
 
   return (
-    <View style={styles.fixedHeader}>
+    <View style={[styles.fixedHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <View style={styles.headerContent}>
         <View>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>{title}</Text>
         </View>
         <View style={styles.headerRight}>
           {!hideBalance && (
@@ -86,8 +88,8 @@ export default function WebHeader({ title = 'Puntos Ciudadanos', hideBalance = f
               <Text style={styles.avatarText}>{getInitials(userData.name)}</Text>
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{userData.name}</Text>
-              <Text style={styles.userEmail}>{userData.email}</Text>
+              <Text style={[styles.userName, { color: theme.text }]}>{userData.name}</Text>
+              <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{userData.email}</Text>
             </View>
           </View>
         </View>
