@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityIndicator, RefreshControl, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform, ActivityIndicator, RefreshControl, Image, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
@@ -46,8 +46,9 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
 
     const categoryMap = {
       'Comida': ['COMIDA', 'POSTRE', 'BEBIDA'],
+      'Descuentos': ['DESCUENTO'],
       'Servicios': ['SERVICIO'],
-      'Cultura': ['CULTURA'],
+      'Productos': ['PRODUCTO'],
     };
 
     const categories = categoryMap[activeFilter] || [];
@@ -91,6 +92,7 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
       COMIDA: { color: '#F44336', icon: 'food', label: 'GASTRONOMÍA' },
       POSTRE: { color: '#E91E63', icon: 'cupcake', label: 'POSTRE' },
       SERVICIO: { color: '#2196F3', icon: 'truck-delivery', label: 'SERVICIO' },
+      PRODUCTO: { color: '#9C27B0', icon: 'gift', label: 'PRODUCTO' },
     };
     
     const config = categoryConfig[item.category] || { color: '#9E9E9E', icon: 'gift', label: 'OTRO' };
@@ -205,7 +207,7 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
                 <Text style={styles.filterLabel}>Filtrar Recompensas</Text>
               </View>
               <View style={styles.filterButtons}>
-                {['Todos', 'Comida', 'Servicios'].map((filter) => {
+                {['Todos', 'Comida', 'Descuentos', 'Servicios', 'Productos'].map((filter) => {
                   const isActive = activeFilter === filter;
                   return (
                     <TouchableOpacity
@@ -257,39 +259,29 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
         {/* Filtros */}
         <View style={styles.filtersContainer}>
           <View style={styles.filterHeader}>
-            <View style={styles.filterTitleRow}>
-              <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-              <Text style={styles.filterLabel}>Filtrar Recompensas</Text>
-            </View>
-            <View style={styles.filterButtons}>
-              {['Todos', 'Comida', 'Servicios'].map((filter) => {
+            <MaterialCommunityIcons name="filter-variant" size={18} color={COLORS.textLight} style={styles.filterIcon} />
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filterScrollContent}
+            >
+              {['Todos', 'Comida', 'Descuentos', 'Servicios', 'Productos'].map((filter) => {
                 const isActive = activeFilter === filter;
-                const count = filter === 'Todos' ? allBenefits.length : 
-                             allBenefits.filter(b => {
-                               if (filter === 'Comida') return ['COMIDA', 'POSTRE', 'BEBIDA'].includes(b.category);
-                               if (filter === 'Servicios') return b.category === 'SERVICIO';
-                               return false;
-                             }).length;
                 
                 return (
                   <TouchableOpacity
                     key={filter}
-                    style={[styles.filterButton, isActive && styles.filterButtonActive]}
+                    style={[styles.filterChip, isActive && styles.filterChipActive]}
                     onPress={() => applyFilter(filter)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
+                    <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
                       {filter}
                     </Text>
-                    {filter === 'Todos' && (
-                      <View style={[styles.countBadge, isActive && styles.countBadgeActive]}>
-                        <Text style={styles.countText}>{count}</Text>
-                      </View>
-                    )}
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
         </View>
 
@@ -350,63 +342,34 @@ const styles = StyleSheet.create({
   filterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.md,
-  },
-  filterTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  filterLabel: {
-    fontSize: TYPOGRAPHY.body2,
-    color: COLORS.gray,
-    fontWeight: '600',
-  },
-  filterButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: 20,
-    backgroundColor: COLORS.white,
+  },
+  filterIcon: {
+    marginRight: SPACING.xs,
+  },
+  filterScrollContent: {
+    gap: SPACING.xs,
+    paddingRight: SPACING.md,
+  },
+  filterChip: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 16,
+    backgroundColor: COLORS.lightGray,
     borderWidth: 1,
     borderColor: COLORS.light,
-    gap: SPACING.xs,
   },
-  filterButtonActive: {
+  filterChipActive: {
     backgroundColor: COLORS.success,
     borderColor: COLORS.success,
   },
-  filterButtonText: {
-    fontSize: TYPOGRAPHY.body2,
+  filterChipText: {
+    fontSize: TYPOGRAPHY.caption,
     color: COLORS.gray,
     fontWeight: '600',
   },
-  filterButtonTextActive: {
+  filterChipTextActive: {
     color: COLORS.white,
-  },
-  countBadge: {
-    backgroundColor: COLORS.gray,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  countBadgeActive: {
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  countText: {
-    color: COLORS.white,
-    fontSize: 11,
-    fontWeight: '700',
   },
   
   list: {

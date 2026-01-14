@@ -9,7 +9,7 @@ import { Platform } from 'react-native';
 const HOST_IP = Platform.OS === 'web' 
   ? 'localhost' 
   : Platform.OS === 'android'
-    ? '192.168.1.101' // IP de tu PC - funciona con Docker
+    ? '192.168.1.82' // IP de tu PC - funciona con Docker
     : 'localhost';
 
 const PORT = '3000';

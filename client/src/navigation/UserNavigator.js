@@ -486,6 +486,7 @@ function MobileLayout() {
             Home: 'home',
             Benefits: 'gift',
             Earn: 'star',
+            Historial: 'history',
             Profile: 'cog',
           };
 

@@ -36,7 +36,7 @@ export default function BenefitsManagementScreen() {
     pointsCost: '',
     stock: '',
     merchantId: '',
-    category: 'PRODUCT',
+    category: 'PRODUCTO',
   });
 
   useEffect(() => {
@@ -173,7 +173,7 @@ export default function BenefitsManagementScreen() {
         pointsCost: '',
         stock: '',
         merchantId: '',
-        category: 'PRODUCT',
+        category: 'PRODUCTO',
       });
       fetchBenefits(); // Recargar lista
     } catch (error) {
@@ -268,12 +268,12 @@ export default function BenefitsManagementScreen() {
 
   const getCategoryIcon = (category) => {
     const icons = {
-      'FOOD': 'food',
-      'BEVERAGE': 'cup',
-      'DISCOUNT': 'percent',
-      'SERVICE': 'wrench',
-      'ENTERTAINMENT': 'ticket',
-      'PRODUCT': 'gift',
+      'COMIDA': 'food',
+      'BEBIDA': 'coffee',
+      'POSTRE': 'cupcake',
+      'DESCUENTO': 'tag',
+      'SERVICIO': 'truck-delivery',
+      'PRODUCTO': 'gift',
     };
     return icons[category] || 'gift';
   };
@@ -393,12 +393,12 @@ export default function BenefitsManagementScreen() {
                       onValueChange={(value) => setNewBenefit({ ...newBenefit, category: value })}
                       style={styles.picker}
                     >
-                      <Picker.Item label="🎁 Producto" value="PRODUCT" />
-                      <Picker.Item label="🍔 Comida" value="FOOD" />
-                      <Picker.Item label="☕ Bebida" value="BEVERAGE" />
-                      <Picker.Item label="💰 Descuento" value="DISCOUNT" />
-                      <Picker.Item label="🔧 Servicio" value="SERVICE" />
-                      <Picker.Item label="🎭 Entretenimiento" value="ENTERTAINMENT" />
+                      <Picker.Item label="Comida" value="COMIDA" />
+                      <Picker.Item label="Bebida" value="BEBIDA" />
+                      <Picker.Item label="Postre" value="POSTRE" />
+                      <Picker.Item label="Descuento" value="DESCUENTO" />
+                      <Picker.Item label="Servicio" value="SERVICIO" />
+                      <Picker.Item label="Producto" value="PRODUCTO" />
                     </Picker>
                   </View>
                 </View>
