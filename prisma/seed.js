@@ -270,6 +270,92 @@ async function main() {
     // CREAR TRANSACCIONES DE EJEMPLO (PARA UserHomeScreen)
     // ============================================
 
+    // ===== TRANSACCIONES DE DICIEMBRE 2025 (MES PASADO) =====
+    
+    // Transacciones de diciembre para user1 (María)
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user1.wallet.id,
+        type: 'EARNED',
+        amount: 100,
+        description: 'Misión aprobada: Votar en Elecciones',
+        createdAt: new Date('2025-12-05T10:30:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user1.wallet.id,
+        type: 'EARNED',
+        amount: 50,
+        description: 'Misión aprobada: Recoger Basura',
+        createdAt: new Date('2025-12-10T14:20:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user1.wallet.id,
+        type: 'EARNED',
+        amount: 75,
+        description: 'Misión aprobada: Participar en Junta Vecinal',
+        createdAt: new Date('2025-12-15T16:45:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user1.wallet.id,
+        type: 'SPENT',
+        amount: 50,
+        description: 'Canjeado: Café Gratis',
+        createdAt: new Date('2025-12-18T09:15:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user1.wallet.id,
+        type: 'EARNED',
+        amount: 30,
+        description: 'Misión aprobada: Reportar Problema Público',
+        createdAt: new Date('2025-12-22T11:30:00Z'),
+      },
+    });
+
+    // Transacciones de diciembre para user2 (Juan)
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user2.wallet.id,
+        type: 'EARNED',
+        amount: 75,
+        description: 'Misión aprobada: Participar en Junta Vecinal',
+        createdAt: new Date('2025-12-08T15:00:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user2.wallet.id,
+        type: 'EARNED',
+        amount: 50,
+        description: 'Misión aprobada: Recoger Basura',
+        createdAt: new Date('2025-12-12T10:30:00Z'),
+      },
+    });
+
+    await prisma.pointTransaction.create({
+      data: {
+        walletId: user2.wallet.id,
+        type: 'EARNED',
+        amount: 30,
+        description: 'Misión aprobada: Reportar Problema Público',
+        createdAt: new Date('2025-12-20T13:45:00Z'),
+      },
+    });
+
+    // ===== TRANSACCIONES DE ENERO 2026 (MES ACTUAL) =====
+
     // Transacciones para user1 (María)
     await prisma.pointTransaction.create({
       data: {
@@ -349,12 +435,16 @@ async function main() {
     console.log('\nSeed completado exitosamente');
     console.log('Datos de prueba creados:');
     console.log('   Admin Master: master@puntos-ciudadanos.com / Master@2025');
-    console.log('   Usuario 1: maria@example.com / user123');
-    console.log('   Usuario 2: juan@example.com / user123');
+    console.log('   Usuario 1: maria@example.com / user123 (Balance: 450)');
+    console.log('     - Diciembre 2025: +255 puntos ganados');
+    console.log('     - Enero 2026: +500 puntos ganados');
+    console.log('   Usuario 2: juan@example.com / user123 (Balance: 300)');
+    console.log('     - Diciembre 2025: +155 puntos ganados');
+    console.log('     - Enero 2026: +305 puntos ganados');
     console.log('   Comercio: mati@mechada.com / merchant123');
     console.log('   Misiones: 4 creadas');
     console.log('   Beneficios: 5 creados');
-    console.log('   Transacciones: 8 creadas\n');
+    console.log('   Transacciones: 16 creadas (8 en diciembre + 8 en enero)\n');
     
   } catch (error) {
     console.error('Error durante el seed:', error);

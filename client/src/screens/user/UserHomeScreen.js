@@ -19,7 +19,7 @@ import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
 import {
   useUserBalance,
-  useRecentTransactions,
+  useAllTransactions,
   useAvailableMissions,
   useAvailableBenefits,
 } from '../../hooks/useUserData';
@@ -47,7 +47,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     isLoading: isLoadingTransactions,
     error: transactionsError,
     refetch: refetchTransactions,
-  } = useRecentTransactions(5);
+  } = useAllTransactions(100);
 
   const {
     data: missions = [],
@@ -125,16 +125,70 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     });
   }, [transactions]);
   
-  // Calcular puntos mensuales con useMemo
-  const monthlyPoints = useMemo(() => {
+  // Calcular puntos mensuales con useMemo (solo EARNED, no SPENT)
+  const { monthlyPoints, lastMonthPoints } = useMemo(() => {
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const monthlyTransactions = transactions.filter(t => {
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+    
+    // Puntos del mes actual (solo EARNED, excluye SPENT)
+    const currentMonthEarned = transactions.filter(t => {
       const tDate = new Date(t.createdAt);
-      return tDate >= monthStart && t.type === 'EARNED';
+      return tDate >= currentMonthStart && t.type === 'EARNED';
     });
-    return monthlyTransactions.reduce((sum, t) => sum + t.amount, 0);
+    const currentPoints = currentMonthEarned.reduce((sum, t) => sum + t.amount, 0);
+    
+    // Puntos del mes pasado (solo EARNED)
+    const lastMonthEarned = transactions.filter(t => {
+      const tDate = new Date(t.createdAt);
+      return tDate >= lastMonthStart && tDate <= lastMonthEnd && t.type === 'EARNED';
+    });
+    const lastPoints = lastMonthEarned.reduce((sum, t) => sum + t.amount, 0);
+    
+    return { monthlyPoints: currentPoints, lastMonthPoints: lastPoints };
   }, [transactions]);
+
+  // Mensaje motivacional basado en progreso
+  const getMotivationalMessage = (current, goal) => {
+    const percentage = (current / goal) * 100;
+    
+    if (percentage >= 100) {
+      return {
+        text: '¡Meta superada! Sigue así 🎉',
+        color: COLORS.success,
+        icon: 'trophy',
+      };
+    }
+    if (percentage >= 75) {
+      return {
+        text: `Solo ${goal - current} puntos para tu meta 💪`,
+        color: '#FF9800',
+        icon: 'lightning-bolt',
+      };
+    }
+    if (percentage >= 50) {
+      return {
+        text: '¡Vas por buen camino! 🚀',
+        color: COLORS.primary,
+        icon: 'rocket',
+      };
+    }
+    if (percentage >= 25) {
+      return {
+        text: 'Cada punto cuenta 🌟',
+        color: COLORS.info,
+        icon: 'star',
+      };
+    }
+    return {
+      text: '¡Comienza a ganar puntos hoy! 🎯',
+      color: COLORS.gray,
+      icon: 'target',
+    };
+  };
+
+  const motivation = getMotivationalMessage(monthlyPoints, monthlyGoal);
 
   // Procesar beneficios
   const benefits = useMemo(() => {
@@ -228,8 +282,10 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
               <View style={styles.balanceTop}>
                 <View style={styles.balanceInfo}>
                   <Text style={styles.balanceLabel}>BALANCE DISPONIBLE</Text>
-                  <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-                  <Text style={styles.balanceUnit}>Puntos</Text>
+                  <View style={styles.balanceRow}>
+                    <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
+                    <Text style={styles.balanceUnit}>Puntos</Text>
+                  </View>
                 </View>
                 <View style={styles.walletIconContainer}>
                   <MaterialCommunityIcons name="wallet" size={64} color="#4CAF50" />
@@ -297,13 +353,36 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
                 <View
                   style={[
                     styles.progressFill,
-                    { width: `${(monthlyPoints / monthlyGoal) * 100}%` },
+                    { width: `${Math.min((monthlyPoints / monthlyGoal) * 100, 100)}%` },
                   ]}
                 />
               </View>
-              <Text style={styles.progressText}>
-                Progreso <Text style={styles.progressHighlight}>Meta: {monthlyGoal}</Text>
-              </Text>
+              
+              {/* Meta y comparación en la misma línea */}
+              <View style={styles.progressInfoRow}>
+                <Text style={styles.progressText}>
+                  Meta: {monthlyGoal} puntos
+                </Text>
+                <View style={styles.comparisonContainer}>
+                  <Text style={styles.comparisonLabel}>Mes pasado: </Text>
+                  <Text style={styles.comparisonValue}>+{lastMonthPoints}</Text>
+                  {monthlyPoints > lastMonthPoints ? (
+                    <MaterialCommunityIcons name="trending-up" size={12} color={COLORS.success} />
+                  ) : monthlyPoints < lastMonthPoints ? (
+                    <MaterialCommunityIcons name="trending-down" size={12} color={COLORS.error} />
+                  ) : (
+                    <MaterialCommunityIcons name="minus" size={12} color={COLORS.gray} />
+                  )}
+                </View>
+              </View>
+              
+              {/* Mensaje motivacional */}
+              <View style={[styles.motivationContainer, { backgroundColor: motivation.color + '15' }]}>
+                <MaterialCommunityIcons name={motivation.icon} size={16} color={motivation.color} />
+                <Text style={[styles.motivationText, { color: motivation.color }]}>
+                  {motivation.text}
+                </Text>
+              </View>
             </View>
 
             {/* ACTIVIDAD RECIENTE */}
@@ -522,11 +601,16 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(76, 175, 80, 0.2)',
   },
   balanceLabel: {
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.primary,
     letterSpacing: 1,
     marginBottom: 4,
+  },
+  balanceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: SPACING.xs,
   },
   balanceAmount: {
     fontSize: 48,
@@ -535,9 +619,9 @@ const styles = StyleSheet.create({
     lineHeight: 52,
   },
   balanceUnit: {
-    fontSize: 14,
+    fontSize: 16,
     color: COLORS.gray,
-    marginTop: 4,
+    fontWeight: '600',
   },
   balanceActions: {
     flexDirection: 'row',
@@ -610,11 +694,44 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: COLORS.success,
   },
+  progressInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
   progressText: {
     fontSize: 12,
     color: COLORS.gray,
   },
   progressHighlight: {
+    fontWeight: '700',
+    color: COLORS.dark,
+  },
+  motivationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 8,
+  },
+  motivationText: {
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+  },
+  comparisonContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  comparisonLabel: {
+    fontSize: 12,
+    color: COLORS.gray,
+  },
+  comparisonValue: {
+    fontSize: 12,
     fontWeight: '700',
     color: COLORS.dark,
   },

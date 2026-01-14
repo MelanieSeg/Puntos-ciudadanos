@@ -259,29 +259,35 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
         {/* Filtros */}
         <View style={styles.filtersContainer}>
           <View style={styles.filterHeader}>
-            <MaterialCommunityIcons name="filter-variant" size={18} color={COLORS.textLight} style={styles.filterIcon} />
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.filterScrollContent}
-            >
+            <View style={styles.filterTitleRow}>
+              <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
+              <Text style={styles.filterLabel}>Filtrar Beneficios</Text>
+            </View>
+            <View style={styles.filterButtons}>
               {['Todos', 'Comida', 'Descuentos', 'Servicios', 'Productos'].map((filter) => {
                 const isActive = activeFilter === filter;
+                const count = filter === 'Todos' ? allBenefits.length : 
+                             benefits.length;
                 
                 return (
                   <TouchableOpacity
                     key={filter}
-                    style={[styles.filterChip, isActive && styles.filterChipActive]}
+                    style={[styles.filterButton, isActive && styles.filterButtonActive]}
                     onPress={() => applyFilter(filter)}
                     activeOpacity={0.7}
                   >
-                    <Text style={[styles.filterChipText, isActive && styles.filterChipTextActive]}>
+                    <Text style={[styles.filterButtonText, isActive && styles.filterButtonTextActive]}>
                       {filter}
                     </Text>
+                    {filter === 'Todos' && (
+                      <View style={[styles.countBadge, isActive && styles.countBadgeActive]}>
+                        <Text style={styles.countText}>{count}</Text>
+                      </View>
+                    )}
                   </TouchableOpacity>
                 );
               })}
-            </ScrollView>
+            </View>
           </View>
         </View>
 
@@ -333,8 +339,12 @@ const styles = StyleSheet.create({
   
   // Filtros
   filtersContainer: {
-    marginBottom: SPACING.lg,
-    paddingTop: SPACING.sm,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.light,
     ...(Platform.OS === 'web' && {
       paddingVertical: SPACING.md,
     }),
@@ -342,34 +352,63 @@ const styles = StyleSheet.create({
   filterHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    justifyContent: 'space-between',
+    gap: SPACING.md,
   },
-  filterIcon: {
-    marginRight: SPACING.xs,
-  },
-  filterScrollContent: {
+  filterTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.xs,
-    paddingRight: SPACING.md,
   },
-  filterChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: 16,
-    backgroundColor: COLORS.lightGray,
-    borderWidth: 1,
-    borderColor: COLORS.light,
-  },
-  filterChipActive: {
-    backgroundColor: COLORS.success,
-    borderColor: COLORS.success,
-  },
-  filterChipText: {
-    fontSize: TYPOGRAPHY.caption,
+  filterLabel: {
+    fontSize: TYPOGRAPHY.body2,
     color: COLORS.gray,
     fontWeight: '600',
   },
-  filterChipTextActive: {
+  filterButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  filterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.light,
+    gap: SPACING.xs,
+  },
+  filterButtonActive: {
+    backgroundColor: COLORS.success,
+    borderColor: COLORS.success,
+  },
+  filterButtonText: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
+    fontWeight: '600',
+  },
+  filterButtonTextActive: {
     color: COLORS.white,
+  },
+  countBadge: {
+    backgroundColor: COLORS.gray,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  countBadgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  countText: {
+    color: COLORS.white,
+    fontSize: 11,
+    fontWeight: '700',
   },
   
   list: {
