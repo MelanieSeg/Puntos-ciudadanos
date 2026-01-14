@@ -198,22 +198,22 @@ export default function BenefitDetailScreen({ route, navigation }) {
     <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.dark} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Detalles</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Detalles</Text>
           <View style={{ width: 24 }} />
         </View>
 
         {/* Benefit Card */}
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: theme.card }]}>
           <View style={styles.iconContainer}>
             <MaterialCommunityIcons name="gift" size={48} color={COLORS.primary} />
           </View>
-          <Text style={styles.benefitName}>{data.title}</Text>
+          <Text style={[styles.benefitName, { color: theme.text }]}>{data.title}</Text>
           {data.merchant && (
-            <Text style={styles.provider}>
+            <Text style={[styles.provider, { color: theme.textSecondary }]}>
               {data.merchant?.merchantProfile?.storeName || data.merchant?.name || 'Comercio'}
             </Text>
           )}
@@ -225,11 +225,12 @@ export default function BenefitDetailScreen({ route, navigation }) {
         </View>
 
         {/* Balance del usuario */}
-        <View style={styles.balanceSection}>
+        <View style={[styles.balanceSection, { backgroundColor: theme.surface }]}>
           <View style={styles.balanceRow}>
-            <Text style={styles.balanceLabel}>Tu saldo:</Text>
+            <Text style={[styles.balanceLabel, { color: theme.textSecondary }]}>Tu saldo:</Text>
             <Text style={[
               styles.balanceAmount,
+              { color: theme.text },
               insufficientBalance && styles.balanceInsufficient
             ]}>
               {userBalance} pts
@@ -255,41 +256,42 @@ export default function BenefitDetailScreen({ route, navigation }) {
 
         {/* Descripción */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Descripción</Text>
-          <Text style={styles.description}>{data.description}</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Descripción</Text>
+          <Text style={[styles.description, { color: theme.textSecondary }]}>{data.description}</Text>
         </View>
 
         {/* Puntos & Disponibilidad */}
         <View style={styles.infoRow}>
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons name="star" size={28} color={COLORS.warning} />
-            <Text style={styles.infoLabel}>Costo</Text>
-            <Text style={styles.infoValue}>{data.pointsCost} pts</Text>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Costo</Text>
+            <Text style={[styles.infoValue, { color: theme.text }]}>{data.pointsCost} pts</Text>
           </View>
 
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons 
               name="package" 
               size={28} 
               color={noStock ? COLORS.error : COLORS.info} 
             />
-            <Text style={styles.infoLabel}>Stock</Text>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Stock</Text>
             <Text style={[
               styles.infoValue,
+              { color: theme.text },
               noStock && styles.infoValueError
             ]}>
               {data.stock}
             </Text>
           </View>
 
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons 
               name={data.active ? "check-circle" : "close-circle"} 
               size={28} 
               color={data.active ? COLORS.success : COLORS.error} 
             />
-            <Text style={styles.infoLabel}>Estado</Text>
-            <Text style={styles.infoValue}>{data.active ? 'Activo' : 'Inactivo'}</Text>
+            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Estado</Text>
+            <Text style={[styles.infoValue, { color: theme.text }]}>{data.active ? 'Activo' : 'Inactivo'}</Text>
           </View>
         </View>
 

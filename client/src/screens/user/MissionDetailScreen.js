@@ -59,14 +59,14 @@ export default function MissionDetailScreen({ route, navigation }) {
   return (
     <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView>
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.dark} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Detalles de Misión</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Detalles de Misión</Text>
           <View style={{ width: 24 }} />
         </View>
-        <View style={styles.heroCard}>
+        <View style={[styles.heroCard, { backgroundColor: theme.card }]}>
           <View style={styles.iconLarge}>
             <MaterialCommunityIcons
               name={data.icon}
@@ -74,7 +74,7 @@ export default function MissionDetailScreen({ route, navigation }) {
               color={COLORS.primary}
             />
           </View>
-          <Text style={styles.missionName}>{data.name}</Text>
+          <Text style={[styles.missionName, { color: theme.text }]}>{data.name}</Text>
           <View style={styles.pointsLarge}>
             <MaterialCommunityIcons name="star" size={28} color={COLORS.warning} />
             <Text style={styles.pointsLargeText}>{data.points}</Text>

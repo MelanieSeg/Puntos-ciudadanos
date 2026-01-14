@@ -9,11 +9,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function QRCodeScreen({ route, navigation }) {
   const { redemptionId, qrCode, benefitName, benefitId, expiresAt } = route.params || {};
+  const { theme } = useTheme();
 
   const displayQRCode = qrCode || 'QR-' + Date.now();
   const expiryDate = expiresAt ? new Date(expiresAt) : null;
@@ -76,7 +78,7 @@ export default function QRCodeScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
           {expiryDate && (
-            <Text style={styles.expiryText}>
+            <Text style={[styles.expiryText, { color: theme.textSecondary }]}>
               Válido hasta: {expiryDate.toLocaleDateString('es-ES', { 
                 day: '2-digit', 
                 month: '2-digit', 
@@ -93,8 +95,8 @@ export default function QRCodeScreen({ route, navigation }) {
               <Text style={styles.stepNumberText}>1</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Muestra este código</Text>
-              <Text style={styles.stepText}>Al comerciante en el punto de venta para validar tu beneficio</Text>
+              <Text style={[styles.stepTitle, { color: theme.text }]}>Muestra este código</Text>
+              <Text style={[styles.stepText, { color: theme.textSecondary }]}>Al comerciante en el punto de venta para validar tu beneficio</Text>
             </View>
           </View>
 
@@ -103,8 +105,8 @@ export default function QRCodeScreen({ route, navigation }) {
               <Text style={styles.stepNumberText}>2</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Verifica el descuento</Text>
-              <Text style={styles.stepText}>El comercio aplicará el descuento a tu compra</Text>
+              <Text style={[styles.stepTitle, { color: theme.text }]}>Verifica el descuento</Text>
+              <Text style={[styles.stepText, { color: theme.textSecondary }]}>El comercio aplicará el descuento a tu compra</Text>
             </View>
           </View>
 
@@ -113,8 +115,8 @@ export default function QRCodeScreen({ route, navigation }) {
               <Text style={styles.stepNumberText}>3</Text>
             </View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Revisa tu historial</Text>
-              <Text style={styles.stepText}>Si pierdes este código, podrás recuperarlo en tu historial de transacciones</Text>
+              <Text style={[styles.stepTitle, { color: theme.text }]}>Revisa tu historial</Text>
+              <Text style={[styles.stepText, { color: theme.textSecondary }]}>Si pierdes este código, podrás recuperarlo en tu historial de transacciones</Text>
             </View>
           </View>
         </View>

@@ -113,72 +113,73 @@ export default function MissionSubmissionScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.dark} />
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={styles.title}>Enviar Evidencia</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Enviar Evidencia</Text>
           <View style={{ width: 24 }} />
         </View>
 
         {/* Misión Info */}
-        <View style={styles.missionCard}>
+        <View style={[styles.missionCard, { backgroundColor: theme.surface }]}>
           <MaterialCommunityIcons name="target" size={32} color={COLORS.primary} />
           <View style={styles.missionInfo}>
-            <Text style={styles.missionName}>{missionName || 'Misión'}</Text>
-            <Text style={styles.missionId}>ID: {missionId}</Text>
+            <Text style={[styles.missionName, { color: theme.text }]}>{missionName || 'Misión'}</Text>
+            <Text style={[styles.missionId, { color: theme.textSecondary }]}>ID: {missionId}</Text>
           </View>
         </View>
 
         {/* Descripción */}
         <View style={styles.section}>
-          <Text style={styles.label}>Describe tu evidencia</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Describe tu evidencia</Text>
           <TextInput
-            style={styles.textarea}
+            style={[styles.textarea, { backgroundColor: theme.surface, color: theme.text, borderColor: theme.border }]}
             placeholder="Cuéntanos cómo completaste esta misión..."
+            placeholderTextColor={theme.textSecondary}
             multiline
             numberOfLines={4}
             value={description}
             onChangeText={setDescription}
             editable={!loading}
           />
-          <Text style={styles.charCount}>{description.length}/500</Text>
+          <Text style={[styles.charCount, { color: theme.textSecondary }]}>{description.length}/500</Text>
         </View>
 
         {/* Adjuntos */}
         <View style={styles.section}>
-          <Text style={styles.label}>Adjuntar Evidencia</Text>
+          <Text style={[styles.label, { color: theme.text }]}>Adjuntar Evidencia</Text>
           
           <View style={styles.uploadButtons}>
             <TouchableOpacity
-              style={styles.uploadButton}
+              style={[styles.uploadButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
               onPress={handleTakePhoto}
               disabled={loading}
             >
               <MaterialCommunityIcons name="camera" size={24} color={COLORS.primary} />
-              <Text style={styles.uploadButtonText}>Cámara</Text>
+              <Text style={[styles.uploadButtonText, { color: theme.text }]}>Cámara</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.uploadButton}
+              style={[styles.uploadButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
               onPress={handleSelectImage}
               disabled={loading}
             >
               <MaterialCommunityIcons name="file-image" size={24} color={COLORS.primary} />
-              <Text style={styles.uploadButtonText}>Galería</Text>
+              <Text style={[styles.uploadButtonText, { color: theme.text }]}>Galería</Text>
             </TouchableOpacity>
           </View>
 
           {/* Lista de Adjuntos */}
           {attachments.length > 0 && (
             <View style={styles.attachmentsList}>
-              <Text style={styles.attachmentsCount}>
+              <Text style={[styles.attachmentsCount, { color: theme.text }]}>
                 {attachments.length} archivo(s) adjuntado(s)
               </Text>
               {attachments.map((item, index) => (
-                <View key={index} style={styles.attachment}>
+                <View key={index} style={[styles.attachment, { backgroundColor: theme.surface }]}>
                   <MaterialCommunityIcons name="file" size={20} color={COLORS.gray} />
-                  <Text style={styles.attachmentName}>Archivo {index + 1}</Text>
+                  <Text style={[styles.attachmentName, { color: theme.text }]}>Archivo {index + 1}</Text>
                   <TouchableOpacity onPress={() => removeAttachment(index)}>
                     <MaterialCommunityIcons name="close" size={20} color={COLORS.danger} />
                   </TouchableOpacity>
@@ -189,19 +190,19 @@ export default function MissionSubmissionScreen({ route, navigation }) {
         </View>
 
         {/* Requisitos */}
-        <View style={styles.requirements}>
-          <Text style={styles.requirementsTitle}>Requisitos</Text>
+        <View style={[styles.requirements, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.requirementsTitle, { color: theme.text }]}>Requisitos</Text>
           <View style={styles.requirement}>
             <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
-            <Text style={styles.requirementText}>Foto clara y legible</Text>
+            <Text style={[styles.requirementText, { color: theme.textSecondary }]}>Foto clara y legible</Text>
           </View>
           <View style={styles.requirement}>
             <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
-            <Text style={styles.requirementText}>Documento original o certificado</Text>
+            <Text style={[styles.requirementText, { color: theme.textSecondary }]}>Documento original o certificado</Text>
           </View>
           <View style={styles.requirement}>
             <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
-            <Text style={styles.requirementText}>Máximo 10 archivos por misión</Text>
+            <Text style={[styles.requirementText, { color: theme.textSecondary }]}>Máximo 10 archivos por misión</Text>
           </View>
         </View>
 

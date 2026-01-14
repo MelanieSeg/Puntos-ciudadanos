@@ -130,12 +130,12 @@ function WebSidebar({ activeTab, onNavigate }) {
         onRequestClose={() => setShowLogoutModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.logoutModalContent}>
+          <View style={[styles.logoutModalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalIconContainer}>
               <MaterialCommunityIcons name="logout" size={56} color={COLORS.error} />
             </View>
-            <Text style={styles.logoutModalTitle}>Cerrar Sesión</Text>
-            <Text style={styles.logoutModalMessage}>¿Estás seguro que deseas salir de tu cuenta?</Text>
+            <Text style={[styles.logoutModalTitle, { color: theme.text }]}>Cerrar Sesión</Text>
+            <Text style={[styles.logoutModalMessage, { color: theme.textSecondary }]}>¿Estás seguro que deseas salir de tu cuenta?</Text>
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
@@ -166,6 +166,7 @@ function WebSidebar({ activeTab, onNavigate }) {
 // COMPONENTE: Web Layout (Sidebar + Content)
 // ============================================================================
 function WebLayout() {
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('Home');
   const [missionSubmissionVisible, setMissionSubmissionVisible] = useState(false);
   const [missionSubmissionParams, setMissionSubmissionParams] = useState(null);
@@ -302,12 +303,12 @@ function WebLayout() {
         onRequestClose={handleCloseMissionSubmission}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
             <TouchableOpacity 
-              style={styles.modalClose}
+              style={[styles.modalClose, { backgroundColor: theme.surface }]}
               onPress={handleCloseMissionSubmission}
             >
-              <Text style={styles.modalCloseText}>✕</Text>
+              <Text style={[styles.modalCloseText, { color: theme.text }]}>✕</Text>
             </TouchableOpacity>
             {missionSubmissionParams && (
               <MissionSubmissionScreen 
@@ -327,12 +328,12 @@ function WebLayout() {
         onRequestClose={handleCloseBenefitDetail}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
             <TouchableOpacity 
-              style={styles.modalClose}
+              style={[styles.modalClose, { backgroundColor: theme.surface }]}
               onPress={handleCloseBenefitDetail}
             >
-              <Text style={styles.modalCloseText}>✕</Text>
+              <Text style={[styles.modalCloseText, { color: theme.text }]}>✕</Text>
             </TouchableOpacity>
             {benefitDetailParams && (
               <BenefitDetailScreen 
@@ -366,7 +367,7 @@ function WebLayout() {
         onRequestClose={handleCloseQRCode}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.qrModalContent}>
+          <View style={[styles.qrModalContent, { backgroundColor: theme.background }]}>
             {qrCodeParams && (
               <QRCodeScreen 
                 route={{ params: qrCodeParams }}
