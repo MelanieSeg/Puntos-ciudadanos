@@ -49,12 +49,20 @@ export default function LoginScreen({ navigation }) {
     const emailValidation = validators.validateEmail(email);
     
     if (!emailValidation.valid) {
-      Alert.alert('Error de Validación', 'Por favor ingresa un email válido');
+      if (Platform.OS === 'web') {
+        window.alert('Por favor ingresa un email válido');
+      } else {
+        Alert.alert('Error de Validación', 'Por favor ingresa un email válido');
+      }
       return;
     }
     
     if (!password) {
-      Alert.alert('Error de Validación', 'Por favor ingresa tu contraseña');
+      if (Platform.OS === 'web') {
+        window.alert('Por favor ingresa tu contraseña');
+      } else {
+        Alert.alert('Error de Validación', 'Por favor ingresa tu contraseña');
+      }
       return;
     }
 
@@ -65,7 +73,11 @@ export default function LoginScreen({ navigation }) {
       // y la navegación se maneja automáticamente en App.js
     } catch (error) {
       const errorMessage = getErrorMessage(error);
-      Alert.alert('Error de Autenticación', errorMessage);
+      if (Platform.OS === 'web') {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert('Error de Autenticación', errorMessage);
+      }
     } finally {
       setLoading(false);
     }

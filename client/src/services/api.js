@@ -71,7 +71,12 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response?.status === 401) {
+    const requestUrl = error.config?.url || '';
+    
+    // No ejecutar logout en rutas de autenticación (login, register)
+    const isAuthRoute = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+    
+    if (error.response?.status === 401 && !isAuthRoute) {
       // Token inválido o expirado
       console.warn('Sesión expirada o token inválido (401). Ejecutando logout...');
       
