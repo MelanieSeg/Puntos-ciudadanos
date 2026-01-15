@@ -108,9 +108,15 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.login(email, password);
       const { token, user, requirePasswordChange } = response.data.data;
 
+      // Actualizar el objeto user con el estado de mustChangePassword si viene requirePasswordChange
+      const updatedUser = {
+        ...user,
+        mustChangePassword: requirePasswordChange || user.mustChangePassword || false,
+      };
+
       // Guardar en SecureStore (cifrado en mobile)
       await secureStorage.setItem('userToken', token);
-      await secureStorage.setItem('userData', JSON.stringify(user));
+      await secureStorage.setItem('userData', JSON.stringify(updatedUser));
       
       // Guardar role solo si existe
       if (user.role) {
@@ -124,7 +130,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState({
         token,
         authenticated: true,
-        user,
+        user: updatedUser,
         role: user.role,
         mustChangePassword: requirePasswordChange || user.mustChangePassword || false,
         loading: false,
@@ -218,17 +224,30 @@ export const AuthProvider = ({ children }) => {
       const response = await api.get('/auth/me');
       const user = response.data.data;
 
-      // Actualizar usuario en SecureStore
-      await secureStorage.setItem('userData', JSON.stringify(user));
+      // Preservar mustChangePassword del estado actual si no viene en la respuesta
+      const currentMustChangePassword = authState.mustChangePassword;
+      
+      // Actualizar el user object con mustChangePassword preservado
+      const updatedUser = {
+        ...user,
+        mustChangePassword: user.mustChangePassword !== undefined 
+          ? user.mustChangePassword 
+          : currentMustChangePassword,
+      };
 
-      // Actualizar estado
+      // Actualizar usuario en SecureStore
+      await secureStorage.setItem('userData', JSON.stringify(updatedUser));
+
+      // Actualizar estado (preservando mustChangePassword si no viene del backend)
       setAuthState(prev => ({
         ...prev,
-        user,
-        mustChangePassword: user.mustChangePassword || false,
+        user: updatedUser,
+        mustChangePassword: user.mustChangePassword !== undefined 
+          ? user.mustChangePassword 
+          : prev.mustChangePassword,
       }));
 
-      return user;
+      return updatedUser;
     } catch (error) {
       logError('refreshUser', error);
       throw error;

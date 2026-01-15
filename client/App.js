@@ -42,7 +42,9 @@ const RootStack = createNativeStackNavigator();
  * 2. Si no hay usuario: AuthNavigator
  * 3. Si hay usuario: Navigator según su rol
  */
-function RootNavigator({ authState }) {
+function RootNavigator() {
+  const { authState } = useContext(AuthContext);
+
   // Mientras está cargando
   if (authState.loading) {
     return (
@@ -169,8 +171,10 @@ function AppContent() {
   }
 
   return (
-    <NavigationContainer>
-      <RootNavigator authState={authState} />
+    <NavigationContainer 
+      key={`nav-${authState.authenticated}-${authState.mustChangePassword}`}
+    >
+      <RootNavigator />
     </NavigationContainer>
   );
 }

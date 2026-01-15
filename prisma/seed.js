@@ -74,6 +74,8 @@ async function main() {
         passwordHash,
         role: 'MASTER_ADMIN',
         status: 'ACTIVE',
+        emailVerified: true, // Master admin pre-verificado
+        mustChangePassword: false, // No requiere cambio (contraseña definitiva)
         wallet: {
           create: {
             balance: 0,
@@ -94,6 +96,7 @@ async function main() {
         passwordHash: userPasswordHash,
         role: 'USER',
         status: 'ACTIVE',
+        emailVerified: true,
         wallet: {
           create: {
             balance: 450,
@@ -113,6 +116,7 @@ async function main() {
         passwordHash: userPasswordHash,
         role: 'USER',
         status: 'ACTIVE',
+        emailVerified: true,
         wallet: {
           create: {
             balance: 300,
@@ -136,6 +140,8 @@ async function main() {
         passwordHash: merchantPasswordHash,
         role: 'MERCHANT',
         status: 'ACTIVE',
+        emailVerified: true, // Merchant del seed pre-verificado
+        mustChangePassword: false, // No requiere cambio (contraseña definitiva)
         wallet: {
           create: {
             balance: 0,
