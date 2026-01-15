@@ -173,7 +173,7 @@ export default function ChangePasswordScreen({ navigation }) {
                   styles.input,
                   touched.newPassword && errors.newPassword && styles.inputError,
                 ]}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Mínimo 8 caracteres (mayúsculas, números, símbolos)"
                 value={newPassword}
                 onChangeText={setNewPassword}
                 onBlur={() => setTouched({ ...touched, newPassword: true })}
@@ -225,7 +225,8 @@ export default function ChangePasswordScreen({ navigation }) {
 
             <View style={styles.infoBox}>
               <Text style={styles.infoText}>
-                ✓ Tu nueva contraseña debe tener al menos 6 caracteres{'\n'}
+                ✓ Mínimo 8 caracteres{'\n'}
+                ✓ Al menos una mayúscula, minúscula, número y símbolo{'\n'}
                 ✓ No podrás usar tu contraseña temporal nuevamente{'\n'}
                 ✓ Recuerda guardar tu nueva contraseña en un lugar seguro
               </Text>

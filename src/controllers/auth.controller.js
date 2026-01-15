@@ -81,14 +81,11 @@ export const register = asyncHandler(async (req, res) => {
     // No fallar el registro si el email falla, pero advertir
   }
 
-  // Generar token (pero el usuario no podrá hacer login hasta verificar)
-  const token = generateToken(createTokenPayload(user));
-
+  // No enviar token - el usuario debe verificar su email antes de poder hacer login
   successResponse(
     res,
     {
       user,
-      token,
       message: 'Por favor verifica tu correo electrónico para activar tu cuenta',
     },
     'Usuario registrado exitosamente. Revisa tu correo para verificar tu cuenta.',

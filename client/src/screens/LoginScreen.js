@@ -125,7 +125,7 @@ export default function LoginScreen({ navigation }) {
                   styles.input,
                   touched.password && errors.password && styles.inputError,
                 ]}
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Ingresa tu contraseña"
                 value={password}
                 onChangeText={setPassword}
                 onBlur={() => setTouched({ ...touched, password: true })}

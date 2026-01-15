@@ -47,13 +47,9 @@ export const validatePassword = (password) => {
 
   // Carácter especial
   if (PASSWORD_REQUIREMENTS.requireSpecialChar) {
-    const specialCharsRegex = new RegExp(
-      `[${PASSWORD_REQUIREMENTS.specialChars.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}]`
-    );
-    if (!specialCharsRegex.test(password)) {
-      errors.push(
-        `Debe contener al menos un símbolo (${PASSWORD_REQUIREMENTS.specialChars})`
-      );
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(password);
+    if (!hasSpecialChar) {
+      errors.push('Debe contener al menos un símbolo (!@#$%^&*()_+-=[]{}|;:,.<>?)');
     }
   }
 

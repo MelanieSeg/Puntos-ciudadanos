@@ -162,7 +162,7 @@ export default function RegisterScreen({ navigation }) {
                 styles.input,
                 touched.password && errors.password && styles.inputError,
               ]}
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Mínimo 8 caracteres (mayúsculas, números, símbolos)"
               placeholderTextColor={COLORS.gray}
               secureTextEntry
               value={password}
