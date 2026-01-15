@@ -13,6 +13,7 @@ import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SplashScreen from './src/screens/SplashScreen';
+import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import UserNavigator from './src/navigation/UserNavigator';
 import MerchantNavigator from './src/navigation/MerchantNavigator';
@@ -73,6 +74,27 @@ function RootNavigator({ authState }) {
           name="Auth"
           component={AuthNavigator}
           options={{ animationEnabled: false }}
+        />
+      </RootStack.Navigator>
+    );
+  }
+
+  // Si está autenticado pero debe cambiar contraseña
+  if (authState.user && authState.user.mustChangePassword) {
+    return (
+      <RootStack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animationEnabled: false,
+        }}
+      >
+        <RootStack.Screen
+          name="ChangePassword"
+          component={ChangePasswordScreen}
+          options={{ 
+            animationEnabled: false,
+            gestureEnabled: false, // No permitir regresar con gestos
+          }}
         />
       </RootStack.Navigator>
     );

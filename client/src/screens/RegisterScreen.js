@@ -3,8 +3,7 @@
  */
 
 import React, { useState, useContext, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
-import ScreenWrapper from '../layouts/ScreenWrapper';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme';
 import { AuthContext } from '../context/AuthContext';
 import * as validators from '../utils/validators';
@@ -78,25 +77,42 @@ export default function RegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await register(email.toLowerCase().trim(), password, name.trim());
-      // El AuthContext maneja la navegación automáticamente
+      const result = await register(email.toLowerCase().trim(), password, name.trim());
+      // Mostrar mensaje de éxito sobre verificación de email
+      if (Platform.OS === 'web') {
+        window.alert('¡Registro exitoso! Por favor verifica tu correo electrónico para activar tu cuenta. Revisa tu bandeja de entrada.');
+      } else {
+        Alert.alert(
+          'Registro Exitoso',
+          'Por favor verifica tu correo electrónico para activar tu cuenta. Revisa tu bandeja de entrada.',
+          [{ text: 'OK' }]
+        );
+      }
+      // Navegar al login para que el usuario inicie sesión después de verificar
+      navigation.navigate('Login');
     } catch (error) {
       const errorMessage = getErrorMessage(error);
-      Alert.alert('Error de Registro', errorMessage);
+      if (Platform.OS === 'web') {
+        window.alert(errorMessage);
+      } else {
+        Alert.alert('Error de Registro', errorMessage);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScreenWrapper bgColor={COLORS.white}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Crear Cuenta</Text>
-          <Text style={styles.subtitle}>Únete a nuestro programa de puntos</Text>
-        </View>
+        <View style={styles.content}>
+          <Text style={styles.title}>Puntos Ciudadanos</Text>
+          <Text style={styles.subtitle}>Energía CO2 Neutral</Text>
 
-        <View style={styles.form}>
+          <View style={styles.form}>
           {/* Campo Nombre */}
           <View style={styles.fieldContainer}>
             <Text style={styles.label}>Nombre Completo</Text>
@@ -195,56 +211,68 @@ export default function RegisterScreen({ navigation }) {
             )}
           </TouchableOpacity>
 
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>¿Ya tienes cuenta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Login')} disabled={loading}>
-              <Text style={styles.loginLink}>Inicia sesión</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.loginLink}
+            onPress={() => navigation.navigate('Login')}
+            disabled={loading}
+          >
+            <Text style={styles.loginText}>
+              ¿Ya tienes cuenta? <Text style={styles.loginBold}>Inicia sesión aquí</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
         </View>
       </ScrollView>
-    </ScreenWrapper>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
   scrollContent: {
     flexGrow: 1,
   },
-  header: {
+  content: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    padding: 20,
   },
   title: {
-    fontSize: TYPOGRAPHY.h2,
-    fontWeight: '700',
-    color: COLORS.dark,
-    marginBottom: SPACING.sm,
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: TYPOGRAPHY.body2,
-    color: COLORS.gray,
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 40,
   },
   form: {
-    gap: SPACING.md,
+    width: '100%',
+    maxWidth: 400,
   },
   fieldContainer: {
-    marginBottom: SPACING.lg,
+    marginBottom: 20,
   },
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.dark,
-    marginBottom: SPACING.sm,
+    color: '#333',
+    marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: COLORS.light,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 8,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    fontSize: TYPOGRAPHY.body1,
-    color: COLORS.dark,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   inputError: {
     borderColor: '#f44336',
@@ -253,36 +281,36 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#f44336',
     fontSize: 12,
-    marginTop: SPACING.sm,
+    marginTop: 6,
     fontWeight: '500',
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 16,
     borderRadius: 8,
-    paddingVertical: SPACING.md,
     alignItems: 'center',
-    marginTop: SPACING.lg,
+    marginTop: 20,
   },
   buttonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#A5D6A7',
   },
   buttonText: {
-    fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: SPACING.lg,
-  },
-  footerText: {
-    fontSize: TYPOGRAPHY.body2,
-    color: COLORS.gray,
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   loginLink: {
-    fontSize: TYPOGRAPHY.body2,
-    color: COLORS.primary,
-    fontWeight: '600',
+    marginTop: 20,
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  loginText: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+  },
+  loginBold: {
+    fontWeight: 'bold',
+    color: '#2E7D32',
   },
 });

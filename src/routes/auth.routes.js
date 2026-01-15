@@ -7,6 +7,7 @@ import {
   updateProfile,
   changePassword,
   logout,
+  verifyEmail,
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middlewares/auth.js';
 import { validatePasswordChangeScope } from '../middlewares/roleCheck.js';
@@ -62,6 +63,13 @@ router.post(
   validate(loginSchema),
   login
 );
+
+/**
+ * @route   GET /api/v1/auth/verify-email
+ * @desc    Verificar correo electrónico mediante token
+ * @access  Public
+ */
+router.get('/verify-email', verifyEmail);
 
 /**
  * @route   GET /api/v1/auth/me

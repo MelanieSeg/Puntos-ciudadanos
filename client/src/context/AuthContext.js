@@ -146,31 +146,17 @@ export const AuthProvider = ({ children }) => {
       setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
       const response = await authAPI.register(name, email, password, password);
-      const { token, user } = response.data.data;
+      const { user } = response.data.data;
 
-      // Guardar en SecureStore (cifrado en mobile)
-      await secureStorage.setItem('userToken', token);
-      await secureStorage.setItem('userData', JSON.stringify(user));
-      
-      // Guardar role solo si existe
-      if (user.role) {
-        await secureStorage.setItem('userRole', user.role);
-      }
-
-      // Configurar header de axios
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Actualizar estado
-      setAuthState({
-        token,
-        authenticated: true,
-        user,
-        role: user.role || 'USER',
+      // NO hacer auto-login - el usuario debe verificar su email primero
+      // Solo retornar el usuario creado sin guardar token ni actualizar estado
+      setAuthState((prev) => ({
+        ...prev,
         loading: false,
         error: null,
-      });
+      }));
 
-      return { success: true, user, role: user.role };
+      return { success: true, user, requiresEmailVerification: true };
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       logError('register', error);
@@ -218,11 +204,34 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const user = response.data.data;
+
+      // Actualizar usuario en SecureStore
+      await secureStorage.setItem('userData', JSON.stringify(user));
+
+      // Actualizar estado
+      setAuthState(prev => ({
+        ...prev,
+        user,
+      }));
+
+      return user;
+    } catch (error) {
+      logError('refreshUser', error);
+      throw error;
+    }
+  };
+
   const value = {
     authState,
     login,
     register,
     logout,
+    refreshUser,
+    user: authState.user,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

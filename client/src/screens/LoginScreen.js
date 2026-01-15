@@ -91,7 +91,7 @@ export default function LoginScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <Text style={styles.title}>Puntos Ciudadanos</Text>
-          <Text style={styles.subtitle}>Energía CO2</Text>
+          <Text style={styles.subtitle}>Energía CO2 Neutral</Text>
 
           <View style={styles.form}>
             {/* Campo Email */}

@@ -11,6 +11,7 @@ import { generateToken, createTokenPayload } from '../utils/jwt.js';
 import { validatePassword } from '../utils/password.js';
 import prisma from '../config/database.js';
 import config from '../config/index.js';
+import { sendVerificationEmail, verifyEmailToken } from '../services/email.service.js';
 
 /**
  * @route   POST /api/v1/auth/register
@@ -71,7 +72,16 @@ export const register = asyncHandler(async (req, res) => {
     },
   });
 
-  // Generar token
+  // Enviar correo de verificación
+  try {
+    const baseUrl = process.env.API_BASE_URL || `http://localhost:${config.port}`;
+    await sendVerificationEmail(user, baseUrl);
+  } catch (emailError) {
+    console.error('Error al enviar email de verificación:', emailError);
+    // No fallar el registro si el email falla, pero advertir
+  }
+
+  // Generar token (pero el usuario no podrá hacer login hasta verificar)
   const token = generateToken(createTokenPayload(user));
 
   successResponse(
@@ -79,8 +89,9 @@ export const register = asyncHandler(async (req, res) => {
     {
       user,
       token,
+      message: 'Por favor verifica tu correo electrónico para activar tu cuenta',
     },
-    'Usuario registrado exitosamente',
+    'Usuario registrado exitosamente. Revisa tu correo para verificar tu cuenta.',
     201
   );
 });
@@ -123,6 +134,13 @@ export const login = asyncHandler(async (req, res) => {
 
   if (user.status === 'INACTIVE') {
     throw new ForbiddenError('Tu cuenta está inactiva. Contacta al administrador.');
+  }
+
+  // Verificar que el email esté verificado (ANTES de verificar contraseña)
+  if (!user.emailVerified) {
+    throw new ForbiddenError(
+      'Debes verificar tu correo electrónico antes de iniciar sesión. Revisa tu bandeja de entrada.'
+    );
   }
 
   // Verificar contraseña
@@ -337,4 +355,232 @@ export const logout = asyncHandler(async (req, res) => {
   // Aquí podríamos agregar el token a una blacklist si implementamos esa feature
   
   successResponse(res, null, 'Sesión cerrada exitosamente');
+});
+
+/**
+ * @route   GET /api/v1/auth/verify-email
+ * @desc    Verificar email del usuario mediante token
+ * @access  Public
+ * @query   token - JWT de verificación
+ */
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    throw new ValidationError('Token de verificación requerido');
+  }
+
+  // Verificar y decodificar el token
+  const userId = verifyEmailToken(token);
+
+  // Buscar el usuario
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new UnauthorizedError('Usuario no encontrado');
+  }
+
+  // Verificar si ya está verificado
+  if (user.emailVerified) {
+    // Redirigir con mensaje de éxito (ya estaba verificado)
+    return res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Email ya verificado - Puntos Ciudadanos</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+          }
+          .container {
+            background: white;
+            border-radius: 12px;
+            padding: 48px 32px;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          }
+          .icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+          }
+          h1 {
+            color: #4CAF50;
+            font-size: 28px;
+            margin-bottom: 16px;
+          }
+          p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+          }
+          .button {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+          }
+          .button:hover {
+            background-color: #45a049;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="icon">✅</div>
+          <h1>Tu email ya estaba verificado</h1>
+          <p>Tu cuenta ya está activa. Puedes iniciar sesión cuando quieras.</p>
+          <a href="http://localhost:8081" class="button">Ir a la aplicación</a>
+        </div>
+      </body>
+      </html>
+    `);
+  }
+
+  // Actualizar el estado de verificación
+  await prisma.user.update({
+    where: { id: userId },
+    data: { emailVerified: true },
+  });
+
+  // Determinar si es admin o comerciante
+  const isAdminOrMerchant = user.role === 'SUPPORT_ADMIN' || user.role === 'MERCHANT';
+  const roleLabel = user.role === 'MERCHANT' ? 'Comerciante' : 
+                    user.role === 'SUPPORT_ADMIN' ? 'Administrador de Soporte' : 'Usuario';
+
+  // Responder con página HTML de éxito (diferente según rol)
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Email Verificado - Puntos Ciudadanos</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+          background: ${isAdminOrMerchant ? 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)' : 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)'};
+          margin: 0;
+          padding: 20px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+        }
+        .container {
+          background: white;
+          border-radius: 12px;
+          padding: 48px 32px;
+          max-width: 500px;
+          text-align: center;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .icon {
+          font-size: 64px;
+          margin-bottom: 24px;
+          animation: bounce 1s ease-in-out;
+        }
+        @keyframes bounce {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+        h1 {
+          color: #2E7D32;
+          font-size: 28px;
+          margin-bottom: 16px;
+        }
+        p {
+          color: #666;
+          font-size: 16px;
+          line-height: 1.6;
+          margin-bottom: 32px;
+        }
+        .success-box {
+          background-color: #E8F5E9;
+          border-left: 4px solid #4CAF50;
+          padding: 16px;
+          margin: 24px 0;
+          border-radius: 4px;
+          text-align: left;
+        }
+        .success-box p {
+          margin: 8px 0;
+          color: #2E7D32;
+          font-size: 14px;
+        }
+        .button {
+          display: inline-block;
+          background-color: #4CAF50;
+          color: white;
+          padding: 14px 32px;
+          border-radius: 8px;
+          text-decoration: none;
+          font-weight: bold;
+          transition: all 0.3s;
+          box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+        .button:hover {
+          background-color: #45a049;
+          box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+          transform: translateY(-2px);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="icon">${isAdminOrMerchant ? '✓' : '🎉'}</div>
+        <h1>${isAdminOrMerchant ? 'Cuenta Verificada' : '¡Email Verificado Exitosamente!'}</h1>
+        <p>${isAdminOrMerchant ? `Tu cuenta de ${roleLabel} ha sido verificada correctamente.` : 'Tu cuenta ha sido activada correctamente.'}</p>
+        
+        ${isAdminOrMerchant ? `
+        <div class="success-box" style="background-color: #FFF3E0; border-left-color: #F57C00;">
+          <p style="color: #E65100; font-weight: bold;">⚠️ ACCIÓN REQUERIDA</p>
+          <p style="color: #E65100;">Debes iniciar sesión y cambiar tu contraseña temporal antes de acceder al sistema.</p>
+        </div>
+        <div class="success-box">
+          <p>✓ Tu cuenta tiene acceso privilegiado</p>
+          <p>✓ Deberás crear una contraseña segura</p>
+          <p>✓ Lee y cumple tus responsabilidades como ${roleLabel}</p>
+        </div>
+        ` : `
+        <div class="success-box">
+          <p>✓ Ahora puedes iniciar sesión</p>
+          <p>✓ Completar misiones ecológicas</p>
+          <p>✓ Canjear beneficios exclusivos</p>
+        </div>
+        `}
+        
+        <p>${isAdminOrMerchant ? 'Inicia sesión para continuar con el cambio de contraseña.' : 'Gracias por unirte a <strong>Puntos Ciudadanos</strong>.'}</p>
+        <a href="http://localhost:8081" class="button">${isAdminOrMerchant ? 'Iniciar Sesión y Cambiar Contraseña' : 'Iniciar Sesión'}</a>
+      </div>
+    </body>
+    </html>
+  `);
 });

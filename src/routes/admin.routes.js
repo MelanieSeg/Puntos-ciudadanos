@@ -10,6 +10,8 @@ import * as cacheService from '../services/cache.service.js';
 import upload from '../middlewares/upload.js';
 import cloudinary from '../config/cloudinary.js';
 import { Readable } from 'stream';
+import { sendVerificationEmail } from '../services/email.service.js';
+import config from '../config/index.js';
 
 const router = express.Router();
 
@@ -548,10 +550,18 @@ router.post(
       },
     });
 
+    // Enviar correo de verificación
+    try {
+      const baseUrl = process.env.API_BASE_URL || `http://localhost:${config.port}`;
+      await sendVerificationEmail(newAdmin, baseUrl);
+    } catch (emailError) {
+      console.error('Error al enviar email de verificación a admin:', emailError);
+    }
+
     successResponse(
       res,
       { admin: newAdmin, temporaryPassword },
-      'Administrador de soporte creado exitosamente',
+      'Administrador de soporte creado exitosamente. Se ha enviado un email de verificación.',
       201
     );
   })
@@ -611,10 +621,18 @@ router.post(
       },
     });
 
+    // Enviar correo de verificación
+    try {
+      const baseUrl = process.env.API_BASE_URL || `http://localhost:${config.port}`;
+      await sendVerificationEmail(newMerchant, baseUrl);
+    } catch (emailError) {
+      console.error('Error al enviar email de verificación a comerciante:', emailError);
+    }
+
     successResponse(
       res,
       { merchant: newMerchant, temporaryPassword },
-      'Cuenta de comercio creada exitosamente',
+      'Cuenta de comercio creada exitosamente. Se ha enviado un email de verificación.',
       201
     );
   })
