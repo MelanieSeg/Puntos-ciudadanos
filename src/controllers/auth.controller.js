@@ -148,11 +148,11 @@ export const login = asyncHandler(async (req, res) => {
   }
 
   // ========================================
-  // SEGURIDAD DE ADMINISTRADORES
-  // Verificar si el usuario es admin y debe cambiar contraseña inicial
+  // SEGURIDAD DE ADMINISTRADORES Y COMERCIANTES
+  // Verificar si el usuario es admin/comerciante y debe cambiar contraseña inicial
   // ========================================
   if (
-    (user.role === 'MASTER_ADMIN' || user.role === 'SUPPORT_ADMIN') &&
+    (user.role === 'MASTER_ADMIN' || user.role === 'SUPPORT_ADMIN' || user.role === 'MERCHANT') &&
     user.mustChangePassword
   ) {
     // No generar token de sesión completo, pero sí un token limitado

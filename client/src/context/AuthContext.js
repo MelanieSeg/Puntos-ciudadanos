@@ -39,6 +39,7 @@ export const AuthProvider = ({ children }) => {
     authenticated: false,
     user: null,
     role: null,
+    mustChangePassword: false,
     loading: true,
     error: null,
   });
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }) => {
           authenticated: true,
           user,
           role: userRole || user.role,
+          mustChangePassword: user.mustChangePassword || false,
           loading: false,
           error: null,
         });
@@ -77,6 +79,7 @@ export const AuthProvider = ({ children }) => {
           authenticated: false,
           user: null,
           role: null,
+          mustChangePassword: false,
           loading: false,
           error: null,
         });
@@ -88,6 +91,7 @@ export const AuthProvider = ({ children }) => {
         authenticated: false,
         user: null,
         role: null,
+        mustChangePassword: false,
         loading: false,
         error: getErrorMessage(error),
       });
@@ -102,7 +106,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState((prev) => ({ ...prev, loading: true, error: null }));
 
       const response = await authAPI.login(email, password);
-      const { token, user } = response.data.data;
+      const { token, user, requirePasswordChange } = response.data.data;
 
       // Guardar en SecureStore (cifrado en mobile)
       await secureStorage.setItem('userToken', token);
@@ -122,6 +126,7 @@ export const AuthProvider = ({ children }) => {
         authenticated: true,
         user,
         role: user.role,
+        mustChangePassword: requirePasswordChange || user.mustChangePassword || false,
         loading: false,
         error: null,
       });
@@ -134,6 +139,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState((prev) => ({
         ...prev,
         loading: false,
+        mustChangePassword: false,
         error: errorMessage,
       }));
 
@@ -153,6 +159,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState((prev) => ({
         ...prev,
         loading: false,
+        mustChangePassword: false,
         error: null,
       }));
 
@@ -164,6 +171,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState((prev) => ({
         ...prev,
         loading: false,
+        mustChangePassword: false,
         error: errorMessage,
       }));
 
@@ -193,6 +201,7 @@ export const AuthProvider = ({ children }) => {
         authenticated: false,
         user: null,
         role: null,
+        mustChangePassword: false,
         loading: false,
         error: null,
       });
@@ -216,6 +225,7 @@ export const AuthProvider = ({ children }) => {
       setAuthState(prev => ({
         ...prev,
         user,
+        mustChangePassword: user.mustChangePassword || false,
       }));
 
       return user;
@@ -225,12 +235,30 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  /**
+   * Función para cambiar el estado de mustChangePassword
+   * Se usa después de que el usuario cambia su contraseña exitosamente
+   */
+  const setNeedPasswordChange = (status) => {
+    setAuthState(prev => ({
+      ...prev,
+      mustChangePassword: status,
+    }));
+
+    // También actualizar en el usuario guardado si existe
+    if (authState.user) {
+      const updatedUser = { ...authState.user, mustChangePassword: status };
+      secureStorage.setItem('userData', JSON.stringify(updatedUser));
+    }
+  };
+
   const value = {
     authState,
     login,
     register,
     logout,
     refreshUser,
+    setNeedPasswordChange,
     user: authState.user,
   };
 

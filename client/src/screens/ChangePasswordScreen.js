@@ -28,7 +28,7 @@ export default function ChangePasswordScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
-  const { user, refreshUser } = useContext(AuthContext);
+  const { user, refreshUser, setNeedPasswordChange } = useContext(AuthContext);
 
   // Validar campos en tiempo real
   useEffect(() => {
@@ -88,6 +88,11 @@ export default function ChangePasswordScreen({ navigation }) {
         newPassword,
         confirmNewPassword: confirmPassword,
       });
+
+      // Desbloquear la bandera de cambio obligatorio
+      if (setNeedPasswordChange) {
+        setNeedPasswordChange(false);
+      }
 
       // Actualizar estado del usuario
       if (refreshUser) {

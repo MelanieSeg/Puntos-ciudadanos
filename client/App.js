@@ -80,7 +80,7 @@ function RootNavigator({ authState }) {
   }
 
   // Si está autenticado pero debe cambiar contraseña
-  if (authState.user && authState.user.mustChangePassword) {
+  if (authState.authenticated && authState.mustChangePassword) {
     return (
       <RootStack.Navigator
         screenOptions={{
