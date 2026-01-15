@@ -8,6 +8,8 @@
  * Para colores dinámicos según tema (Light/Dark), usar useTheme() hook.
  */
 
+import { Platform } from 'react-native';
+
 // Colores estáticos que NO cambian con el tema
 export const COLORS = {
   // Primarios (identidad de marca)
@@ -180,13 +182,18 @@ export const LAYOUT = {
     elevation: 2,
   },
 
-  shadowMedium: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+  shadowMedium: Platform.select({
+    web: {
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.15)',
+    },
+    default: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+  }),
 
   shadowLarge: {
     shadowColor: '#000',

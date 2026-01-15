@@ -641,7 +641,6 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: COLORS.success,
     ...(Platform.OS === 'web' ? {
-      background: 'linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%)',
       boxShadow: '0 4px 12px rgba(76, 175, 80, 0.3)',
     } : {
       shadowColor: '#4CAF50',
