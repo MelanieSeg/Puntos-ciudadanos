@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import api from '../../services/api';
+import { merchantAPI } from '../../services/api';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -54,84 +54,86 @@ export default function QRScannerScreen({ navigation }) {
     );
   }
 
-  // Manejar escaneo de QR
-  const handleBarCodeScanned = async ({ type, data }) => {
+  const handleBarCodeScanned = async ({ data }) => {
     if (scanned) return;
     setScanned(true);
     setValidating(true);
 
-    console.log('[QRScanner] Código escaneado:', data);
-    console.log('[QRScanner] Tipo:', type);
-
     try {
-      // Enviar el QR al backend
-      const response = await api.post('/merchant/validate-qr', {
-        qrCode: data, // El backend espera 'qrCode', no 'transactionId'
-      });
+      // 1. Obtener vista previa de los detalles del QR
+      const previewResponse = await merchantAPI.getRedemptionPreview(data);
+      const { user, benefit } = previewResponse.data.data;
 
-      console.log('[QRScanner] Respuesta del servidor:', response.data);
-
-      // El backend devuelve datos anidados: user, benefit, etc.
-      const { user, benefit, pointsCharged } = response.data.data;
-
-      // Mostrar alerta de éxito
+      // 2. Mostrar alerta de confirmación
       Alert.alert(
-        'Cupón Validado', 
-        `Cliente: ${user.name}\nBeneficio: ${benefit.title}\nPuntos: ${benefit.pointsCost}`, 
+        'Confirmar Canje',
+        `Cliente: ${user.name}\n\nBeneficio: ${benefit.title}\nDetalle: ${benefit.description}\n\nCosto: ${benefit.pointsCost} puntos`,
         [
-          {
-            text: 'Aceptar',
+          { 
+            text: 'Cancelar', 
+            style: 'cancel', 
             onPress: () => {
               setScanned(false);
-              navigation.goBack();
-            },
+              setValidating(false);
+            } 
+          },
+          {
+            text: 'Confirmar Canje',
+            style: 'destructive',
+            onPress: () => confirmRedemption(data),
           },
         ]
       );
     } catch (error) {
-      console.error('[QRScanner] Error completo:', error);
-      console.error('[QRScanner] Respuesta error:', error.response?.data);
-      
-      let errorMessage = 'Error al validar el cupón';
-      
-      // Intentar obtener el mensaje de error del backend
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // Mensajes personalizados según el tipo de error
-      if (errorMessage.toLowerCase().includes('ya fue validado') || 
-          errorMessage.toLowerCase().includes('redeemed')) {
-        errorMessage = 'Este cupón ya fue validado previamente';
-      } else if (errorMessage.toLowerCase().includes('expirado') || 
-                 errorMessage.toLowerCase().includes('expired')) {
-        errorMessage = 'Este cupón ha expirado';
-      } else if (errorMessage.toLowerCase().includes('no encontrado') || 
-                 errorMessage.toLowerCase().includes('not found')) {
-        errorMessage = 'Cupón no encontrado o inválido';
-      }
+      handleApiError(error);
+      setValidating(false);
+      setScanned(false);
+    }
+  };
 
-      // Mostrar alerta de error
-      Alert.alert('Error al Validar', errorMessage, [
-        {
-          text: 'Intentar de nuevo',
-          onPress: () => setScanned(false),
-        },
-        {
-          text: 'Volver',
-          onPress: () => {
-            setScanned(false);
-            navigation.goBack();
-          },
-        },
-      ]);
+  const confirmRedemption = async (qrCode) => {
+    try {
+      // 3. Realizar el canje final
+      const finalResponse = await merchantAPI.validateQR(qrCode);
+
+      if (finalResponse.data.success) {
+        const { user } = finalResponse.data.data;
+        Alert.alert(
+          '¡Éxito!',
+          `Cupón canjeado correctamente para ${user.name}.`,
+          [{ text: 'OK', onPress: () => navigation.goBack() }]
+        );
+      }
+    } catch (error) {
+      handleApiError(error);
     } finally {
       setValidating(false);
+      setScanned(false); // Permitir nuevos escaneos
     }
+  };
+
+  const handleApiError = (error) => {
+    console.error('[QRScanner] Error en API:', error.response?.data || error.message);
+    
+    let errorMessage = 'Ocurrió un error inesperado.';
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    }
+
+    if (error.response?.status === 403) {
+      errorMessage = '¡Acceso Denegado! Este cupón pertenece a otro establecimiento.';
+    } else if (errorMessage.toLowerCase().includes('ya fue procesado')) {
+      errorMessage = 'Este cupón ya fue validado o procesado.';
+    } else if (errorMessage.toLowerCase().includes('expirado')) {
+      errorMessage = 'Este cupón ha expirado.';
+    } else if (errorMessage.toLowerCase().includes('no encontrado')) {
+      errorMessage = 'Cupón no encontrado o inválido.';
+    }
+
+    Alert.alert('Error de Validación', errorMessage, [
+      { text: 'Intentar de nuevo', onPress: () => setScanned(false) },
+      { text: 'Volver', style: 'cancel', onPress: () => navigation.goBack() },
+    ]);
   };
 
   const handleClose = () => {

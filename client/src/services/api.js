@@ -143,7 +143,8 @@ export const benefitsAPI = {
 
 // Servicios de merchant
 export const merchantAPI = {
-  validateQR: (qrCode) => api.post('/merchant/validate-qr', { qrCode }),
+  getRedemptionPreview: (qrCode) => api.post('/merchant/redeem/preview', { qrCode }),
+  validateQR: (qrCode) => api.post('/merchant/redeem', { qrCode }),
   getStats: () => api.get('/merchant/stats'),
   getHistory: (limit = 20, offset = 0) => 
     api.get(`/merchant/history?limit=${limit}&offset=${offset}`),

@@ -22,15 +22,38 @@ export default function ScannerScreen({ navigation }) {
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      console.log('[ScannerScreen] Validando QR:', qrCode);
+      // 1. Obtener vista previa
+      const previewResponse = await merchantAPI.getRedemptionPreview(qrCode);
+      const { user, benefit } = previewResponse.data.data;
+
+      // 2. Mostrar alerta de confirmación
+      Alert.alert(
+        'Confirmar Canje',
+        `Cliente: ${user.name}\n\nBeneficio: ${benefit.title}\nDetalle: ${benefit.description}\n\nCosto: ${benefit.pointsCost} puntos`,
+        [
+          { text: 'Cancelar', style: 'cancel', onPress: () => setLoading(false) },
+          { 
+            text: 'Confirmar Canje', 
+            onPress: () => confirmRedemption(qrCode),
+            style: 'destructive' // En iOS, esto hace el texto rojo
+          },
+        ]
+      );
+    } catch (error) {
+      handleApiError(error);
+      setLoading(false);
+    }
+  };
+
+  const confirmRedemption = async (code) => {
+    try {
+      // 3. Si se confirma, realizar el canje final
+      const finalResponse = await merchantAPI.validateQR(code);
       
-      const response = await merchantAPI.validateQR(qrCode);
-      console.log('[ScannerScreen] Respuesta:', response.data);
-      
-      if (response.data.success) {
-        const { user, benefit } = response.data.data;
+      if (finalResponse.data.success) {
+        const { user, benefit } = finalResponse.data.data;
         setLastValidation({
           userName: user.name,
           benefitTitle: benefit.title,
@@ -38,50 +61,37 @@ export default function ScannerScreen({ navigation }) {
         });
         
         Alert.alert(
-          'Cupón Validado',
-          `Cliente: ${user.name}\nBeneficio: ${benefit.title}\nPuntos: ${benefit.pointsCost}`,
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setQrCode('');
-                setLastValidation(null);
-              },
-            },
-          ]
+          '¡Éxito!',
+          `Cupón canjeado correctamente para ${user.name}.`,
+          [{ text: 'OK', onPress: () => setQrCode('') }]
         );
       }
     } catch (error) {
-      console.error('[ScannerScreen] Error validando:', error);
-      console.error('[ScannerScreen] Respuesta error:', error.response?.data);
-      
-      let errorMsg = 'Error al validar cupón';
-      
-      // Intentar obtener el mensaje de error del backend
-      if (error.response?.data?.message) {
-        errorMsg = error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMsg = error.response.data.error;
-      } else if (error.message) {
-        errorMsg = error.message;
-      }
-      
-      // Mensajes personalizados según el tipo de error
-      if (errorMsg.toLowerCase().includes('ya fue validado') || 
-          errorMsg.toLowerCase().includes('redeemed')) {
-        errorMsg = 'Este cupón ya fue validado previamente';
-      } else if (errorMsg.toLowerCase().includes('expirado') || 
-                 errorMsg.toLowerCase().includes('expired')) {
-        errorMsg = 'Este cupón ha expirado';
-      } else if (errorMsg.toLowerCase().includes('no encontrado') || 
-                 errorMsg.toLowerCase().includes('not found')) {
-        errorMsg = 'Cupón no encontrado o inválido';
-      }
-      
-      Alert.alert('Error', errorMsg);
+      handleApiError(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleApiError = (error) => {
+    console.error('[ScannerScreen] Error en API:', error.response?.data || error.message);
+    
+    let errorMsg = 'Ocurrió un error inesperado.';
+    if (error.response?.data?.message) {
+      errorMsg = error.response.data.message;
+    }
+
+    if (error.response?.status === 403) {
+      errorMsg = '¡Acceso Denegado! Este cupón pertenece a otro establecimiento.';
+    } else if (errorMsg.toLowerCase().includes('ya fue procesado')) {
+      errorMsg = 'Este cupón ya fue validado o procesado.';
+    } else if (errorMsg.toLowerCase().includes('expirado')) {
+      errorMsg = 'Este cupón ha expirado.';
+    } else if (errorMsg.toLowerCase().includes('no encontrado')) {
+      errorMsg = 'Cupón no encontrado o inválido.';
+    }
+    
+    Alert.alert('Error de Validación', errorMsg);
   };
 
   return (

@@ -1,5 +1,5 @@
 import prisma from '../config/database.js';
-import { AppError, NotFoundError, ValidationError, ConcurrencyError } from '../utils/errors.js';
+import { AppError, NotFoundError, ValidationError, ConcurrencyError, ForbiddenError } from '../utils/errors.js';
 import * as cacheService from './cache.service.js';
 
 /**
@@ -298,7 +298,7 @@ export const redeemBenefit = async (userId, benefitId) => {
  * @returns {Promise<{redemption, user, benefit, pointsCharged}>}
  */
 export const redeemQRCode = async (qrCode, merchantId) => {
-  // 1. Validar que el comerciante existe y es MERCHANT
+  // 1. Validar que el comerciante existe y es MERCHANT o MASTER_ADMIN
   const merchant = await prisma.user.findUnique({
     where: { id: merchantId },
   });
@@ -307,16 +307,16 @@ export const redeemQRCode = async (qrCode, merchantId) => {
     throw new NotFoundError('Comerciante no encontrado');
   }
 
-  if (merchant.role !== 'MERCHANT') {
+  if (merchant.role !== 'MERCHANT' && merchant.role !== 'MASTER_ADMIN') {
     throw new ValidationError('Solo comerciantes pueden validar QR');
   }
 
-  // 2. Buscar el canje pendiente con este QR
+  // 2. Buscar el canje pendiente con este QR - INCLUIR BENEFIT PARA VALIDACIÓN
   const redemption = await prisma.benefitRedemption.findUnique({
     where: { qrCode },
     include: {
       user: true,
-      benefit: true,
+      benefit: true, // ✅ Incluir benefit para validar propiedad
     },
   });
 
@@ -324,25 +324,36 @@ export const redeemQRCode = async (qrCode, merchantId) => {
     throw new NotFoundError('Código QR no válido o no encontrado');
   }
 
-  // 3. Validar estado del canje
+  // 3. 🔒 VALIDACIÓN CRUCIAL DE SEGURIDAD - Verificar propiedad del beneficio
+  const benefit = redemption.benefit;
+  
+  // Solo permitir el canje si:
+  // - El beneficio pertenece al comercio que escanea (benefit.merchantId === merchantId)
+  // - O el usuario que escanea es MASTER_ADMIN (soporte técnico)
+  if (benefit.merchantId !== merchantId && merchant.role !== 'MASTER_ADMIN') {
+    throw new ForbiddenError(
+      'Este beneficio no pertenece a su comercio y no puede ser canjeado aquí'
+    );
+  }
+
+  // 4. Validar estado del canje
   if (redemption.status !== 'PENDING') {
     throw new ValidationError(
       `Este QR ya fue procesado. Estado: ${redemption.status}`
     );
   }
 
-  // 4. Validar que no haya expirado
+  // 5. Validar que no haya expirado
   if (new Date() > redemption.expiresAt) {
     throw new ValidationError('Este QR ha expirado');
   }
 
-  // 5. Validar que el beneficio todavía existe y está activo
-  const benefit = redemption.benefit;
+  // 6. Validar que el beneficio todavía existe y está activo
   if (!benefit.active) {
     throw new ValidationError('Este beneficio no está disponible');
   }
 
-  // 6. Actualizar el estado del canje a REDEEMED
+  // 7. Actualizar el estado del canje a REDEEMED
   const updatedRedemption = await prisma.benefitRedemption.update({
     where: { id: redemption.id },
     data: {
@@ -457,5 +468,77 @@ export const validateRedemption = async (transactionId, merchantId) => {
     transaction: updated,
     user: transaction.wallet.user,
     benefit: transaction.benefit,
+  };
+};
+
+/**
+ * Obtener detalles de un canje de QR sin procesarlo (para vista previa)
+ * @param {string} qrCode - Código QR a validar
+ * @param {string} merchantId - ID del comerciante que escanea
+ * @returns {Promise<{redemption, user, benefit}>}
+ */
+export const getRedemptionDetails = async (qrCode, merchantId) => {
+  // 1. Validar que el comerciante existe y es MERCHANT o MASTER_ADMIN
+  const merchant = await prisma.user.findUnique({
+    where: { id: merchantId },
+  });
+
+  if (!merchant) {
+    throw new NotFoundError('Comerciante no encontrado');
+  }
+
+  if (merchant.role !== 'MERCHANT' && merchant.role !== 'MASTER_ADMIN') {
+    throw new ValidationError('Solo comerciantes pueden validar QR');
+  }
+
+  // 2. Buscar el canje pendiente con este QR
+  const redemption = await prisma.benefitRedemption.findUnique({
+    where: { qrCode },
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      benefit: true,
+    },
+  });
+
+  if (!redemption) {
+    throw new NotFoundError('Código QR no válido o no encontrado');
+  }
+
+  // 3. Validar propiedad del beneficio
+  const benefit = redemption.benefit;
+  if (benefit.merchantId !== merchantId && merchant.role !== 'MASTER_ADMIN') {
+    throw new ForbiddenError(
+      'Este beneficio no pertenece a su comercio'
+    );
+  }
+
+  // 4. Validar estado del canje
+  if (redemption.status !== 'PENDING') {
+    throw new ValidationError(
+      `Este QR ya fue procesado. Estado: ${redemption.status}`
+    );
+  }
+
+  // 5. Validar que no haya expirado
+  if (new Date() > redemption.expiresAt) {
+    throw new ValidationError('Este QR ha expirado');
+  }
+
+  // 6. Validar que el beneficio todavía existe y está activo
+  if (!benefit.active) {
+    throw new ValidationError('Este beneficio no está disponible');
+  }
+
+  // 7. Devolver los datos para la vista previa
+  return {
+    redemption,
+    user: redemption.user,
+    benefit: redemption.benefit,
   };
 };

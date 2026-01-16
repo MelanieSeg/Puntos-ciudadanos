@@ -20,6 +20,18 @@ router.post(
 );
 
 /**
+ * POST /api/v1/merchant/redeem/preview
+ * El comercio escanea el QR y obtiene detalles ANTES de confirmar el canje
+ * Solo comercios y admins
+ */
+router.post(
+  '/redeem/preview',
+  authenticate,
+  isMerchantOrAdmin,
+  merchantController.getRedemptionPreview
+);
+
+/**
  * POST /api/v1/merchant/validate-qr
  * Validar QR de beneficio
  */
