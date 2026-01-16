@@ -11,11 +11,17 @@ En total tenemos 27 pantallas en la aplicación. De estas:
 
 ## Pantallas de Autenticación
 
-### LoginScreen: Conectado
-Esta pantalla permite a los usuarios iniciar sesión. Está completamente funcional. Valida el email y contraseña, se conecta al backend para autenticar, y guarda el token de sesión. También muestra usuarios de prueba en la interfaz para facilitar las pruebas.
+### LoginScreen: Conectado y Mejorado
+Esta pantalla permite a los usuarios iniciar sesión. Está completamente funcional y mejorada. Valida el email y contraseña, se conecta al backend para autenticar y guarda el token. Ahora incluye **inicio de sesión con Google** y un enlace a la pantalla de **recuperación de contraseña**.
 
-### RegisterScreen: Conectado
-Pantalla de registro de nuevos usuarios. Funciona perfectamente. Valida todos los campos en tiempo real: nombre, email, contraseña y confirmación de contraseña. Cuando el registro es exitoso, automáticamente inicia sesión con el usuario nuevo.
+### RegisterScreen: Conectado y Mejorado
+Pantalla de registro de nuevos usuarios. Funciona perfectamente. Valida todos los campos en tiempo real. Tras un registro exitoso, redirige a la pantalla de login para que el usuario inicie sesión, promoviendo un flujo más seguro y consistente.
+
+### ForgotPasswordScreen: Conectado
+Nueva pantalla que permite a los usuarios solicitar un correo para restablecer su contraseña. Se conecta al backend para enviar el token de reseteo.
+
+### ResetPasswordScreen: Conectado
+Nueva pantalla a la que se accede desde el enlace del correo. Permite al usuario establecer una nueva contraseña, validando el token recibido.
 
 ### HomeScreen: Conectado
 Es la primera pantalla que ves después de hacer login. Muestra tu información básica: nombre, email, rol y fecha de registro. Usa los datos que vienen del contexto de autenticación, no necesita hacer llamadas adicionales al backend.
@@ -62,14 +68,22 @@ Muestra el código QR de un beneficio que canjeaste. No necesita llamar al backe
 
 ## Pantallas de Comerciante
 
-### MerchantDashboardScreen: Parcialmente conectado
-El dashboard del comercio con estadísticas. Tiene conexión parcial. Intenta obtener las estadísticas del backend, pero si falla usa valores por defecto. Las transacciones recientes todavía son datos de ejemplo. Necesita mejorar la conexión para mostrar datos reales.
+### MerchantDashboardScreen: Conectado
+El dashboard del comercio con estadísticas. Ahora está completamente conectado. Obtiene las estadísticas reales del backend (canjes, puntos, etc.) y muestra el historial de las últimas validaciones de cupones. Ya no utiliza datos de ejemplo.
 
 ### ScannerScreen: Conectado
-Permite al comerciante validar códigos QR de cupones. Está completamente funcional. El comercio puede ingresar el código manualmente (para web) o escanear con la cámara (en móvil). Se conecta al backend para validar el cupón y muestra mensajes específicos si el cupón ya fue usado, está expirado o no existe.
+Permite al comerciante validar códigos QR de cupones. Está completamente funcional y securizado. 
+- **Flujo de dos pasos**: Primero muestra una vista previa con los detalles del cupón (cliente, beneficio, descripción y puntos) y pide confirmación antes de procesar el canje definitivo.
+- **Seguridad mejorada**: Impide que un comercio pueda canjear cupones que pertenecen a otro establecimiento.
+- El comercio puede ingresar el código manualmente (web) o escanear con la cámara (móvil).
+- Muestra mensajes de error específicos si el cupón es inválido, ya fue usado, está expirado o pertenece a otra tienda.
 
 ### QRScannerScreen: Conectado
-La pantalla de escaneo con cámara para móviles. Totalmente funcional. Pide permisos de cámara, escanea el código QR y lo valida automáticamente con el backend. Muestra un marco visual para ayudar a enfocar el código. Solo funciona en móvil, en web se usa el ScannerScreen.
+La pantalla de escaneo con cámara para móviles. Totalmente funcional y securizada.
+- Implementa el mismo **flujo de confirmación en dos pasos** que la pantalla manual.
+- Pide permisos de cámara, escanea el QR y muestra la alerta de confirmación con todos los detalles antes de validar.
+- Incluye la misma lógica de seguridad para prevenir el canje de cupones ajenos.
+- Muestra un marco visual para ayudar a enfocar el código. Solo funciona en móvil.
 
 ### MerchantStockScreen: Pendiente de conectar
 Debería mostrar el inventario de beneficios del comercio, pero todavía usa datos de ejemplo. Falta implementar el endpoint GET /merchant/benefits. La interfaz ya está lista con barras de progreso de stock y badges de estado, solo necesita conectarse.
@@ -79,8 +93,12 @@ Historial de cupones que el comercio ha validado. Completamente funcional. Obtie
 
 ## Pantallas de Administrador
 
-### AdminDashboardScreen: Pendiente de conectar
-El panel principal del administrador con métricas del sistema. Todas las estadísticas son números de ejemplo, no están conectadas al backend. Necesita implementar endpoints para obtener: total de usuarios, comercios, transacciones, etc. La interfaz está completa y organizada.
+### AdminDashboardScreen: Conectado
+El panel principal del administrador con métricas del sistema. Esta pantalla ahora está completamente conectada al backend. Utiliza el endpoint `adminAPI.getStats` para mostrar en tiempo real:
+- Resumen general (usuarios activos, comercios, puntos en circulación, transacciones).
+- Alertas de misiones pendientes de aprobación.
+- Reportes detallados de actividad de usuarios, misiones, beneficios y comercios.
+Ya no utiliza datos de ejemplo.
 
 ### UsersManagementScreen: Conectado
 Gestión completa de usuarios. Está totalmente funcional y es una de las pantallas más completas. Permite:
@@ -96,13 +114,18 @@ Los admins de soporte tienen restricciones: no pueden ver otros admins ni crear 
 ### MissionsManagementScreen: Pendiente de conectar
 Para administrar misiones (crear, editar, pausar, eliminar). La interfaz está completa con filtros por estado y todos los botones de acción, pero ninguna operación está conectada al backend. Los datos que muestra son de ejemplo. Necesita implementar todo el CRUD de misiones en el backend.
 
-### BenefitsManagementScreen: Pendiente de conectar
-Gestión de beneficios. Tiene un formulario completo para crear beneficios nuevos, pero cuando intentas guardar solo muestra un mensaje de "Próximamente". No está conectado al backend todavía. La lista siempre está vacía porque no obtiene datos reales.
+### BenefitsManagementScreen: Conectado
+Gestión de beneficios. Esta pantalla ahora es **completamente funcional**. Permite a los administradores realizar un CRUD completo:
+- **Crear** nuevos beneficios a través de un formulario detallado.
+- **Leer** y filtrar la lista de todos los beneficios existentes.
+- **Actualizar** cualquier detalle de un beneficio ya creado.
+- **Activar o desactivar** beneficios para controlar su visibilidad.
+Ya no muestra el mensaje "Próximamente".
 
 ### SubmissionsApprovalScreen: Conectado
 Para revisar y aprobar/rechazar evidencias de misiones. Completamente funcional. Obtiene los envíos del backend filtrados por estado (pendientes, aprobados, rechazados). Puedes aprobar con un click o rechazar escribiendo un motivo. Después de cada acción se actualiza automáticamente la lista. Tiene un badge que muestra cuántos envíos están pendientes.
-
-### SubmissionDetailScreen: No requiere conexión adicional
+Conectado
+Muestra reportes y estadísticas del sistema. Ahora está conectada al mismo endpoint que el AdminDashboard (`adminAPI.getStats`) para visualizar datos reales sobre la actividad de la plataforma. Ya no utiliza datos de ejemplo
 Muestra los detalles completos de un envío de evidencia. No necesita llamar al backend porque recibe todos los datos cuando navegas a ella desde la pantalla de aprobaciones. Muestra usuario, misión, puntos, evidencia, observaciones y fechas.
 
 ### ReportsScreen: Pendiente de conectar
