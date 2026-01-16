@@ -159,6 +159,7 @@ export const missionsAPI = {
 
 // Servicios de admin
 export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
   getSubmissions: (status = 'PENDING', limit = 20, offset = 0) => 
     api.get(`/admin/submissions?status=${status}&limit=${limit}&offset=${offset}`),
   approveSubmission: (submissionId, notes) => {

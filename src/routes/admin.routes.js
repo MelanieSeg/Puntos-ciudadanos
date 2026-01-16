@@ -12,8 +12,16 @@ import cloudinary from '../config/cloudinary.js';
 import { Readable } from 'stream';
 import { sendVerificationEmail } from '../services/email.service.js';
 import config from '../config/index.js';
+import { getGlobalStats } from '../controllers/stats.controller.js';
 
 const router = express.Router();
+
+/**
+ * GET /api/v1/admin/stats
+ * Obtener estadísticas globales del sistema
+ * Solo ADMIN
+ */
+router.get('/stats', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), getGlobalStats);
 
 /**
  * Helper: Subir imagen a Cloudinary desde buffer
