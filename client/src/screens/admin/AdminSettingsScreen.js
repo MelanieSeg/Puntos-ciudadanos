@@ -126,17 +126,8 @@ export default function AdminSettingsScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
-      <ScrollView>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={COLORS.dark} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Configuración del Sistema</Text>
-          <View style={{ width: 24 }} />
-        </View>
-
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+      <ScrollView contentContainerStyle={{ paddingBottom: SPACING.xl }}>
         {/* Cooldowns */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -484,29 +475,32 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: COLORS.danger,
-    borderRadius: LAYOUT.borderRadius.lg,
+    backgroundColor: `${COLORS.error}15`,
+    borderRadius: LAYOUT.borderRadius.md,
+    borderWidth: 1,
+    borderColor: COLORS.error,
     paddingVertical: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
+    ...LAYOUT.shadowSmall,
   },
   resetButtonText: {
-    color: COLORS.danger,
+    color: COLORS.error,
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   saveButton: {
     flex: 1,
     backgroundColor: COLORS.primary,
-    borderRadius: LAYOUT.borderRadius.lg,
+    borderRadius: LAYOUT.borderRadius.md,
     paddingVertical: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
+    ...LAYOUT.shadowSmall,
   },
   saveButtonLoading: {
     opacity: 0.7,
@@ -514,6 +508,6 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

@@ -81,7 +81,7 @@ export default function AdminNavigator() {
         <Stack.Screen
           name="ApprovalsMain"
           component={SubmissionsApprovalScreen}
-          options={{ title: 'Aprobaciones Pendientes' }}
+          options={{ title: 'Solicitudes Pendientes' }}
         />
         <Stack.Group screenOptions={{ 
           presentation: 'modal', 
@@ -196,7 +196,7 @@ export default function AdminNavigator() {
       <Tab.Screen
         name="Approvals"
         component={ApprovalsStack}
-        options={{ headerShown: false, title: 'Aprobaciones' }}
+        options={{ headerShown: false, title: 'Solicitudes' }}
       />
       <Tab.Screen
         name="Users"

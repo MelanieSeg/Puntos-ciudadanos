@@ -357,10 +357,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     backgroundColor: COLORS.primary,
     borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
   },
   backButtonText: {
     color: COLORS.white,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,

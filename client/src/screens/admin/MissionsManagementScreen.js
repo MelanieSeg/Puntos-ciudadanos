@@ -262,7 +262,7 @@ export default function MissionsManagementScreen({ navigation }) {
 
       <View style={styles.actions}>
         <TouchableOpacity
-          style={styles.actionButtonSmall}
+          style={styles.actionButtonPrimary}
           onPress={() => handleToggleStatus(item)}
         >
           <MaterialCommunityIcons
@@ -276,7 +276,7 @@ export default function MissionsManagementScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionButtonSmall}
+          style={styles.actionButtonInfo}
           onPress={() => handleEditMission(item)}
         >
           <MaterialCommunityIcons name="pencil" size={18} color={COLORS.info} />
@@ -284,7 +284,7 @@ export default function MissionsManagementScreen({ navigation }) {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionButtonSmall}
+          style={styles.actionButtonDanger}
           onPress={() => handleDeleteMission(item.id)}
         >
           <MaterialCommunityIcons name="trash-can" size={18} color={COLORS.danger} />
@@ -305,23 +305,9 @@ export default function MissionsManagementScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Gestión de Misiones</Text>
-          <Text style={styles.subtitle}>{missions.length} misiones</Text>
-        </View>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={() => navigation.navigate('CreateMission')}
-        >
-          <MaterialCommunityIcons name="plus-circle" size={28} color={COLORS.primary} />
-        </TouchableOpacity>
-      </View>
-
       {/* Filtros */}
       <View style={styles.filters}>
         {['ALL', 'ACTIVE', 'PAUSED', 'ARCHIVED'].map(status => (
@@ -417,8 +403,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     borderRadius: LAYOUT.borderRadius.md,
-    borderWidth: 1,
-    borderColor: COLORS.light,
+    backgroundColor: COLORS.light,
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
@@ -433,13 +418,13 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   listContent: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: LAYOUT.borderRadius.lg,
     padding: SPACING.md,
+    marginHorizontal: SPACING.md,
     marginBottom: SPACING.md,
     ...LAYOUT.shadowSmall,
   },
@@ -520,7 +505,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.sm,
   },
-  actionButtonSmall: {
+  actionButtonPrimary: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -528,9 +513,39 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.sm,
     borderRadius: LAYOUT.borderRadius.md,
+    backgroundColor: `${COLORS.primary}10`,
     borderWidth: 1,
-    borderColor: COLORS.light,
+    borderColor: COLORS.primary,
     gap: SPACING.xs,
+    ...LAYOUT.shadowSmall,
+  },
+  actionButtonInfo: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    backgroundColor: `${COLORS.info}10`,
+    borderWidth: 1,
+    borderColor: COLORS.info,
+    gap: SPACING.xs,
+    ...LAYOUT.shadowSmall,
+  },
+  actionButtonDanger: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    backgroundColor: `${COLORS.error}10`,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    gap: SPACING.xs,
+    ...LAYOUT.shadowSmall,
   },
   actionSmallText: {
     fontSize: TYPOGRAPHY.caption,
@@ -550,16 +565,17 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     backgroundColor: COLORS.primary,
-    borderRadius: LAYOUT.borderRadius.lg,
-    paddingVertical: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
+    ...LAYOUT.shadowSmall,
   },
   emptyButtonText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

@@ -337,16 +337,6 @@ export default function AdminAuditScreen() {
 
   return (
     <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
-      {/* Header */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.title}>Auditoría y Control</Text>
-          <Text style={styles.subtitle}>
-            {filteredLogs.length} {filteredLogs.length === 1 ? 'registro' : 'registros'}
-          </Text>
-        </View>
-      </View>
-
       {/* Barra de Búsqueda */}
       <View style={styles.searchContainer}>
           <MaterialCommunityIcons name="magnify" size={20} color={COLORS.gray} style={styles.searchIcon} />
@@ -368,7 +358,6 @@ export default function AdminAuditScreen() {
 
         {/* Filtros por tipo de acción */}
         <View style={styles.controlsRow}>
-          <Text style={styles.controlLabel}>Acción:</Text>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -645,8 +634,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
   },
   searchIcon: {
     marginRight: SPACING.xs,
@@ -797,8 +789,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.light,
+    backgroundColor: `${COLORS.info}15`,
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.info,
     gap: SPACING.xs,
   },
   detailsButtonText: {
@@ -816,6 +810,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.error,
     borderRadius: 8,
     gap: SPACING.xs,
+    ...LAYOUT.shadowSmall,
   },
   suspendButtonText: {
     ...TYPOGRAPHY.body2,

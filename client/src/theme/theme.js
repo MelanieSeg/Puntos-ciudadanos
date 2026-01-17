@@ -139,7 +139,7 @@ export const TAB_CONFIG = {
     },
     {
       name: 'Approvals',
-      label: 'Aprobaciones',
+      label: 'Solicitudes',
       color: COLORS.admin,
     },
     {

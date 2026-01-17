@@ -290,14 +290,7 @@ export default function BenefitsManagementScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Gestión de Beneficios</Text>
-          <Text style={styles.subtitle}>{benefits.length} beneficios disponibles</Text>
-        </View>
-      </View>
-
+    <ScreenWrapper bgColor={COLORS.light} padding={0}>
       <FlatList
         data={benefits}
         keyExtractor={(item) => item.id}
@@ -567,19 +560,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   listContent: {
-    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   benefitCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: LAYOUT.borderRadius.lg,
     padding: SPACING.md,
+    marginHorizontal: SPACING.md,
     marginBottom: SPACING.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    ...LAYOUT.shadowSmall,
   },
   benefitImage: {
     width: 80,
@@ -746,7 +736,10 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderRadius: LAYOUT.borderRadius.md,
     backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: 'center',
+    ...LAYOUT.shadowSmall,
   },
   modalButtonCancelText: {
     fontSize: TYPOGRAPHY.body1,
@@ -759,13 +752,14 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.borderRadius.md,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
+    ...LAYOUT.shadowSmall,
   },
   buttonDisabled: {
     opacity: 0.6,
   },
   modalButtonConfirmText: {
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.white,
   },
   pickerContainer: {
@@ -863,20 +857,21 @@ const styles = StyleSheet.create({
   deleteModalButton: {
     flex: 1,
     paddingVertical: SPACING.md,
-    borderRadius: LAYOUT.borderRadius.lg,
+    borderRadius: LAYOUT.borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
     gap: SPACING.xs,
+    ...LAYOUT.shadowSmall,
   },
   deleteModalButtonCancel: {
     backgroundColor: COLORS.light,
     borderWidth: 1,
-    borderColor: COLORS.gray + '40',
+    borderColor: COLORS.border,
   },
   deleteModalButtonCancelText: {
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.dark,
   },
   deleteModalButtonDelete: {
@@ -884,7 +879,7 @@ const styles = StyleSheet.create({
   },
   deleteModalButtonDeleteText: {
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
     color: COLORS.white,
   },
 });

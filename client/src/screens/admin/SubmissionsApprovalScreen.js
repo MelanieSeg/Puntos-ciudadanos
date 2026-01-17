@@ -1,5 +1,5 @@
 /**
- * SubmissionsApprovalScreen - Bandeja de Aprobaciones
+ * SubmissionsApprovalScreen - Gestión de Solicitudes
  * Pantalla crítica para administrador: revisar y aprobar/rechazar envíos de usuarios
  * Ahora con paginación infinita para manejar miles de envíos
  */
@@ -213,8 +213,8 @@ export default function SubmissionsApprovalScreen({ navigation }) {
               })
             }
           >
-            <MaterialCommunityIcons name="eye" size={18} color={COLORS.white} />
-            <Text style={styles.approveButtonText}>Ver Detalle</Text>
+            <MaterialCommunityIcons name="eye" size={18} color={COLORS.primary} />
+            <Text style={styles.detailButtonText}>Ver Detalle</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -242,13 +242,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Aprobaciones Pendientes</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeNumber}>{submissions.length}</Text>
-        </View>
-      </View>
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
       <View style={styles.filters}>
         {['PENDING', 'APPROVED', 'REJECTED'].map(status => (
           <TouchableOpacity
@@ -363,8 +357,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.md,
     borderRadius: LAYOUT.borderRadius.md,
-    borderWidth: 1,
-    borderColor: COLORS.light,
+    backgroundColor: COLORS.light,
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
@@ -494,21 +487,30 @@ const styles = StyleSheet.create({
   },
   approveButton: {
     backgroundColor: COLORS.success,
+    ...LAYOUT.shadowSmall,
   },
   approveButtonText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.caption,
     fontWeight: '600',
   },
+  detailButtonText: {
+    color: COLORS.primary,
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: '600',
+  },
   detailButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: `${COLORS.primary}15`,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    ...LAYOUT.shadowSmall,
   },
   rejectButton: {
-    borderWidth: 1,
-    borderColor: COLORS.danger,
+    backgroundColor: COLORS.error,
+    ...LAYOUT.shadowSmall,
   },
   rejectButtonText: {
-    color: COLORS.danger,
+    color: COLORS.white,
     fontSize: TYPOGRAPHY.caption,
     fontWeight: '600',
   },

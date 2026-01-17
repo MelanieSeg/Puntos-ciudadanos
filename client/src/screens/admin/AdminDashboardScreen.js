@@ -85,7 +85,7 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
@@ -93,8 +93,6 @@ export default function AdminDashboardScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[COLORS.primary]} />
         }
       >
-        <Text style={styles.title}>Panel de Control</Text>
-
         <View style={styles.statsGrid}>
           {stats.map((stat) => (
             <View key={stat.label} style={styles.statCard}>
@@ -253,7 +251,9 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
   scrollContent: {
-    paddingTop: Platform.OS === 'web' ? 0 : SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   reportsSection: {
     marginBottom: SPACING.xl,
@@ -328,10 +328,11 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderRadius: LAYOUT.borderRadius.md,
     marginTop: SPACING.md,
+    ...LAYOUT.shadowSmall,
   },
   retryButtonText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

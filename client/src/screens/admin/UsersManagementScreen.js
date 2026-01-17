@@ -446,7 +446,7 @@ export default function UsersManagementScreen() {
               style={[styles.actionButton, styles.dangerActionButton]}
               onPress={() => handleBanUser(item.id, item.name)}
             >
-              <MaterialCommunityIcons name="cancel" size={18} color={COLORS.white} />
+              <MaterialCommunityIcons name="gavel" size={18} color={COLORS.white} />
               <Text style={styles.actionButtonText}>Banear</Text>
             </TouchableOpacity>
           )}
@@ -467,18 +467,9 @@ export default function UsersManagementScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
-      {/* Header con Tabs integrados */}
-      <View style={styles.headerContainer}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.title}>Gestión de Usuarios</Text>
-          <Text style={styles.subtitle}>
-            {filteredUsers.length} de {allUsers.length} usuarios
-          </Text>
-        </View>
-        
-        {/* Tabs compactas al lado del título */}
-        <View style={styles.tabsContainer}>
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+      {/* Tabs */}
+      <View style={styles.tabsContainer}>
           {getAvailableTabs().map((role) => (
             <TouchableOpacity
               key={role}
@@ -501,7 +492,6 @@ export default function UsersManagementScreen() {
             </TouchableOpacity>
           ))}
         </View>
-      </View>
 
       {/* Barra de Búsqueda */}
       <View style={styles.searchContainer}>
@@ -840,6 +830,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   tab: {
     flexDirection: 'row',
@@ -903,12 +898,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: LAYOUT.borderRadius.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   searchIcon: {
     marginRight: SPACING.sm,
@@ -925,11 +918,12 @@ const styles = StyleSheet.create({
   // Controles
   controlsRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.md,
-    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   controlLabel: {
     fontSize: TYPOGRAPHY.caption,
@@ -947,10 +941,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.light,
     borderRadius: LAYOUT.borderRadius.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
     gap: SPACING.xs,
   },
   sortButtonText: {
@@ -960,10 +952,8 @@ const styles = StyleSheet.create({
   },
   sortOrderButton: {
     padding: SPACING.sm,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.light,
     borderRadius: LAYOUT.borderRadius.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
   },
   statusFilterContainer: {
     flexDirection: 'row',
@@ -972,16 +962,14 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   miniFilterButton: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: LAYOUT.borderRadius.sm,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 16,
+    backgroundColor: COLORS.light,
+    marginRight: SPACING.xs,
   },
   miniFilterButtonActive: {
     backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
   },
   miniFilterText: {
     fontSize: 10,
