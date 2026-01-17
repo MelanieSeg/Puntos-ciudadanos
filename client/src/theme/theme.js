@@ -148,6 +148,11 @@ export const TAB_CONFIG = {
       color: COLORS.admin,
     },
     {
+      name: 'Audit',
+      label: 'Auditoría',
+      color: COLORS.admin,
+    },
+    {
       name: 'Settings',
       label: 'Configuración',
       color: COLORS.admin,

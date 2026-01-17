@@ -13,6 +13,7 @@ import { Readable } from 'stream';
 import { sendVerificationEmail } from '../services/email.service.js';
 import config from '../config/index.js';
 import { getGlobalStats } from '../controllers/stats.controller.js';
+import { getAuditLogs, updateUserStatus } from '../controllers/audit.controller.js';
 
 const router = express.Router();
 
@@ -22,6 +23,20 @@ const router = express.Router();
  * Solo ADMIN
  */
 router.get('/stats', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), getGlobalStats);
+
+/**
+ * GET /api/v1/admin/audit-logs
+ * Obtener logs de auditoría con información del administrador
+ * Solo MASTER_ADMIN
+ */
+router.get('/audit-logs', authenticate, authorize('MASTER_ADMIN'), getAuditLogs);
+
+/**
+ * PATCH /api/v1/admin/users/:id/status
+ * Cambiar el estado de un usuario (suspender/activar)
+ * Solo MASTER_ADMIN
+ */
+router.patch('/users/:id/status', authenticate, authorize('MASTER_ADMIN'), updateUserStatus);
 
 /**
  * Helper: Subir imagen a Cloudinary desde buffer
@@ -123,6 +138,27 @@ router.post(
     // Invalidar caché de beneficios
     cacheService.delPattern('all_benefits');
 
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'BENEFIT_CREATED',
+        targetId: benefit.id,
+        description: `Beneficio "${benefit.title}" creado para ${benefit.merchant.name}`,
+        metadata: {
+          benefitId: benefit.id,
+          benefitTitle: benefit.title,
+          pointsCost: benefit.pointsCost,
+          stock: benefit.stock,
+          merchantId: benefit.merchantId,
+          merchantName: benefit.merchant.name,
+          category: benefit.category,
+          hasImage: !!imageUrl,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
     successResponse(
       res,
       benefit,
@@ -147,6 +183,14 @@ router.delete(
     // Verificar que el beneficio existe
     const benefit = await prisma.benefit.findUnique({
       where: { id },
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
 
     if (!benefit) {
@@ -160,6 +204,25 @@ router.delete(
 
     // Invalidar caché
     cacheService.delPattern('all_benefits');
+
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'BENEFIT_DELETED',
+        targetId: id,
+        description: `Beneficio "${benefit.title}" eliminado de ${benefit.merchant.name}`,
+        metadata: {
+          benefitId: benefit.id,
+          benefitTitle: benefit.title,
+          pointsCost: benefit.pointsCost,
+          stock: benefit.stock,
+          merchantId: benefit.merchantId,
+          merchantName: benefit.merchant.name,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
 
     successResponse(
       res,
@@ -325,6 +388,27 @@ router.post(
       },
     });
 
+    // Registrar acción en AdminLog para auditoría
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'SUBMISSION_APPROVED',
+        targetId: submissionId,
+        description: `Misión "${submission.mission.name}" aprobada para ${submission.user.name} (${submission.user.email})`,
+        metadata: {
+          submissionId: submission.id,
+          userId: submission.userId,
+          userName: submission.user.name,
+          userEmail: submission.user.email,
+          missionId: submission.missionId,
+          missionName: submission.mission.name,
+          pointsAwarded: submission.mission.points,
+          notes: notes || null,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
     // Limpiar caché de misiones del usuario (cooldown actualizado)
     const missionCacheKey = `${cacheService.CACHE_KEYS.AVAILABLE_MISSIONS}_${submission.userId}`;
     cacheService.del(missionCacheKey);
@@ -376,6 +460,30 @@ router.post(
         validatedAt: new Date(),
         validatedById: req.user.id,
         observation: reason,
+      },
+      include: {
+        user: true,
+        mission: true,
+      },
+    });
+
+    // Registrar acción en AdminLog para auditoría
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'SUBMISSION_REJECTED',
+        targetId: submissionId,
+        description: `Misión "${updatedSubmission.mission.name}" rechazada para ${updatedSubmission.user.name} (${updatedSubmission.user.email})`,
+        metadata: {
+          submissionId: updatedSubmission.id,
+          userId: updatedSubmission.userId,
+          userName: updatedSubmission.user.name,
+          userEmail: updatedSubmission.user.email,
+          missionId: updatedSubmission.missionId,
+          missionName: updatedSubmission.mission.name,
+          reason: reason,
+          timestamp: new Date().toISOString(),
+        },
       },
     });
 
@@ -566,6 +674,23 @@ router.post(
       console.error('Error al enviar email de verificación a admin:', emailError);
     }
 
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'USER_CREATED',
+        targetId: newAdmin.id,
+        description: `Administrador de soporte "${newAdmin.name}" creado`,
+        metadata: {
+          userId: newAdmin.id,
+          userName: newAdmin.name,
+          userEmail: newAdmin.email,
+          userRole: 'SUPPORT_ADMIN',
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
     successResponse(
       res,
       { admin: newAdmin, temporaryPassword },
@@ -636,6 +761,23 @@ router.post(
     } catch (emailError) {
       console.error('Error al enviar email de verificación a comerciante:', emailError);
     }
+
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'USER_CREATED',
+        targetId: newMerchant.id,
+        description: `Comerciante "${newMerchant.name}" creado`,
+        metadata: {
+          userId: newMerchant.id,
+          userName: newMerchant.name,
+          userEmail: newMerchant.email,
+          userRole: 'MERCHANT',
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
 
     successResponse(
       res,

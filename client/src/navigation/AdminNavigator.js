@@ -17,6 +17,7 @@ import SubmissionsApprovalScreen from '../screens/admin/SubmissionsApprovalScree
 import SubmissionDetailScreen from '../screens/admin/SubmissionDetailScreen';
 import MissionsManagementScreen from '../screens/admin/MissionsManagementScreen';
 import AdminSettingsScreen from '../screens/admin/AdminSettingsScreen';
+import AdminAuditScreen from '../screens/admin/AdminAuditScreen';
 import { COLORS, TAB_CONFIG, SPACING } from '../theme/theme';
 import { AuthContext } from '../context/AuthContext';
 
@@ -124,6 +125,9 @@ export default function AdminNavigator() {
     );
   }
 
+  // Verificar si el usuario es MASTER_ADMIN
+  const isMasterAdmin = authState?.user?.role === 'MASTER_ADMIN';
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -154,6 +158,7 @@ export default function AdminNavigator() {
               Benefits: 'gift',
               Missions: 'target',
               Approvals: 'check-circle',
+              Audit: 'shield-lock',
               Settings: 'cog',
             };
             return (
@@ -198,6 +203,13 @@ export default function AdminNavigator() {
         component={UsersManagementScreen}
         options={{ title: 'Usuarios' }}
       />
+      {isMasterAdmin && (
+        <Tab.Screen
+          name="Audit"
+          component={AdminAuditScreen}
+          options={{ title: 'Auditoría' }}
+        />
+      )}
       <Tab.Screen
         name="Settings"
         component={SettingsStack}
