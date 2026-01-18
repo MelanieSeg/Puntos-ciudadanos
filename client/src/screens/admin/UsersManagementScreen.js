@@ -30,13 +30,49 @@ import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { adminAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { useInfiniteUsers } from '../../hooks/useUserData';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 export default function UsersManagementScreen() {
+  const queryClient = useQueryClient();
   const { authState } = React.useContext(AuthContext);
   const currentUserRole = authState?.user?.role;
   
+  const { data: userCountData } = useQuery({ 
+    queryKey: ['userCount'], 
+    queryFn: () => adminAPI.getUsers('USER', null, 9999, 0),
+    staleTime: 1000 * 60 * 5,
+  });
+  const { data: merchantCountData } = useQuery({ 
+    queryKey: ['merchantCount'], 
+    queryFn: () => adminAPI.getUsers('MERCHANT', null, 9999, 0),
+    staleTime: 1000 * 60 * 5,
+  });
+  const { data: adminCountData } = useQuery({ 
+    queryKey: ['adminCount'], 
+    queryFn: () => adminAPI.getUsers(null, null, 9999, 0),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const userCount = userCountData?.data?.data?.users?.length || 0;
+  const merchantCount = merchantCountData?.data?.data?.users?.length || 0;
+  
+  const admins = adminCountData?.data?.data?.users || [];
+  const masterAdminCount = admins.filter(u => u.role === 'MASTER_ADMIN').length;
+  const supportAdminCount = admins.filter(u => u.role === 'SUPPORT_ADMIN').length;
+  const adminCount = admins.length;
+
+  const totalUsers = userCount + merchantCount + adminCount;
+
+  const getCategoryCount = (role) => {
+    if (role === 'USER') return userCount;
+    if (role === 'MERCHANT') return merchantCount;
+    if (role === 'MASTER_ADMIN') return adminCount;
+    return 0;
+  };
+    
   // Tab activa (USER, MERCHANT, MASTER_ADMIN)
-  const [activeTab, setActiveTab] = useState('USER');
+  
+    const [activeTab, setActiveTab] = useState('USER');
   
   // Búsqueda
   const [searchQuery, setSearchQuery] = useState('');
@@ -255,6 +291,9 @@ export default function UsersManagementScreen() {
       setShowAddModal(false);
       setNewUserForm({ name: '', email: '', password: '' });
       await refetch(); // Recargar con React Query
+      queryClient.invalidateQueries(['userCount']);
+      queryClient.invalidateQueries(['merchantCount']);
+      queryClient.invalidateQueries(['adminCount']);
     } catch (error) {
       const errorMsg = error.response?.data?.data?.message || error.response?.data?.message || 'Error al crear usuario';
       Alert.alert('Error', errorMsg);
@@ -315,6 +354,9 @@ export default function UsersManagementScreen() {
   };
 
   const getTabCount = (role) => {
+    if (role === 'MASTER_ADMIN') {
+        return allUsers.filter(u => u.role === 'MASTER_ADMIN' || u.role === 'SUPPORT_ADMIN').length;
+    }
     return allUsers.filter(u => u.role === role).length;
   };
 
@@ -468,30 +510,34 @@ export default function UsersManagementScreen() {
 
   return (
     <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
-      {/* Tabs */}
-      <View style={styles.tabsContainer}>
-          {getAvailableTabs().map((role) => (
-            <TouchableOpacity
-              key={role}
-              style={[styles.tab, activeTab === role && styles.tabActive]}
-              onPress={() => setActiveTab(role)}
-            >
-              <MaterialCommunityIcons
-                name={getRoleIcon(role)}
-                size={18}
-                color={activeTab === role ? COLORS.white : getRoleColor(role)}
-              />
-              <Text style={[styles.tabText, activeTab === role && styles.tabTextActive]}>
-                {getTabLabel(role)}
-              </Text>
-              <View style={[styles.tabBadge, activeTab === role && styles.tabBadgeActive]}>
-                <Text style={[styles.tabBadgeText, activeTab === role && styles.tabBadgeTextActive]}>
-                  {getTabCount(role)}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+      {/* Filters */}
+      <View style={styles.filtersContainer}>
+        {getAvailableTabs().map((role) => (
+          <TouchableOpacity
+            key={role}
+            style={[
+              styles.filterButton,
+              activeTab === role && styles.filterButtonActive,
+            ]}
+            onPress={() => setActiveTab(role)}
+          >
+            <Text style={[styles.filterButtonText, activeTab === role && styles.filterButtonTextActive]}>
+              {getTabLabel(role)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      <View style={styles.userCountContainer}>
+        <Text style={styles.userCountText}>
+            {`${getCategoryCount(activeTab)} de ${totalUsers || 0} usuarios`}
+        </Text>
+        {activeTab === 'MASTER_ADMIN' && (
+            <View style={styles.adminCountBreakdown}>
+                <Text style={styles.breakdownText}>Master: {masterAdminCount}</Text>
+                <Text style={styles.breakdownText}>Soporte: {supportAdminCount}</Text>
+            </View>
+        )}
+      </View>
 
       {/* Barra de Búsqueda */}
       <View style={styles.searchContainer}>
@@ -825,58 +871,61 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.body2,
     color: COLORS.gray,
   },
-  // Tabs
-  tabsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  tab: {
+  // Filters (replaces Tabs)
+  filtersContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: LAYOUT.borderRadius.md,
     backgroundColor: COLORS.white,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    gap: SPACING.xs,
+    padding: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
+    gap: SPACING.sm,
   },
-  tabActive: {
+  filterButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: LAYOUT.borderRadius.md,
+    backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  filterButtonActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+    ...LAYOUT.shadowSmall,
   },
-  tabText: {
-    fontSize: TYPOGRAPHY.body2,
-    fontWeight: '600',
-    color: COLORS.dark,
-  },
-  tabTextActive: {
-    color: COLORS.white,
-  },
-  tabBadge: {
-    backgroundColor: COLORS.light,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: 12,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  tabBadgeActive: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-  },
-  tabBadgeText: {
+  filterButtonText: {
+    textAlign: 'center',
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: '700',
-    color: COLORS.dark,
+    fontWeight: '600',
+    color: COLORS.gray,
   },
-  tabBadgeTextActive: {
+  filterButtonTextActive: {
     color: COLORS.white,
+  },
+  userCountContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+  },
+  userCountText: {
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: '600',
+    color: COLORS.gray,
+  },
+  adminCountBreakdown: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginTop: SPACING.xs,
+  },
+  breakdownText: {
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.gray,
   },
   // Botón Flotante (FAB)
   fab: {
@@ -900,17 +949,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
   },
   searchIcon: {
-    marginRight: SPACING.sm,
+    marginRight: SPACING.xs,
   },
   searchInput: {
     flex: 1,
     fontSize: TYPOGRAPHY.body1,
     color: COLORS.dark,
-    padding: 0,
+    paddingVertical: Platform.OS === 'ios' ? SPACING.sm : SPACING.xs,
   },
   clearButton: {
     padding: SPACING.xs,

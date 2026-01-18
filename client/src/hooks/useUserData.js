@@ -161,6 +161,7 @@ export function useInfiniteUsers(role = null, status = null, pageSize = 20) {
       const response = await adminAPI.getUsers(role, status, pageSize, pageParam);
       return {
         data: response.data?.data?.users || [],
+        total: response.data?.data?.total || 0,
         nextOffset: pageParam + pageSize,
       };
     },

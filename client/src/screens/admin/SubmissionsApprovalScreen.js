@@ -347,10 +347,15 @@ const styles = StyleSheet.create({
   },
   filters: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    gap: SPACING.sm,
+    alignItems: 'center',
     backgroundColor: COLORS.white,
+    padding: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
+    gap: SPACING.sm,
   },
   filterButton: {
     flex: 1,
@@ -358,10 +363,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     borderRadius: LAYOUT.borderRadius.md,
     backgroundColor: COLORS.light,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   filterButtonActive: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+    ...LAYOUT.shadowSmall,
   },
   filterButtonText: {
     textAlign: 'center',
