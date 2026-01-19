@@ -62,7 +62,7 @@ export default function MerchantDashboardScreen({ navigation }) {
 
   if (loading && !stats) {
     return (
-      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
         <MerchantDashboardSkeleton />
       </ScreenWrapper>
     );
@@ -72,7 +72,7 @@ export default function MerchantDashboardScreen({ navigation }) {
   const qrsValidados = stats?.qrsValidados || 12;
 
   return (
-    <ScreenWrapper bgColor={theme.background} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   scrollContent: {
-    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.sm,
     paddingBottom: SPACING.xl,
   },
   centerContent: {

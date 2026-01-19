@@ -222,15 +222,18 @@ function ScannerStack() {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="ScannerMain" component={ScannerScreen} />
+      <Stack.Screen 
+        name="ScannerMain" 
+        component={ScannerScreen} 
+        options={{
+          headerShown: false, // Ocultamos el header del Stack para usar el del Tab
+        }}
+      />
       <Stack.Screen 
         name="QRScanner" 
         component={QRScannerScreen}
         options={{
-          headerShown: true,
-          headerStyle: { backgroundColor: COLORS.merchant },
-          headerTintColor: COLORS.white,
-          headerTitle: 'Escanear QR',
+          headerShown: false, // Ocultamos header aquí también (tiene su propia UI de cámara)
         }}
       />
     </Stack.Navigator>
@@ -255,6 +258,7 @@ function MobileLayout() {
           fontWeight: '600',
           fontSize: 18,
         },
+        headerTitleAlign: 'left',
         tabBarIcon: ({ focused }) => {
           const iconMap = {
             Dashboard: 'chart-box',
@@ -292,7 +296,7 @@ function MobileLayout() {
       <Tab.Screen
         name="Scanner"
         component={ScannerStack}
-        options={{ title: 'Validar', headerShown: false }}
+        options={{ title: 'Validar Cupón' }} // Activamos el header del Tab (quitando headerShown: false)
       />
       <Tab.Screen
         name="History"

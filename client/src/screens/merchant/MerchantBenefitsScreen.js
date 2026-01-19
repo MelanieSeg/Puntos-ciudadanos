@@ -195,7 +195,7 @@ export default function MerchantBenefitsScreen() {
   // Loading state
   if (loading && benefits.length === 0) {
     return (
-      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
         <FlatList
           data={[1, 2, 3, 4, 5, 6]}
           renderItem={renderSkeleton}
@@ -211,7 +211,7 @@ export default function MerchantBenefitsScreen() {
   // Error state
   if (error && benefits.length === 0) {
     return (
-      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
         <View style={styles.centerContent}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
           <Text style={[styles.errorTitle, { color: theme.text }]}>Error de conexión</Text>
@@ -226,7 +226,7 @@ export default function MerchantBenefitsScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={theme.background} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
       <FlatList
         data={benefits}
         renderItem={renderBenefit}
@@ -334,12 +334,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   listContent: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingHorizontal: Platform.OS === 'web' ? SPACING.lg : SPACING.md,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.sm,
     paddingBottom: SPACING.xl,
   },
   row: {
     justifyContent: 'flex-start',
+    gap: SPACING.md,
     marginBottom: SPACING.md,
   },
   rowMobile: {
@@ -350,9 +351,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.md,
-    marginHorizontal: SPACING.xs,
+    marginHorizontal: Platform.OS === 'web' ? 0 : SPACING.xs,
     marginBottom: SPACING.md,
-    width: Platform.OS === 'web' ? '31%' : '48%',
+    width: Platform.OS === 'web' ? '32%' : '48%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,

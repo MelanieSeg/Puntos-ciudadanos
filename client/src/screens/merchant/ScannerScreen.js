@@ -97,9 +97,9 @@ export default function ScannerScreen({ navigation }) {
   };
 
   return (
-    <ScreenWrapper bgColor={theme.background} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.subtitle, { color: theme.textSecondary, marginBottom: SPACING.lg }]}>
+        <Text style={[styles.subtitle, { color: theme.textSecondary, marginBottom: SPACING.lg, marginHorizontal: SPACING.md }]}>
           {isWeb ? 'Ingresa el código QR del cliente' : 'Escanea el código QR del cliente'}
         </Text>
 
@@ -230,8 +230,8 @@ export default function ScannerScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingHorizontal: 0,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.sm,
     paddingBottom: SPACING.xl,
   },
   subtitle: {
@@ -246,6 +246,7 @@ const styles = StyleSheet.create({
     borderRadius: LAYOUT.borderRadius.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
+    marginHorizontal: SPACING.md, // Margen lateral
     marginBottom: SPACING.xl,
     borderWidth: 2,
     borderColor: COLORS.merchant,
@@ -269,6 +270,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.merchant,
     borderRadius: LAYOUT.borderRadius.lg,
     padding: SPACING.xl * 1.5,
+    marginHorizontal: SPACING.md, // Margen lateral
     marginVertical: SPACING.xl,
     alignItems: 'center',
     ...LAYOUT.shadowMedium,
@@ -367,6 +369,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: LAYOUT.borderRadius.md,
     padding: SPACING.lg,
+    marginHorizontal: SPACING.md, // Margen lateral
     marginBottom: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
@@ -403,6 +406,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: SPACING.md, // Margen lateral
     gap: SPACING.md,
     marginBottom: SPACING.xl,
     ...LAYOUT.shadowMedium,
@@ -421,6 +425,7 @@ const styles = StyleSheet.create({
     borderLeftColor: COLORS.info,
     borderRadius: LAYOUT.borderRadius.md,
     padding: SPACING.md,
+    marginHorizontal: SPACING.md, // Margen lateral
     flexDirection: 'row',
     gap: SPACING.md,
   },

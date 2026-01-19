@@ -153,7 +153,7 @@ export default function MerchantStockScreen({ navigation }) {
 
   if (loading) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
@@ -162,7 +162,7 @@ export default function MerchantStockScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
       {/* Lista */}
       <FlatList
         data={benefits}
@@ -272,14 +272,15 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
   },
   listContent: {
-    paddingHorizontal: SPACING.md,
-    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingHorizontal: 0,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.sm,
     paddingBottom: SPACING.xl,
   },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: LAYOUT.borderRadius.lg,
     padding: SPACING.md,
+    marginHorizontal: SPACING.md, // Agregado para que no toque los bordes
     marginBottom: SPACING.md,
     ...LAYOUT.shadowSmall,
   },

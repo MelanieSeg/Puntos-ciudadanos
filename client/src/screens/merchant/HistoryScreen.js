@@ -100,7 +100,7 @@ export default function HistoryScreen() {
 
   if (isLoading && !redemptions.length) {
     return (
-      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.merchant} />
           <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Cargando historial...</Text>
@@ -110,10 +110,9 @@ export default function HistoryScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={theme.background} safeArea={false}>
-      <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.text }]}>Historial de Validaciones</Text>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>
+      <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : 0 }]}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{transactions.length} canjes realizados</Text>
         </View>
 
@@ -170,7 +169,7 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: 0,
   },
   centerContainer: {
     flex: 1,
@@ -184,6 +183,10 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.md, // Alineación del texto del header
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
   },
   title: {
     fontSize: TYPOGRAPHY.h3,
@@ -197,12 +200,14 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingBottom: SPACING.xl,
+    paddingTop: SPACING.md,
   },
   transactionCard: {
     flexDirection: 'row',
     backgroundColor: COLORS.white,
     borderRadius: LAYOUT.borderRadius.lg,
     padding: SPACING.md,
+    marginHorizontal: SPACING.md, // Agregado para que no toque los bordes
     marginBottom: SPACING.md,
     alignItems: 'center',
     ...LAYOUT.shadowSmall,
