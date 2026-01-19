@@ -68,7 +68,7 @@ enum EvidenceType {
 // MODELS
 // ============================================
 
-/// Usuarios del sistema (ciudadanos, comerciantes y administradores)
+/// Tabla única de Usuarios: Centraliza el acceso para Ciudadanos, Comercios y Admins.
 model User {
   id                String           @id @default(uuid())
   name              String           @db.VarChar(255)
@@ -76,8 +76,8 @@ model User {
   passwordHash      String           @map("password_hash") @db.VarChar(255)
   role              UserRole         @default(USER)
   status            UserStatus       @default(ACTIVE)
-  emailVerified     Boolean          @default(false) @map("email_verified")
-  mustChangePassword Boolean         @default(false) @map("mustChangePassword")
+  emailVerified     Boolean          @default(false) @map("email_verified") // Para verificar cuenta nueva
+  mustChangePassword Boolean         @default(false) @map("mustChangePassword") // Obligatorio para Admins/Comercios creados manualmente
   lastLoginAt       DateTime?        @map("last_login_at") @db.Timestamptz(3)
   
   // Timestamps
@@ -86,10 +86,10 @@ model User {
   updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
   
   // Relaciones
-  wallet            Wallet?          // Billetera: relación 1:1
-  merchantProfile   MerchantProfile? // Perfil de comerciante (si es comerciante)
-  missionSubmissions MissionSubmission[] // Misiones enviadas por el usuario
-  missionCompletions MissionCompletion[] // Registro de misiones completadas
+  wallet            Wallet?          // Principalmente para Ciudadanos (puntos ganados)
+  merchantProfile   MerchantProfile? // Datos extra solo para rol MERCHANT (RUT, Dirección)
+  missionSubmissions MissionSubmission[] // Evidencias enviadas (Ciudadanos)
+  missionCompletions MissionCompletion[] // Historial de misiones (Ciudadanos)
   validatedSubmissions MissionSubmission[] @relation("AdminValidations") // Aprobaciones hechas por este admin
   adminLogs         AdminLog[]       // Decisiones administrativas que ha tomado
   benefitsOwned     Benefit[]        // Beneficios que posee como comerciante
@@ -140,7 +140,7 @@ model PointTransaction {
   createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
   
   // Relaciones
-  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  wallet       Wallet          @relation(fields: [walletId], references: [id], onDelete: Restrict) // PROTECCIÓN: No borrar historial financiero si se borra la wallet
   benefit      Benefit?        @relation(fields: [benefitId], references: [id], onDelete: SetNull)
   
   @@index([walletId])
@@ -264,7 +264,7 @@ model AdminLog {
   createdAt   DateTime @default(now()) @map("createdAt") @db.Timestamptz(3)
   
   // Relaciones
-  admin       User     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  admin       User     @relation(fields: [adminId], references: [id], onDelete: Restrict) // PROTECCIÓN: Mantener auditoría aunque se borre el admin
   
   @@index([adminId])
   @@index([action])
@@ -286,7 +286,6 @@ model MissionCompletion {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   mission       Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
   
-  @@unique([userId, missionId, completedAt])
   @@index([userId])
   @@index([missionId])
   @@index([completedAt])
