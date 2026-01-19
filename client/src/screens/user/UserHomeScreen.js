@@ -464,6 +464,21 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
             </ScrollView>
           </View>
         )}
+
+        {/* TARJETA DE COMERCIOS ASOCIADOS */}
+        <TouchableOpacity
+          style={[styles.associatesCard, { backgroundColor: theme.surface }]}
+          onPress={() => navigation.navigate('Associates')}
+        >
+          <View style={styles.associatesIconContainer}>
+            <MaterialCommunityIcons name="store" size={24} color={COLORS.primary} />
+          </View>
+          <View style={styles.associatesInfo}>
+            <Text style={[styles.associatesTitle, { color: theme.text }]}>Comercios Asociados</Text>
+            <Text style={[styles.associatesSubtitle, { color: theme.textSecondary }]}>Descubre dónde usar tus puntos</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
+        </TouchableOpacity>
       </ScrollView>
     </ScreenWrapper>
   );
@@ -654,6 +669,38 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '600',
     fontSize: 14,
+  },
+  associatesCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: 12,
+    marginBottom: SPACING.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  associatesIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.light,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: SPACING.md,
+  },
+  associatesInfo: {
+    flex: 1,
+  },
+  associatesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  associatesSubtitle: {
+    fontSize: 12,
   },
   sidePanel: {
     gap: SPACING.md,

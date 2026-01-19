@@ -8,6 +8,17 @@ import prisma from '../config/database.js';
 const router = Router();
 
 /**
+ * GET /api/v1/merchant/associates
+ * Obtener lista de comercios asociados
+ * Accesible para cualquier usuario autenticado
+ */
+router.get(
+  '/associates',
+  authenticate,
+  merchantController.getAssociates
+);
+
+/**
  * POST /api/v1/merchant/redeem
  * El comercio escanea el QR del cliente y procesa el canje
  * Solo comercios y admins

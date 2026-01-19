@@ -1,6 +1,7 @@
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/response.js';
 import * as pointsService from '../services/points.service.js';
+import prisma from '../config/database.js';
 
 /**
  * POST /api/v1/merchant/redeem
@@ -46,6 +47,32 @@ export const redeemQRCode = asyncHandler(async (req, res) => {
     'QR validado y canje procesado exitosamente',
     200
   );
+});
+
+/**
+ * GET /api/v1/merchant/associates
+ * Obtener lista de comercios asociados
+ */
+export const getAssociates = asyncHandler(async (req, res) => {
+  const merchants = await prisma.user.findMany({
+    where: {
+      role: 'MERCHANT',
+      status: 'ACTIVE',
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+  });
+
+  const data = merchants.map((m) => ({
+    id: m.id,
+    name: m.name,
+    category: 'Comercio Asociado',
+  }));
+
+  successResponse(res, data, 'Comercios asociados obtenidos');
 });
 
 /**

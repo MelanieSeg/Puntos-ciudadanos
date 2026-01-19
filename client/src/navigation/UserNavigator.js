@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import UserHomeScreen from '../screens/user/UserHomeScreen';
 import BenefitsScreen from '../screens/user/BenefitsScreen';
 import EarnScreen from '../screens/user/EarnScreen';
+import AssociatesScreen from '../screens/user/AssociatesScreen';
 import ProfileScreen from '../screens/user/ProfileScreen';
 import HistorialScreen from '../screens/user/HistorialScreen';
 import MissionDetailScreen from '../screens/user/MissionDetailScreen';
@@ -174,6 +175,7 @@ function WebLayout() {
   const [benefitDetailParams, setBenefitDetailParams] = useState(null);
   const [qrCodeVisible, setQrCodeVisible] = useState(false);
   const [qrCodeParams, setQrCodeParams] = useState(null);
+  const [associatesVisible, setAssociatesVisible] = useState(false);
 
   const handleMissionPress = (params) => {
     setMissionSubmissionParams(params);
@@ -212,6 +214,10 @@ function WebLayout() {
     }, 300);
   };
 
+  const handleAssociatesPress = () => {
+    setAssociatesVisible(true);
+  };
+
   const earnNavigationMock = {
     navigate: (screen, params) => {
       if (screen === 'MissionSubmission') {
@@ -231,7 +237,11 @@ function WebLayout() {
 
   const homeNavigationMock = {
     navigate: (screen) => {
-      setActiveTab(screen);
+      if (screen === 'Associates') {
+        handleAssociatesPress();
+      } else {
+        setActiveTab(screen);
+      }
     }
   };
 
@@ -379,6 +389,26 @@ function WebLayout() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal para Associates */}
+      <Modal
+        visible={associatesVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setAssociatesVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+            <TouchableOpacity 
+              style={[styles.modalClose, { backgroundColor: theme.surface }]}
+              onPress={() => setAssociatesVisible(false)}
+            >
+              <Text style={[styles.modalCloseText, { color: theme.text }]}>✕</Text>
+            </TouchableOpacity>
+            <AssociatesScreen navigation={{ goBack: () => setAssociatesVisible(false) }} />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -499,6 +529,33 @@ function HistorialStack() {
 }
 
 // ============================================================================
+// COMPONENTE: Stack para Home (Incluye Associates)
+// ============================================================================
+function HomeStack() {
+  const { theme } = useTheme();
+  
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: theme.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.border,
+        },
+        headerTintColor: theme.text,
+        headerTitleStyle: {
+          fontWeight: '600',
+        },
+      }}
+    >
+      <Stack.Screen name="HomeMain" component={UserHomeScreen} options={{ title: 'Inicio' }} />
+      <Stack.Screen name="Associates" component={AssociatesScreen} options={{ title: 'Comercios Asociados' }} />
+    </Stack.Navigator>
+  );
+}
+
+// ============================================================================
 // COMPONENTE: Mobile Layout (Bottom Tabs)
 // ============================================================================
 function MobileLayout() {
@@ -545,8 +602,8 @@ function MobileLayout() {
     >
       <Tab.Screen
         name="Home"
-        component={UserHomeScreen}
-        options={{ title: 'Inicio' }}
+        component={HomeStack}
+        options={{ title: 'Inicio', headerShown: false }}
       />
       <Tab.Screen
         name="Benefits"

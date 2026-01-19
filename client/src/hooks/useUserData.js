@@ -227,3 +227,23 @@ export function useInfiniteMerchantHistory(pageSize = 20) {
     retry: 2,
   });
 }
+
+/**
+ * Hook para obtener comercios asociados (público)
+ * staleTime: 1 hora - La lista de comercios no cambia frecuentemente
+ */
+export function useAssociates() {
+  return useQuery({
+    queryKey: ['associates', 'list'],
+    queryFn: async () => {
+      const response = await merchantAPI.getAssociates(); 
+      return response.data?.data || [];
+    },
+    staleTime: 1000 * 60 * 60, // 1 hora
+    retry: (failureCount, error) => {
+      // No reintentar si el endpoint no existe (404)
+      if (error.response?.status === 404) return false;
+      return failureCount < 2;
+    },
+  });
+}

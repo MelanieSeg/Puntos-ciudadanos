@@ -148,6 +148,7 @@ export const merchantAPI = {
   getStats: () => api.get('/merchant/stats'),
   getHistory: (limit = 20, offset = 0) => 
     api.get(`/merchant/history?limit=${limit}&offset=${offset}`),
+  getAssociates: () => api.get('/merchant/associates'),
 };
 
 // Servicios de misiones
