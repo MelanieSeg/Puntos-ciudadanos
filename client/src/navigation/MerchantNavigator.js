@@ -16,6 +16,7 @@ import MerchantBenefitsScreen from '../screens/merchant/MerchantBenefitsScreen';
 import ScannerScreen from '../screens/merchant/ScannerScreen';
 import QRScannerScreen from '../screens/merchant/QRScannerScreen';
 import HistoryScreen from '../screens/merchant/HistoryScreen';
+import MerchantProfileScreen from '../screens/merchant/MerchantProfileScreen';
 import WebHeader from '../components/WebHeader';
 import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -47,6 +48,7 @@ function WebSidebar({ activeTab, onNavigate }) {
     { id: 'Benefits', label: 'Mis Beneficios', icon: 'gift' },
     { id: 'Scanner', label: 'Validar Cupones', icon: 'qrcode-scan' },
     { id: 'History', label: 'Historial', icon: 'history' },
+    { id: 'Profile', label: 'Configuración', icon: 'cog' },
   ];
 
   return (
@@ -187,6 +189,9 @@ function WebLayout() {
         <View style={activeTab === 'History' ? styles.activeScreen : styles.hiddenScreen}>
           <HistoryScreen navigation={navigationMock} />
         </View>
+        <View style={activeTab === 'Profile' ? styles.activeScreen : styles.hiddenScreen}>
+          <MerchantProfileScreen navigation={navigationMock} />
+        </View>
       </>
     );
   };
@@ -197,6 +202,7 @@ function WebLayout() {
       'Benefits': 'Mis Beneficios',
       'Scanner': 'Validar Cupones',
       'History': 'Historial de Validaciones',
+      'Profile': 'Configuración',
     };
     return titles[activeTab] || 'Mi Comercio';
   };
@@ -245,6 +251,7 @@ function ScannerStack() {
 // ============================================================================
 function MobileLayout() {
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   return (
     <Tab.Navigator
@@ -265,6 +272,7 @@ function MobileLayout() {
             Benefits: 'gift',
             Scanner: 'qrcode-scan',
             History: 'history',
+            Profile: 'cog',
           };
           return (
             <MaterialCommunityIcons
@@ -280,6 +288,8 @@ function MobileLayout() {
           ...styles.mobileTabBar,
           paddingBottom: insets.bottom,
           height: 60 + insets.bottom,
+          backgroundColor: theme.surface,
+          borderTopColor: theme.border,
         },
       })}
     >
@@ -302,6 +312,11 @@ function MobileLayout() {
         name="History"
         component={HistoryScreen}
         options={{ title: 'Historial' }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={MerchantProfileScreen}
+        options={{ title: 'Perfil' }}
       />
     </Tab.Navigator>
   );

@@ -596,7 +596,13 @@ function MobileLayout() {
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.gray,
-        tabBarStyle: { ...styles.mobileTabBar, paddingBottom: insets.bottom, height: 60 + insets.bottom },
+        tabBarStyle: { 
+          ...styles.mobileTabBar, 
+          paddingBottom: insets.bottom, 
+          height: 60 + insets.bottom,
+          backgroundColor: theme.surface,
+          borderTopColor: theme.border,
+        },
         tabBarLabelStyle: styles.tabBarLabel,
       })}
     >
