@@ -140,8 +140,12 @@ export const getStats = asyncHandler(async (req, res) => {
  */
 export const getHistory = asyncHandler(async (req, res) => {
   const { limit = 20, offset = 0 } = req.query;
-  const limitNum = parseInt(limit, 10);
-  const offsetNum = parseInt(offset, 10);
+  
+  // Validación robusta para evitar NaN si el cliente móvil envía "undefined" o strings vacíos
+  let limitNum = parseInt(limit, 10);
+  let offsetNum = parseInt(offset, 10);
+  if (isNaN(limitNum) || limitNum <= 0) limitNum = 20;
+  if (isNaN(offsetNum) || offsetNum < 0) offsetNum = 0;
 
   const redemptions = await prisma.benefitRedemption.findMany({
     where: {
@@ -219,13 +223,15 @@ export const getAssociates = asyncHandler(async (req, res) => {
       id: true,
       name: true,
       email: true,
+      merchantProfile: true,
     },
   });
 
   const data = merchants.map((m) => ({
     id: m.id,
-    name: m.name,
+    name: m.merchantProfile?.storeName || m.name,
     category: 'Comercio Asociado',
+    merchantProfile: m.merchantProfile,
   }));
 
   successResponse(res, data, 'Comercios asociados obtenidos');

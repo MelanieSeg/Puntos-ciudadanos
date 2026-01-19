@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TextInput, ActivityIndicator, Platform, TouchableOpacity, Linking, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { useAssociates } from '../../hooks/useUserData';
@@ -16,7 +16,32 @@ export default function AssociatesScreen() {
   ) || [];
 
   const renderItem = ({ item }) => (
-    <View style={[styles.card, { backgroundColor: theme.surface }]}>
+    <TouchableOpacity 
+      style={[styles.card, { backgroundColor: theme.surface }]}
+      onPress={() => {
+        const address = item.merchantProfile?.address;
+        if (address) {
+          // Si empieza con http es un link, si no, creamos una búsqueda en Google Maps
+          const finalUrl = address.startsWith('http') 
+            ? address 
+            : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+            
+          Linking.openURL(finalUrl).catch(err => {
+            if (Platform.OS === 'web') {
+              window.alert('Error: No se pudo abrir el mapa');
+            } else {
+              Alert.alert('Error', 'No se pudo abrir el mapa');
+            }
+          });
+        } else {
+          if (Platform.OS === 'web') {
+            window.alert('Aviso: Este comercio no tiene ubicación registrada');
+          } else {
+            Alert.alert('Aviso', 'Este comercio no tiene ubicación registrada');
+          }
+        }
+      }}
+    >
       <View style={[styles.iconContainer, { backgroundColor: COLORS.light }]}>
         <MaterialCommunityIcons name="store" size={32} color={COLORS.primary} />
       </View>
@@ -25,9 +50,19 @@ export default function AssociatesScreen() {
         <Text style={[styles.merchantCategory, { color: theme.textSecondary }]}>
           {item.category || 'Comercio Asociado'}
         </Text>
+        {item.merchantProfile?.address && (
+          <Text style={{ fontSize: 12, color: COLORS.primary, marginTop: 4 }}>
+            Ver ubicación <MaterialCommunityIcons name="map-marker" size={12} />
+          </Text>
+        )}
+        {item.merchantProfile?.phone && (
+          <Text style={{ fontSize: 12, color: theme.textSecondary, marginTop: 2 }}>
+            <MaterialCommunityIcons name="phone" size={12} /> {item.merchantProfile.phone}
+          </Text>
+        )}
       </View>
       <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
-    </View>
+    </TouchableOpacity>
   );
 
   return (

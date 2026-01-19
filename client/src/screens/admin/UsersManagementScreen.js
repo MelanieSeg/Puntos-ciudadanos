@@ -155,6 +155,9 @@ export default function UsersManagementScreen() {
     name: '',
     email: '',
     password: '',
+    address: '',
+    phone: '',
+    rut: '',
   });
 
   // Modal para mostrar la contraseña generada
@@ -275,6 +278,9 @@ export default function UsersManagementScreen() {
         response = await adminAPI.createMerchant({
           name: newUserForm.name,
           email: newUserForm.email,
+          address: newUserForm.address,
+          phone: newUserForm.phone,
+          rut: newUserForm.rut,
         });
         const password = response.data?.data?.temporaryPassword || 'N/A';
         
@@ -289,7 +295,7 @@ export default function UsersManagementScreen() {
       }
 
       setShowAddModal(false);
-      setNewUserForm({ name: '', email: '', password: '' });
+      setNewUserForm({ name: '', email: '', password: '', address: '', phone: '', rut: '' });
       await refetch(); // Recargar con React Query
       queryClient.invalidateQueries(['userCount']);
       queryClient.invalidateQueries(['merchantCount']);
@@ -302,7 +308,7 @@ export default function UsersManagementScreen() {
 
   const cancelAddUser = () => {
     setShowAddModal(false);
-    setNewUserForm({ name: '', email: '', password: '' });
+    setNewUserForm({ name: '', email: '', password: '', address: '', phone: '', rut: '' });
   };
 
   const getAvailableTabs = () => {
@@ -389,6 +395,12 @@ export default function UsersManagementScreen() {
         <View style={styles.userInfo}>
           <Text style={styles.userName}>{item.name}</Text>
           <Text style={styles.userEmail}>{item.email}</Text>
+          {item.role === 'MERCHANT' && item.merchantProfile?.address && (
+            <View style={styles.addressRow}>
+              <MaterialCommunityIcons name="map-marker" size={14} color={COLORS.gray} />
+              <Text style={styles.addressText} numberOfLines={1}>{item.merchantProfile.address}</Text>
+            </View>
+          )}
           <View style={styles.metaRow}>
             {item.role === 'USER' && (
               <View style={styles.pointsContainer}>
@@ -684,6 +696,11 @@ export default function UsersManagementScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <ScrollView 
+              style={{ width: '100%' }}
+              contentContainerStyle={{ alignItems: 'center', paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            >
             <MaterialCommunityIcons
               name={addModalType === 'MERCHANT' ? 'store-plus' : 'shield-plus'}
               size={48}
@@ -694,7 +711,7 @@ export default function UsersManagementScreen() {
             </Text>
             <Text style={styles.modalSubtitle}>
               {addModalType === 'MERCHANT'
-                ? 'El comercio podrá validar cupones y ofrecer beneficios a los ciudadanos.'
+                ? 'El comercio podrá validar cupones.'
                 : 'Los administradores de soporte pueden aprobar misiones y gestionar usuarios, pero no pueden crear otros administradores.'}
             </Text>
 
@@ -724,6 +741,43 @@ export default function UsersManagementScreen() {
                 />
               </View>
 
+              {addModalType === 'MERCHANT' && (
+                <>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Link de Google Maps / Dirección</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Ej: https://maps.app.goo.gl/..."
+                    value={newUserForm.address}
+                    onChangeText={(text) => setNewUserForm({ ...newUserForm, address: text })}
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Teléfono</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="+569 1234 5678"
+                    value={newUserForm.phone}
+                    onChangeText={(text) => setNewUserForm({ ...newUserForm, phone: text })}
+                    keyboardType="phone-pad"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>RUT</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="12.345.678-9"
+                    value={newUserForm.rut}
+                    onChangeText={(text) => setNewUserForm({ ...newUserForm, rut: text })}
+                    autoCapitalize="none"
+                  />
+                </View>
+                </>
+              )}
+
               <Text style={styles.passwordNote}>
                 💡 Se generará una contraseña temporal automáticamente que deberá cambiarse en el primer inicio de sesión.
               </Text>
@@ -737,6 +791,7 @@ export default function UsersManagementScreen() {
                 <Text style={styles.modalButtonConfirmText}>Crear</Text>
               </TouchableOpacity>
             </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -1069,6 +1124,17 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     marginBottom: SPACING.sm,
   },
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    gap: 4,
+  },
+  addressText: {
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.gray,
+    flex: 1,
+  },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1236,6 +1302,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    maxHeight: '90%',
   },
   modalTitle: {
     fontSize: TYPOGRAPHY.h4,
@@ -1362,4 +1429,3 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
 });
-

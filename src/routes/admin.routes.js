@@ -527,6 +527,11 @@ router.get(
         createdAt: true,
         updatedAt: true,
         lastLoginAt: true, // Agregar último login para admins
+        merchantProfile: {
+          select: {
+            address: true,
+          },
+        },
         wallet: {
           select: {
             balance: true,
@@ -628,6 +633,10 @@ router.post(
       return errorResponse(res, 'Nombre y email son obligatorios', 400);
     }
 
+    if (address && address.length < 5) {
+      return errorResponse(res, 'La dirección es demasiado corta', 400);
+    }
+
     // Verificar que el email no exista
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -709,7 +718,7 @@ router.post(
   authenticate,
   authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
   asyncHandler(async (req, res) => {
-    const { name, email } = req.body;
+    const { name, email, address, phone, rut } = req.body;
 
     // Validaciones
     if (!name || !email) {
@@ -723,6 +732,16 @@ router.post(
 
     if (existingUser) {
       return errorResponse(res, 'Este email ya está registrado', 400);
+    }
+
+    // Verificar si el RUT ya existe (si se proporcionó)
+    if (rut) {
+      const existingProfile = await prisma.merchantProfile.findUnique({
+        where: { rut },
+      });
+      if (existingProfile) {
+        return errorResponse(res, 'Este RUT ya está registrado', 400);
+      }
     }
 
     // Generar contraseña temporal segura (12 caracteres con mayúsculas, minúsculas, números y símbolos)
@@ -741,6 +760,14 @@ router.post(
         wallet: {
           create: {
             balance: 0,
+          },
+        },
+        merchantProfile: {
+          create: {
+            storeName: name,
+            address: address || null,
+            phone: phone || null,
+            rut: rut || null,
           },
         },
       },

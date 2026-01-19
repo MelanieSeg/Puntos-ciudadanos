@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { useTheme } from '../../context/ThemeContext';
@@ -119,8 +119,8 @@ export default function HistoryScreen() {
         {error ? (
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons name="alert-circle" size={48} color={COLORS.error} />
-            <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity style={styles.retryButton} onPress={loadHistory}>
+            <Text style={styles.errorText}>{error?.message || 'Error al cargar historial'}</Text>
+            <TouchableOpacity style={styles.retryButton} onPress={refetch}>
               <Text style={styles.retryText}>Reintentar</Text>
             </TouchableOpacity>
           </View>
