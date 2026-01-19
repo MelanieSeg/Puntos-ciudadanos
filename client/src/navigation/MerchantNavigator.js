@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useContext } from 'react';
-import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert } from 'react-native';
+import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -18,6 +18,7 @@ import QRScannerScreen from '../screens/merchant/QRScannerScreen';
 import HistoryScreen from '../screens/merchant/HistoryScreen';
 import WebHeader from '../components/WebHeader';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { COLORS, SPACING } from '../theme/theme';
 
 const Tab = createBottomTabNavigator();
@@ -29,6 +30,7 @@ const isWeb = Platform.OS === 'web';
 // ============================================================================
 function WebSidebar({ activeTab, onNavigate }) {
   const { logout } = useContext(AuthContext);
+  const { isDarkMode, toggleTheme, theme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogoutConfirm = async () => {
@@ -48,14 +50,14 @@ function WebSidebar({ activeTab, onNavigate }) {
   ];
 
   return (
-    <View style={styles.webSidebar}>
+    <View style={[styles.webSidebar, { backgroundColor: theme.sidebarBg || '#1a1f36' }]}>
       {/* Logo */}
       <View style={styles.logoContainer}>
-        <MaterialCommunityIcons name="leaf" size={28} color={COLORS.white} />
+        <MaterialCommunityIcons name="leaf" size={28} color={theme.sidebarText || COLORS.white} />
         <View>
-          <Text style={styles.logoMain}>Puntos</Text>
-          <Text style={styles.logoSub}>Ciudadanos</Text>
-          <Text style={styles.logoMerchant}>Mi Comercio</Text>
+          <Text style={[styles.logoMain, { color: theme.sidebarText || COLORS.white }]}>Puntos</Text>
+          <Text style={[styles.logoSub, { color: theme.sidebarText || COLORS.white }]}>Ciudadanos</Text>
+          <Text style={[styles.logoMerchant, { color: (theme.sidebarText || COLORS.white) + '99' }]}>Mi Comercio</Text>
         </View>
       </View>
 
@@ -73,11 +75,12 @@ function WebSidebar({ activeTab, onNavigate }) {
             <MaterialCommunityIcons
               name={tab.icon}
               size={20}
-              color={activeTab === tab.id ? COLORS.merchant : COLORS.white}
+              color={activeTab === tab.id ? COLORS.merchant : (theme.sidebarText || COLORS.white)}
             />
             <Text
               style={[
                 styles.sidebarLabel,
+                { color: theme.sidebarText || COLORS.white },
                 activeTab === tab.id && styles.sidebarLabelActive,
               ]}
             >
@@ -88,9 +91,28 @@ function WebSidebar({ activeTab, onNavigate }) {
       </ScrollView>
 
       <View style={styles.sidebarFooter}>
+        {/* Control de Tema */}
+        <TouchableOpacity style={styles.themeToggleBtn} onPress={toggleTheme} activeOpacity={0.7}>
+          <MaterialCommunityIcons 
+            name={isDarkMode ? 'weather-sunny' : 'weather-night'} 
+            size={20} 
+            color={theme.sidebarText || COLORS.white} 
+          />
+          <Text style={[styles.themeToggleText, { color: theme.sidebarText || COLORS.white }]}>
+            {isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+          </Text>
+          <Switch
+            value={isDarkMode}
+            onValueChange={toggleTheme}
+            trackColor={{ false: '#767577', true: COLORS.merchant }}
+            thumbColor={isDarkMode ? COLORS.success : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+          />
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.logoutBtn} onPress={() => setShowLogoutModal(true)}>
-          <MaterialCommunityIcons name="logout" size={20} color={COLORS.white} />
-          <Text style={styles.logoutText}>Cerrar Sesión</Text>
+          <MaterialCommunityIcons name="logout" size={20} color={theme.sidebarText || COLORS.white} />
+          <Text style={[styles.logoutText, { color: theme.sidebarText || COLORS.white }]}>Cerrar Sesión</Text>
         </TouchableOpacity>
       </View>
 
@@ -102,12 +124,12 @@ function WebSidebar({ activeTab, onNavigate }) {
         onRequestClose={() => setShowLogoutModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.logoutModalContent}>
+          <View style={[styles.logoutModalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalIconContainer}>
               <MaterialCommunityIcons name="logout" size={56} color={COLORS.error} />
             </View>
-            <Text style={styles.logoutModalTitle}>Cerrar Sesión</Text>
-            <Text style={styles.logoutModalMessage}>¿Estás seguro que deseas salir de tu cuenta?</Text>
+            <Text style={[styles.logoutModalTitle, { color: theme.text }]}>Cerrar Sesión</Text>
+            <Text style={[styles.logoutModalMessage, { color: theme.textSecondary }]}>¿Estás seguro que deseas salir de tu cuenta?</Text>
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
@@ -140,20 +162,30 @@ function WebSidebar({ activeTab, onNavigate }) {
 function WebLayout() {
   const [activeTab, setActiveTab] = useState('Dashboard');
 
+  const navigationMock = {
+    navigate: (screen) => {
+      if (screen === 'QRScanner') {
+        setActiveTab('Scanner');
+      } else {
+        setActiveTab(screen);
+      }
+    }
+  };
+
   const renderContent = () => {
     return (
       <>
         <View style={activeTab === 'Dashboard' ? styles.activeScreen : styles.hiddenScreen}>
-          <MerchantDashboardScreen />
+          <MerchantDashboardScreen navigation={navigationMock} />
         </View>
         <View style={activeTab === 'Benefits' ? styles.activeScreen : styles.hiddenScreen}>
-          <MerchantBenefitsScreen />
+          <MerchantBenefitsScreen navigation={navigationMock} />
         </View>
         <View style={activeTab === 'Scanner' ? styles.activeScreen : styles.hiddenScreen}>
-          <ScannerScreen />
+          <ScannerScreen navigation={navigationMock} />
         </View>
         <View style={activeTab === 'History' ? styles.activeScreen : styles.hiddenScreen}>
-          <HistoryScreen />
+          <HistoryScreen navigation={navigationMock} />
         </View>
       </>
     );
@@ -363,6 +395,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#2a2f46',
     paddingTop: 8,
+    gap: 8,
   },
   logoutBtn: {
     flexDirection: 'row',
@@ -374,7 +407,20 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     marginLeft: 12,
-    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  themeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    gap: 12,
+  },
+  themeToggleText: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '500',
   },

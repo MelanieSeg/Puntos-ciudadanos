@@ -4,15 +4,17 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { merchantAPI } from '../../services/api';
 
 export default function ScannerScreen({ navigation }) {
   const [qrCode, setQrCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const { theme } = useTheme();
   const [lastValidation, setLastValidation] = useState(null);
   const isWeb = Platform.OS === 'web';
 
@@ -95,24 +97,22 @@ export default function ScannerScreen({ navigation }) {
   };
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Validar Cupón</Text>
-        <Text style={styles.subtitle}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Text style={[styles.subtitle, { color: theme.textSecondary, marginBottom: SPACING.lg }]}>
           {isWeb ? 'Ingresa el código QR del cliente' : 'Escanea el código QR del cliente'}
         </Text>
-      </View>
 
       {/* En Web: Input manual del código */}
       {isWeb && (
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.surface }]}>
           <MaterialCommunityIcons name="qrcode-scan" size={24} color={COLORS.merchant} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text }]}
             value={qrCode}
             onChangeText={setQrCode}
             placeholder="Código QR o ID de transacción"
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -142,22 +142,22 @@ export default function ScannerScreen({ navigation }) {
       {/* En Móvil: Input manual alternativo */}
       {!isWeb && (
         <View style={styles.orDivider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>o ingresa manualmente</Text>
-          <View style={styles.dividerLine} />
+          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
+          <Text style={[styles.dividerText, { color: theme.textSecondary }]}>o ingresa manualmente</Text>
+          <View style={[styles.dividerLine, { backgroundColor: theme.border }]} />
         </View>
       )}
 
       {/* Input manual también para móvil (como alternativa) */}
       {!isWeb && (
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.surface }]}>
           <MaterialCommunityIcons name="qrcode" size={24} color={COLORS.merchant} style={styles.inputIcon} />
           <TextInput
-            style={styles.input}
+            style={[styles.input, { color: theme.text }]}
             value={qrCode}
             onChangeText={setQrCode}
             placeholder="Código QR o ID"
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
             autoCorrect={false}
           />
@@ -171,14 +171,14 @@ export default function ScannerScreen({ navigation }) {
 
       {/* Última validación exitosa */}
       {lastValidation && (
-        <View style={styles.successBox}>
+        <View style={[styles.successBox, { backgroundColor: theme.surface }]}>
           <MaterialCommunityIcons name="check-circle" size={32} color={COLORS.success} />
           <View style={styles.successContent}>
             <Text style={styles.successTitle}>¡Validado!</Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successText, { color: theme.text }]}>
               Cliente: {lastValidation.userName}
             </Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successText, { color: theme.text }]}>
               Beneficio: {lastValidation.benefitTitle}
             </Text>
             <Text style={styles.successPoints}>
@@ -211,11 +211,11 @@ export default function ScannerScreen({ navigation }) {
       </TouchableOpacity>
 
       {/* Información */}
-      <View style={styles.infoBox}>
+      <View style={[styles.infoBox, { backgroundColor: theme.surface }]}>
         <MaterialCommunityIcons name="information" size={24} color={COLORS.primary} style={styles.infoIcon} />
         <View>
-          <Text style={styles.infoTitle}>Información</Text>
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoTitle, { color: theme.text }]}>Información</Text>
+          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
             {isWeb 
               ? '• Ingresa el código QR del cliente\n• Validación en tiempo real\n• Historial automático'
               : '• Escanea códigos QR válidos\n• Validación en tiempo real\n• Historial automático'
@@ -223,19 +223,16 @@ export default function ScannerScreen({ navigation }) {
           </Text>
         </View>
       </View>
+      </ScrollView>
     </ScreenWrapper>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    marginBottom: SPACING.xl,
-  },
-  title: {
-    fontSize: TYPOGRAPHY.h3,
-    fontWeight: '700',
-    color: COLORS.dark,
-    marginBottom: SPACING.sm,
+  scrollContent: {
+    paddingHorizontal: SPACING.md,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   subtitle: {
     fontSize: TYPOGRAPHY.body2,

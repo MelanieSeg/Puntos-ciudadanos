@@ -4,61 +4,27 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthContext } from '../../context/AuthContext';
 import MerchantDashboardSkeleton from '../../components/skeletons/MerchantDashboardSkeleton';
+import ScreenWrapper from '../../layouts/ScreenWrapper';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
+import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 
 export default function MerchantDashboardScreen({ navigation }) {
-  const { authState, logout } = useContext(AuthContext);
+  const { authState } = useContext(AuthContext);
   const { user, role } = authState;
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-
-  // Historial de transacciones recientes
-  const mockHistorial = [
-    {
-      id: '1',
-      cliente: 'Juan Pérez',
-      producto: 'Pizza 2x1',
-      hora: '10:30 AM',
-      fecha: 'Hoy',
-    },
-    {
-      id: '2',
-      cliente: 'María González',
-      producto: 'Descuento 20%',
-      hora: '09:15 AM',
-      fecha: 'Hoy',
-    },
-    {
-      id: '3',
-      cliente: 'Carlos López',
-      producto: 'Hamburguesa Gratis',
-      hora: '08:45 AM',
-      fecha: 'Hoy',
-    },
-    {
-      id: '4',
-      cliente: 'Ana Martínez',
-      producto: 'Bebida Gratis',
-      hora: '15:20 PM',
-      fecha: 'Ayer',
-    },
-    {
-      id: '5',
-      cliente: 'Roberto Silva',
-      producto: 'Postre Gratis',
-      hora: '14:10 PM',
-      fecha: 'Ayer',
-    },
-  ];
 
   // Cargar estadísticas del backend
   useEffect(() => {
@@ -76,7 +42,8 @@ export default function MerchantDashboardScreen({ navigation }) {
       setStats({
         totalPuntosCanjeados: 2450,
         qrsValidados: 12,
-        ultimasTransacciones: mockHistorial,
+        recentActivity: [],
+        topBenefits: [],
       });
     } finally {
       setLoading(false);
@@ -89,34 +56,15 @@ export default function MerchantDashboardScreen({ navigation }) {
     setRefreshing(false);
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
-
   const handleScanQR = () => {
     navigation.navigate('QRScanner');
   };
 
-  const renderHistorialItem = ({ item }) => (
-    <View style={styles.historialItem}>
-      <View style={styles.historialContent}>
-        <Text style={styles.historialCliente}>{item.cliente}</Text>
-        <Text style={styles.historialProducto}>{item.producto}</Text>
-        <Text style={styles.historialFecha}>{item.fecha}</Text>
-      </View>
-      <Text style={styles.historialHora}>{item.hora}</Text>
-    </View>
-  );
-
   if (loading && !stats) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <MerchantDashboardSkeleton />
-      </SafeAreaView>
+      </ScreenWrapper>
     );
   }
 
@@ -124,66 +72,138 @@ export default function MerchantDashboardScreen({ navigation }) {
   const qrsValidados = stats?.qrsValidados || 12;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        data={mockHistorial}
-        renderItem={renderHistorialItem}
-        keyExtractor={(item) => item.id}
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.merchant]} />
         }
-        ListHeaderComponent={
+      >
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <View>
-            {/* Header */}
-            <View style={styles.header}>
-              <View>
-                <Text style={styles.headerGreeting}>Hola, {user?.name}</Text>
-                <Text style={styles.headerSubtitle}>Comercio - {user?.email}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.logoutIconButton}
-                onPress={handleLogout}
-              >
-                <Text style={styles.logoutIcon}>🚪</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={[styles.headerGreeting, { color: theme.text }]}>Hola, {user?.name}</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>Comercio - {user?.email}</Text>
+          </View>
+        </View>
 
-            {/* Tarjetas de Estadísticas */}
-            <View style={styles.statsContainer}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Total Puntos Canjeados</Text>
-                <Text style={styles.statValue}>{totalPuntosCanjeados}</Text>
-                <Text style={styles.statUnit}>pts</Text>
-              </View>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>QRs Validados</Text>
-                <Text style={styles.statValue}>{qrsValidados}</Text>
-                <Text style={styles.statUnit}>validaciones</Text>
-              </View>
+        {/* Tarjetas de Estadísticas */}
+        <View style={styles.statsContainer}>
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: theme.surface, borderLeftWidth: 4, borderLeftColor: COLORS.merchant }]}
+            onPress={() => navigation.navigate('History')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIconContainer, { backgroundColor: COLORS.merchant + '15' }]}>
+              <MaterialCommunityIcons name="star-circle" size={28} color={COLORS.merchant} />
             </View>
+            <View style={styles.statInfo}>
+              <Text style={[styles.statValue, { color: theme.text }]}>{totalPuntosCanjeados}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Puntos Canjeados</Text>
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.statCard, { backgroundColor: theme.surface, borderLeftWidth: 4, borderLeftColor: COLORS.success }]}
+            onPress={() => navigation.navigate('History')}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIconContainer, { backgroundColor: COLORS.success + '15' }]}>
+              <MaterialCommunityIcons name="qrcode-scan" size={28} color={COLORS.success} />
+            </View>
+            <View style={styles.statInfo}>
+              <Text style={[styles.statValue, { color: theme.text }]}>{qrsValidados}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>Validaciones</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-            {/* Botón de Escanear (FAB Style) */}
-            <View style={styles.fabContainer}>
-              <TouchableOpacity
-                style={styles.fabButton}
-                onPress={handleScanQR}
+        {/* Botón de Escanear (FAB Style) */}
+        <View style={styles.fabContainer}>
+          <TouchableOpacity
+            style={styles.fabButton}
+            onPress={handleScanQR}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="camera" size={24} color={COLORS.white} />
+            <Text style={styles.fabText}>Escanear Cupón</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Sección de Reportes */}
+        <View style={styles.reportsSection}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Rendimiento</Text>
+          
+          {/* Beneficios Top */}
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
+              <MaterialCommunityIcons name="trending-up" size={24} color={COLORS.merchant} />
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Beneficios Populares</Text>
+            </View>
+            {(!stats?.topBenefits || stats.topBenefits.length === 0) && (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <Text style={{ color: theme.textSecondary }}>Aún no hay datos suficientes</Text>
+              </View>
+            )}
+            {stats?.topBenefits?.map((benefit, index) => (
+              <TouchableOpacity 
+                key={benefit.id} 
+                style={styles.reportRow}
+                onPress={() => navigation.navigate('Benefits')}
                 activeOpacity={0.7}
               >
-                <Text style={styles.fabIcon}>📱</Text>
-                <Text style={styles.fabText}>Escanear Cupón</Text>
+                <View style={styles.benefitRowLeft}>
+                  <Text style={[styles.rankText, { color: theme.textSecondary }]}>#{index + 1}</Text>
+                  <Text style={[styles.reportLabel, { color: theme.text }]}>{benefit.name}</Text>
+                </View>
+                <View style={styles.benefitRowRight}>
+                  <Text style={[styles.reportValue, { color: theme.text }]}>{benefit.count}</Text>
+                  <MaterialCommunityIcons 
+                    name={benefit.trend === 'up' ? 'arrow-up' : 'arrow-down'} 
+                    size={16} 
+                    color={benefit.trend === 'up' ? COLORS.success : COLORS.error} 
+                  />
+                </View>
               </TouchableOpacity>
-            </View>
-
-            {/* Sección de Historial */}
-            <View style={styles.historialHeader}>
-              <Text style={styles.historialTitle}>Últimos Canjes</Text>
-            </View>
+            ))}
           </View>
-        }
-        scrollEnabled={true}
-        nestedScrollEnabled={true}
-      />
-    </SafeAreaView>
+
+          {/* Resumen de Actividad Reciente */}
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
+              <MaterialCommunityIcons name="history" size={24} color={COLORS.info} />
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Actividad Reciente</Text>
+            </View>
+            {(!stats?.recentActivity || stats.recentActivity.length === 0) && (
+              <View style={{ padding: 16, alignItems: 'center' }}>
+                <Text style={{ color: theme.textSecondary }}>No hay actividad reciente</Text>
+              </View>
+            )}
+            {stats?.recentActivity?.slice(0, 3).map((item) => (
+              <TouchableOpacity 
+                key={item.id} 
+                style={styles.reportRow}
+                onPress={() => navigation.navigate('History')}
+                activeOpacity={0.7}
+              >
+                <View>
+                  <Text style={[styles.reportLabel, { color: theme.text }]}>{item.cliente}</Text>
+                  <Text style={[styles.reportSubLabel, { color: theme.textSecondary }]}>{item.producto}</Text>
+                </View>
+                <Text style={[styles.reportTime, { color: theme.textSecondary }]}>{item.hora}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity 
+              style={styles.seeAllButton}
+              onPress={() => navigation.navigate('History')}
+            >
+              <Text style={styles.seeAllText}>Ver historial completo</Text>
+              <MaterialCommunityIcons name="arrow-right" size={16} color={COLORS.merchant} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </ScreenWrapper>
   );
 }
 
@@ -191,6 +211,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  scrollContent: {
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   centerContent: {
     flex: 1,
@@ -254,14 +278,6 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 4,
   },
-  logoutIconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-  },
-  logoutIcon: {
-    fontSize: 20,
-  },
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -278,21 +294,27 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    flexDirection: 'row',
     alignItems: 'center',
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
+    gap: 12,
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statInfo: {
+    flex: 1,
   },
   statLabel: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 8,
-    textAlign: 'center',
   },
   statValue: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#FF9800',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   statUnit: {
     fontSize: 11,
@@ -303,7 +325,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   fabButton: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORS.merchant,
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -312,61 +334,96 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
     elevation: 5,
-    shadowColor: '#FF9800',
+    shadowColor: COLORS.merchant,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-  },
-  fabIcon: {
-    fontSize: 24,
   },
   fabText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
-  historialHeader: {
+  // Nuevos estilos para reportes
+  reportsSection: {
     paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#f8f9fa',
+    marginTop: 8,
   },
-  historialTitle: {
+  sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1a1a1a',
+    marginBottom: 12,
   },
-  historialItem: {
+  reportCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  reportHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  reportCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  reportRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fff',
+    paddingVertical: 8,
   },
-  historialContent: {
-    flex: 1,
-    marginRight: 12,
+  benefitRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  historialCliente: {
+  benefitRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  rankText: {
+    fontSize: 14,
+    fontWeight: '700',
+    width: 24,
+  },
+  reportLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 4,
   },
-  historialProducto: {
+  reportSubLabel: {
     fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    marginTop: 2,
   },
-  historialFecha: {
-    fontSize: 11,
-    color: '#bbb',
+  reportValue: {
+    fontSize: 14,
+    fontWeight: '700',
   },
-  historialHora: {
+  reportTime: {
     fontSize: 12,
-    color: '#FF9800',
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingTop: 12,
+    gap: 4,
+  },
+  seeAllText: {
+    color: COLORS.merchant,
+    fontSize: 14,
     fontWeight: '600',
   },
 });

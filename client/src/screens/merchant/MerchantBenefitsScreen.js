@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   FlatList,
   RefreshControl,
   TouchableOpacity,
@@ -16,6 +15,8 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import BenefitCardSkeleton from '../../components/skeletons/BenefitCardSkeleton';
+import ScreenWrapper from '../../layouts/ScreenWrapper';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 import { COLORS, SPACING } from '../../theme/theme';
 
@@ -23,6 +24,7 @@ export default function MerchantBenefitsScreen() {
   const [benefits, setBenefits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { theme } = useTheme();
   const [error, setError] = useState(null);
   const [selectedBenefit, setSelectedBenefit] = useState(null);
   const [showStockModal, setShowStockModal] = useState(false);
@@ -89,7 +91,7 @@ export default function MerchantBenefitsScreen() {
     const isOutOfStock = item.stock === 0;
 
     return (
-      <View style={styles.benefitCard}>
+      <View style={[styles.benefitCard, { backgroundColor: theme.surface }]}>
         {/* Badge de stock mejorado */}
         <View style={[
           styles.stockBadge,
@@ -124,22 +126,22 @@ export default function MerchantBenefitsScreen() {
 
         {/* Información */}
         <View style={styles.benefitInfo}>
-          <Text style={styles.benefitName} numberOfLines={2}>
+          <Text style={[styles.benefitName, { color: theme.text }]} numberOfLines={2}>
             {item.name}
           </Text>
-          <Text style={styles.benefitDescription} numberOfLines={2}>
+          <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
             {item.description}
           </Text>
 
           {/* Stats Row */}
-          <View style={styles.statsRow}>
+          <View style={[styles.statsRow, { borderTopColor: theme.border }]}>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="star" size={16} color={COLORS.merchant} />
-              <Text style={styles.statText}>{item.pointsCost} pts</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>{item.pointsCost} pts</Text>
             </View>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="check-circle" size={16} color="#4CAF50" />
-              <Text style={styles.statText}>{item.redeemedCount || 0} canjes</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>{item.redeemedCount || 0} canjes</Text>
             </View>
           </View>
 
@@ -158,7 +160,7 @@ export default function MerchantBenefitsScreen() {
               styles.statusBadge,
               item.isActive ? styles.statusActive : styles.statusInactive
             ]}>
-              <Text style={styles.statusText}>
+              <Text style={[styles.statusText, { color: theme.textSecondary }]}>
                 {item.isActive ? '✓ Activo' : '⊗ Inactivo'}
               </Text>
             </View>
@@ -183,8 +185,8 @@ export default function MerchantBenefitsScreen() {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <MaterialCommunityIcons name="gift-off" size={64} color={COLORS.gray} />
-      <Text style={styles.emptyTitle}>Sin beneficios</Text>
-      <Text style={styles.emptyText}>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>Sin beneficios</Text>
+      <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
         No tienes beneficios registrados en este momento
       </Text>
     </View>
@@ -193,7 +195,7 @@ export default function MerchantBenefitsScreen() {
   // Loading state
   if (loading && benefits.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <FlatList
           data={[1, 2, 3, 4, 5, 6]}
           renderItem={renderSkeleton}
@@ -202,29 +204,29 @@ export default function MerchantBenefitsScreen() {
           columnWrapperStyle={Platform.OS === 'web' ? styles.row : styles.rowMobile}
           contentContainerStyle={styles.listContent}
         />
-      </SafeAreaView>
+      </ScreenWrapper>
     );
   }
 
   // Error state
   if (error && benefits.length === 0) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centerContent}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={COLORS.gray} />
-          <Text style={styles.errorTitle}>Error de conexión</Text>
-          <Text style={styles.errorText}>{error}</Text>
+          <Text style={[styles.errorTitle, { color: theme.text }]}>Error de conexión</Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary }]}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchBenefits}>
             <MaterialCommunityIcons name="refresh" size={20} color={COLORS.white} />
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ScreenWrapper>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <FlatList
         data={benefits}
         renderItem={renderBenefit}
@@ -251,25 +253,26 @@ export default function MerchantBenefitsScreen() {
         onRequestClose={() => setShowStockModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons name="package-variant" size={48} color={COLORS.merchant} />
-            <Text style={styles.modalTitle}>Ajustar Stock</Text>
-            <Text style={styles.modalSubtitle}>{selectedBenefit?.name}</Text>
-            <Text style={styles.currentStock}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Ajustar Stock</Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>{selectedBenefit?.name}</Text>
+            <Text style={[styles.currentStock, { color: theme.textSecondary }]}>
               Stock actual: <Text style={styles.stockNumber}>{selectedBenefit?.stock}</Text>
             </Text>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Cantidad a agregar (+) o restar (-)</Text>
+              <Text style={[styles.inputLabel, { color: theme.text }]}>Cantidad a agregar (+) o restar (-)</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: theme.background, borderColor: theme.border, color: theme.text }]}
                 placeholder="Ej: +10, -5"
+                placeholderTextColor={theme.textSecondary}
                 value={stockAmount}
                 onChangeText={setStockAmount}
                 keyboardType="numeric"
                 autoFocus
               />
-              <Text style={styles.helpText}>
+              <Text style={[styles.helpText, { color: theme.textSecondary }]}>
                 💡 Usa + para agregar o - para restar inventario
               </Text>
             </View>
@@ -300,11 +303,11 @@ export default function MerchantBenefitsScreen() {
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={styles.modalButtonCancel}
+                style={[styles.modalButtonCancel, { backgroundColor: theme.background }]}
                 onPress={() => setShowStockModal(false)}
                 disabled={updating}
               >
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                <Text style={[styles.modalButtonCancelText, { color: theme.textSecondary }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButtonConfirm, updating && styles.buttonDisabled]}
@@ -321,7 +324,7 @@ export default function MerchantBenefitsScreen() {
           </View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </ScreenWrapper>
   );
 }
 
@@ -331,7 +334,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   listContent: {
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   row: {
     justifyContent: 'flex-start',

@@ -7,10 +7,12 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Platform } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
+import { useTheme } from '../../context/ThemeContext';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useInfiniteMerchantHistory } from '../../hooks/useUserData';
 
 export default function HistoryScreen() {
+  const { theme } = useTheme();
   const {
     data,
     isLoading,
@@ -79,13 +81,13 @@ export default function HistoryScreen() {
   };
 
   const renderTransaction = ({ item }) => (
-    <View style={styles.transactionCard}>
+    <View style={[styles.transactionCard, { backgroundColor: theme.surface }]}>
       <MaterialCommunityIcons name="check-circle" size={32} color={COLORS.success} style={styles.transactionIcon} />
       <View style={styles.transactionLeft}>
-        <Text style={styles.userEmail}>{item.userEmail}</Text>
-        <Text style={styles.userId}>ID: {item.userId.substring(0, 8)}...</Text>
+        <Text style={[styles.userEmail, { color: theme.text }]}>{item.userEmail}</Text>
+        <Text style={[styles.userId, { color: theme.textSecondary }]}>ID: {item.userId.substring(0, 8)}...</Text>
         <Text style={styles.benefitTitle}>{item.benefitTitle}</Text>
-        <Text style={styles.dateText}>
+        <Text style={[styles.dateText, { color: theme.textSecondary }]}>
           {formatDate(item.date)} • {formatTime(item.date)}
         </Text>
       </View>
@@ -98,21 +100,21 @@ export default function HistoryScreen() {
 
   if (isLoading && !redemptions.length) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.merchant} />
-          <Text style={styles.loadingText}>Cargando historial...</Text>
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Cargando historial...</Text>
         </View>
       </ScreenWrapper>
     );
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <View style={[styles.container, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
         <View style={styles.header}>
-          <Text style={styles.title}>Historial de Validaciones</Text>
-          <Text style={styles.subtitle}>{transactions.length} canjes realizados</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Historial de Validaciones</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{transactions.length} canjes realizados</Text>
         </View>
 
         {error ? (
@@ -126,8 +128,8 @@ export default function HistoryScreen() {
         ) : transactions.length === 0 ? (
           <View style={styles.emptyState}>
             <MaterialCommunityIcons name="clipboard-list" size={64} color={COLORS.gray} />
-            <Text style={styles.emptyText}>Sin validaciones aún</Text>
-            <Text style={styles.emptySubtext}>Los cupones validados aparecerán aquí</Text>
+            <Text style={[styles.emptyText, { color: theme.text }]}>Sin validaciones aún</Text>
+            <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>Los cupones validados aparecerán aquí</Text>
           </View>
         ) : (
           <FlatList
@@ -149,7 +151,7 @@ export default function HistoryScreen() {
                 return (
                   <View style={styles.loadingFooter}>
                     <ActivityIndicator size="small" color={COLORS.merchant} />
-                    <Text style={styles.loadingFooterText}>Cargando más validaciones...</Text>
+                    <Text style={[styles.loadingFooterText, { color: theme.textSecondary }]}>Cargando más validaciones...</Text>
                   </View>
                 );
               }

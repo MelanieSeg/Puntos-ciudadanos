@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -162,47 +163,6 @@ export default function MerchantStockScreen({ navigation }) {
 
   return (
     <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Mi Stock</Text>
-          <Text style={styles.subtitle}>Beneficios disponibles este mes</Text>
-        </View>
-      </View>
-
-      {/* Stats */}
-      <View style={styles.statsContainer}>
-        <View style={styles.stat}>
-          <MaterialCommunityIcons name="gift" size={24} color={COLORS.primary} />
-          <View>
-            <Text style={styles.statNumber}>
-              {benefits.filter(b => b.isActive).length}
-            </Text>
-            <Text style={styles.statLabel}>Activos</Text>
-          </View>
-        </View>
-
-        <View style={styles.stat}>
-          <MaterialCommunityIcons name="check-circle" size={24} color={COLORS.success} />
-          <View>
-            <Text style={styles.statNumber}>
-              {benefits.reduce((a, b) => a + b.redeemed, 0)}
-            </Text>
-            <Text style={styles.statLabel}>Canjeados</Text>
-          </View>
-        </View>
-
-        <View style={styles.stat}>
-          <MaterialCommunityIcons name="package" size={24} color={COLORS.info} />
-          <View>
-            <Text style={styles.statNumber}>
-              {benefits.reduce((a, b) => a + b.stock, 0)}
-            </Text>
-            <Text style={styles.statLabel}>En Stock</Text>
-          </View>
-        </View>
-      </View>
-
       {/* Lista */}
       <FlatList
         data={benefits}
@@ -210,6 +170,47 @@ export default function MerchantStockScreen({ navigation }) {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListHeaderComponent={
+          <>
+            <View style={styles.header}>
+              <View>
+                <Text style={styles.subtitle}>Beneficios disponibles este mes</Text>
+              </View>
+            </View>
+
+            <View style={styles.statsContainer}>
+              <View style={styles.stat}>
+                <MaterialCommunityIcons name="gift" size={24} color={COLORS.primary} />
+                <View>
+                  <Text style={styles.statNumber}>
+                    {benefits.filter(b => b.isActive).length}
+                  </Text>
+                  <Text style={styles.statLabel}>Activos</Text>
+                </View>
+              </View>
+
+              <View style={styles.stat}>
+                <MaterialCommunityIcons name="check-circle" size={24} color={COLORS.success} />
+                <View>
+                  <Text style={styles.statNumber}>
+                    {benefits.reduce((a, b) => a + b.redeemed, 0)}
+                  </Text>
+                  <Text style={styles.statLabel}>Canjeados</Text>
+                </View>
+              </View>
+
+              <View style={styles.stat}>
+                <MaterialCommunityIcons name="package" size={24} color={COLORS.info} />
+                <View>
+                  <Text style={styles.statNumber}>
+                    {benefits.reduce((a, b) => a + b.stock, 0)}
+                  </Text>
+                  <Text style={styles.statLabel}>En Stock</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <MaterialCommunityIcons name="inbox" size={48} color={COLORS.light} />
@@ -272,7 +273,8 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingTop: Platform.OS === 'web' ? 90 : SPACING.md,
+    paddingBottom: SPACING.xl,
   },
   card: {
     backgroundColor: COLORS.white,

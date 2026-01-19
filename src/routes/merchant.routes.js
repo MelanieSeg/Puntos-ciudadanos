@@ -4,6 +4,7 @@ import { isMerchantOrAdmin } from '../middlewares/authorize.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as merchantController from '../controllers/merchant.controller.js';
 import prisma from '../config/database.js';
+import * as cacheService from '../services/cache.service.js';
 
 const router = Router();
 
@@ -61,50 +62,7 @@ router.get(
   '/stats',
   authenticate,
   isMerchantOrAdmin,
-  async (req, res) => {
-    try {
-      // Contar QRs validados por este comercio
-      const validatedCount = await prisma.benefitRedemption.count({
-        where: {
-          scannedByMerchantId: req.user.id,
-          status: 'REDEEMED'
-        }
-      });
-
-      // Obtener detalles de los canjes
-      const redemptions = await prisma.benefitRedemption.findMany({
-        where: {
-          scannedByMerchantId: req.user.id,
-          status: 'REDEEMED'
-        },
-        include: {
-          benefit: {
-            select: {
-              pointsCost: true
-            }
-          }
-        }
-      });
-
-      const totalPuntos = redemptions.reduce((sum, r) => sum + r.benefit.pointsCost, 0);
-
-      res.json({
-        success: true,
-        message: 'Estadísticas del comercio',
-        data: {
-          comercio: req.user.name,
-          qrsValidados: validatedCount,
-          totalPuntosCanjeados: totalPuntos
-        }
-      });
-    } catch (error) {
-      console.error('Error obteniendo estadísticas:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error al obtener estadísticas' 
-      });
-    }
-  }
+  merchantController.getStats
 );
 
 /**
@@ -115,66 +73,7 @@ router.get(
   '/history',
   authenticate,
   isMerchantOrAdmin,
-  async (req, res) => {
-    try {
-      const { limit = 20, offset = 0 } = req.query;
-
-      // Convertir limit y offset a números
-      const limitNum = parseInt(limit, 10);
-      const offsetNum = parseInt(offset, 10);
-
-      const redemptions = await prisma.benefitRedemption.findMany({
-        where: {
-          scannedByMerchantId: req.user.id,
-          status: 'REDEEMED'
-        },
-        include: {
-          benefit: {
-            select: {
-              title: true,
-              pointsCost: true
-            }
-          },
-          user: {
-            select: {
-              id: true,
-              email: true,
-              name: true
-            }
-          }
-        },
-        orderBy: {
-          redeemedAt: 'desc'
-        },
-        take: parseInt(limit),
-        skip: parseInt(offset)
-      });
-
-      const total = await prisma.benefitRedemption.count({
-        where: {
-          scannedByMerchantId: req.user.id,
-          status: 'REDEEMED'
-        }
-      });
-
-      res.json({
-        success: true,
-        message: 'Historial de validaciones',
-        data: {
-          redemptions,
-          total,
-          limit: parseInt(limit),
-          offset: parseInt(offset)
-        }
-      });
-    } catch (error) {
-      console.error('Error obteniendo historial:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error al obtener historial' 
-      });
-    }
-  }
+  merchantController.getHistory
 );
 
 /**
@@ -253,57 +152,7 @@ router.get(
   '/benefits',
   authenticate,
   isMerchantOrAdmin,
-  async (req, res) => {
-    try {
-      // Obtener beneficios del comercio actual
-      const benefits = await prisma.benefit.findMany({
-        where: {
-          merchantId: req.user.id
-        },
-        include: {
-          _count: {
-            select: {
-              redemptions: {
-                where: {
-                  status: 'REDEEMED'
-                }
-              }
-            }
-          }
-        },
-        orderBy: {
-          createdAt: 'desc'
-        }
-      });
-
-      // Formatear respuesta
-      const formattedBenefits = benefits.map(benefit => ({
-        id: benefit.id,
-        name: benefit.title,
-        description: benefit.description,
-        pointsCost: benefit.pointsCost,
-        stock: benefit.stock,
-        isActive: benefit.active,
-        category: benefit.category || 'PRODUCT',
-        redeemedCount: benefit._count.redemptions,
-        createdAt: benefit.createdAt,
-        updatedAt: benefit.updatedAt
-      }));
-
-      res.json({
-        success: true,
-        message: 'Beneficios del comercio',
-        data: formattedBenefits
-      });
-    } catch (error) {
-      console.error('Error obteniendo beneficios:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Error al obtener beneficios',
-        error: error.message
-      });
-    }
-  }
+  merchantController.getMyBenefits
 );
 
 export default router;
