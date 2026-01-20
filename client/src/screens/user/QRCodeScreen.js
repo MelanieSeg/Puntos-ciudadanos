@@ -42,22 +42,22 @@ export default function QRCodeScreen({ route, navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
-          <MaterialCommunityIcons name="close" size={28} color={COLORS.dark} />
+          <MaterialCommunityIcons name="close" size={28} color={theme.text} />
         </TouchableOpacity>
-        <Text style={styles.title}>Código QR</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Código QR</Text>
         <View style={{ width: 28 }} />
       </View>
 
       {/* Contenido Principal */}
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
         {/* Benefit Info */}
-        <View style={styles.benefitCard}>
+        <View style={[styles.benefitCard, { backgroundColor: theme.surface }]}>
           <MaterialCommunityIcons name="gift" size={32} color={COLORS.primary} />
-          <Text style={styles.benefitName}>{benefitName || 'Beneficio'}</Text>
+          <Text style={[styles.benefitName, { color: theme.text }]}>{benefitName || 'Beneficio'}</Text>
         </View>
 
         {/* Código QR - Redención */}
@@ -73,10 +73,10 @@ export default function QRCodeScreen({ route, navigation }) {
         </View>
 
         {/* Código */}
-        <View style={styles.codeCard}>
-          <Text style={styles.codeLabel}>Tu Código de Canje</Text>
-          <View style={styles.codeBox}>
-            <Text style={styles.code} numberOfLines={1}>{displayQRCode}</Text>
+        <View style={[styles.codeCard, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.codeLabel, { color: theme.textSecondary }]}>Tu Código de Canje</Text>
+          <View style={[styles.codeBox, { backgroundColor: theme.background }]}>
+            <Text style={[styles.code, { color: theme.text }]} numberOfLines={1}>{displayQRCode}</Text>
             <TouchableOpacity onPress={handleCopyCode}>
               <MaterialCommunityIcons name="content-copy" size={18} color={COLORS.primary} />
             </TouchableOpacity>
@@ -93,7 +93,7 @@ export default function QRCodeScreen({ route, navigation }) {
         </View>
 
         {/* Instrucciones */}
-        <View style={styles.instructions}>
+        <View style={[styles.instructions, { backgroundColor: theme.surface }]}>
           <View style={styles.instructionStep}>
             <View style={styles.stepNumber}>
               <Text style={styles.stepNumberText}>1</Text>
@@ -127,7 +127,7 @@ export default function QRCodeScreen({ route, navigation }) {
       </ScrollView>
 
       {/* Botones de Acción */}
-      <View style={styles.actions}>
+      <View style={[styles.actions, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
         <TouchableOpacity style={styles.secondaryButton} onPress={handleShare}>
           <MaterialCommunityIcons name="share-variant" size={20} color={COLORS.primary} />
           <Text style={styles.secondaryButtonText}>Compartir</Text>
