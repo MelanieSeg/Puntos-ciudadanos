@@ -4,9 +4,10 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Share, Dimensions, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Share, Dimensions, Platform, ScrollView, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
+import * as Clipboard from 'expo-clipboard';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -31,10 +32,13 @@ export default function QRCodeScreen({ route, navigation }) {
     }
   };
 
-  const handleCopyCode = () => {
-    // Por hacer: implementar portapapeles nativa
-    // Clipboard.setString(displayQRCode);
-    alert('Código copiado: ' + displayQRCode);
+  const handleCopyCode = async () => {
+    await Clipboard.setStringAsync(displayQRCode);
+    if (Platform.OS === 'web') {
+      window.alert('Código copiado: ' + displayQRCode);
+    } else {
+      Alert.alert('Copiado', 'Código copiado al portapapeles: ' + displayQRCode);
+    }
   };
 
   return (
