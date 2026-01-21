@@ -84,7 +84,7 @@ export default function AdminNavigator() {
           options={{ title: 'Solicitudes Pendientes' }}
         />
         <Stack.Group screenOptions={{ 
-          presentation: 'modal', 
+          presentation: 'transparentModal', 
           headerShown: false, 
           animationEnabled: true 
         }}>
