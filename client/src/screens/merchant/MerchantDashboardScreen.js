@@ -38,10 +38,9 @@ export default function MerchantDashboardScreen({ navigation }) {
       setStats(response.data.data);
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
-      // Valores predeterminados en caso de error de red
       setStats({
-        totalPuntosCanjeados: 2450,
-        qrsValidados: 12,
+        totalPuntosCanjeados: 0,
+        qrsValidados: 0,
         recentActivity: [],
         topBenefits: [],
       });
@@ -68,8 +67,8 @@ export default function MerchantDashboardScreen({ navigation }) {
     );
   }
 
-  const totalPuntosCanjeados = stats?.totalPuntosCanjeados || 2450;
-  const qrsValidados = stats?.qrsValidados || 12;
+  const totalPuntosCanjeados = stats?.totalPuntosCanjeados || 0;
+  const qrsValidados = stats?.qrsValidados || 0;
 
   return (
     <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0} maxWidth={Platform.OS === 'web'}>

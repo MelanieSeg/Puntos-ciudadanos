@@ -24,22 +24,22 @@ export default function AdminSettingsScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
     // Cooldowns
-    missionCooldownDays: '7',
-    minPointsForRedeem: '50',
+    missionCooldownDays: '',
+    minPointsForRedeem: '',
     
     // Límites
-    maxRedemptsPerDay: '3',
-    maxPointsPerDay: '500',
+    maxRedemptsPerDay: '',
+    maxPointsPerDay: '',
     
     // Políticas
-    requireApprovalForRedeem: true,
-    allowMultipleMissionsPerDay: true,
-    enableNewUserBonus: true,
-    newUserBonusPoints: '100',
+    requireApprovalForRedeem: false,
+    allowMultipleMissionsPerDay: false,
+    enableNewUserBonus: false,
+    newUserBonusPoints: '',
     
     // Notificaciones
-    notifyOnSubmission: true,
-    notifyOnApproval: true,
+    notifyOnSubmission: false,
+    notifyOnApproval: false,
   });
 
   React.useEffect(() => {
@@ -95,20 +95,15 @@ export default function AdminSettingsScreen({ navigation }) {
         {
           text: 'Restablecer',
           style: 'destructive',
-          onPress: () => {
-            setSettings({
-              missionCooldownDays: '7',
-              minPointsForRedeem: '50',
-              maxRedemptsPerDay: '3',
-              maxPointsPerDay: '500',
-              requireApprovalForRedeem: true,
-              allowMultipleMissionsPerDay: true,
-              enableNewUserBonus: true,
-              newUserBonusPoints: '100',
-              notifyOnSubmission: true,
-              notifyOnApproval: true,
-            });
-            alert('Configuración restablecida');
+          onPress: async () => {
+            try {
+              // Por hacer: cargar valores predeterminados desde el backend
+              // const response = await adminAPI.getDefaultSettings();
+              // setSettings(response.data.data);
+              alert('Funcionalidad pendiente de implementación');
+            } catch (error) {
+              alert('Error: ' + error.message);
+            }
           },
         },
       ]

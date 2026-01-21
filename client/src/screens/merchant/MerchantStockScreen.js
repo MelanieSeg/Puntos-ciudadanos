@@ -36,41 +36,10 @@ export default function MerchantStockScreen({ navigation }) {
       // Por hacer: conectar a GET /api/v1/merchant/benefits
       // const response = await merchantAPI.getBenefits();
       // setBenefits(response.data.data);
-      
-      setBenefits([
-        {
-          id: 'benefit_001',
-          name: 'Descuento 10%',
-          description: 'Descuento del 10% en compras',
-          stock: 45,
-          maxStock: 100,
-          redeemed: 55,
-          isActive: true,
-          validUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: 'benefit_002',
-          name: 'Descuento 15%',
-          description: 'Descuento del 15% en productos selectos',
-          stock: 12,
-          maxStock: 50,
-          redeemed: 38,
-          isActive: true,
-          validUntil: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        },
-        {
-          id: 'benefit_003',
-          name: 'Envío Gratis',
-          description: 'Envío gratuito en compras mayores a $50',
-          stock: 0,
-          maxStock: 30,
-          redeemed: 30,
-          isActive: false,
-          validUntil: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-        },
-      ]);
+      setBenefits([]);
     } catch (error) {
       console.error('Error loading benefits:', error);
+      setBenefits([]);
     } finally {
       setLoading(false);
     }

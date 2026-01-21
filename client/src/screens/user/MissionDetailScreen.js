@@ -34,25 +34,30 @@ export default function MissionDetailScreen({ route, navigation }) {
     });
   };
 
-  const data = mission || {
-    id: 'mission_001',
-    name: 'Reciclaje de Plásticos',
-    description: 'Recicla 5kg de plástico en un punto de acopio municipal',
-    points: 50,
-    category: 'RECYCLING',
-    difficulty: 'EASY',
-    frequency: 'WEEKLY',
-    cooldownDays: 7,
-    requirements: [
-      'Mínimo 5kg de plástico',
-      'Punto de acopio autorizado',
-      'Evidencia fotográfica',
-    ],
-    hoursRemaining: 12,
-    submissions: 24,
-    approvals: 18,
-    icon: 'trash-can',
-  };
+  const data = mission || null;
+
+  if (!data) {
+    return (
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: theme.text }]}>Detalles de Misión</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }}>
+          <MaterialCommunityIcons name="alert-circle-outline" size={64} color={COLORS.gray} />
+          <Text style={{ fontSize: TYPOGRAPHY.h3, fontWeight: '600', color: theme.text, marginTop: SPACING.lg }}>
+            Misión no encontrada
+          </Text>
+          <Text style={{ fontSize: TYPOGRAPHY.body1, color: theme.textSecondary, textAlign: 'center', marginTop: SPACING.sm }}>
+            No se pudo cargar la información de esta misión.
+          </Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
 
   const canSubmit = data.hoursRemaining > 0;
 

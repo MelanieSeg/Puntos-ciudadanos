@@ -38,57 +38,10 @@ export default function MissionsManagementScreen({ navigation }) {
       // Por hacer: conectar a GET /api/v1/admin/missions?status={filter}
       // const response = await adminAPI.getMissions(filter);
       // setMissions(response.data.data);
-      
-      // Datos iniciales para interfaz
-      setMissions([
-        {
-          id: 'mission_001',
-          name: 'Reciclaje de Plásticos',
-          description: 'Recicla 5kg de plástico en un punto de acopio',
-          points: 50,
-          category: 'RECYCLING',
-          difficulty: 'EASY',
-          status: 'ACTIVE',
-          submissionsCount: 12,
-          approvalsCount: 8,
-          createdAt: new Date('2025-12-15'),
-          frequency: 'WEEKLY',
-          completions: 8,
-          icon: 'trash-can',
-        },
-        {
-          id: 'mission_002',
-          name: 'Plantación de Árboles',
-          description: 'Planta 3 árboles en un área comunitaria',
-          points: 75,
-          category: 'ENVIRONMENT',
-          difficulty: 'MEDIUM',
-          status: 'ACTIVE',
-          submissionsCount: 5,
-          approvalsCount: 3,
-          createdAt: new Date('2025-12-10'),
-          frequency: 'MONTHLY',
-          completions: 3,
-          icon: 'tree',
-        },
-        {
-          id: 'mission_003',
-          name: 'Voluntariado Comunitario',
-          description: '4 horas de voluntariado comunitario',
-          points: 100,
-          category: 'COMMUNITY',
-          difficulty: 'HARD',
-          status: 'PAUSED',
-          submissionsCount: 2,
-          approvalsCount: 1,
-          createdAt: new Date('2025-11-20'),
-          frequency: 'MONTHLY',
-          completions: 1,
-          icon: 'heart-multiple',
-        },
-      ]);
+      setMissions([]);
     } catch (error) {
       console.error('Error loading missions:', error);
+      setMissions([]);
     } finally {
       setLoading(false);
     }
