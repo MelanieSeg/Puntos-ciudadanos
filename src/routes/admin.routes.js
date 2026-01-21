@@ -274,6 +274,199 @@ router.delete(
 );
 
 /**
+ * PATCH /api/v1/admin/benefits/:id/stock
+ * Actualizar stock de un beneficio
+ * Solo ADMIN
+ */
+router.patch(
+  '/benefits/:id/stock',
+  authenticate,
+  authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { stock } = req.body;
+
+    if (stock === undefined || stock < 0) {
+      return errorResponse(res, 'Stock inválido', 400);
+    }
+
+    // Verificar que el beneficio existe
+    const benefit = await prisma.benefit.findUnique({
+      where: { id },
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!benefit) {
+      return errorResponse(res, 'Beneficio no encontrado', 404);
+    }
+
+    const oldStock = benefit.stock;
+
+    // Actualizar stock
+    const updatedBenefit = await prisma.benefit.update({
+      where: { id },
+      data: { stock: parseInt(stock) },
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    // Invalidar caché
+    cacheService.delPattern('all_benefits');
+
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'BENEFIT_STOCK_UPDATED',
+        targetId: id,
+        description: `Stock de "${benefit.title}" actualizado de ${oldStock} a ${stock}`,
+        metadata: {
+          benefitId: benefit.id,
+          benefitTitle: benefit.title,
+          oldStock,
+          newStock: stock,
+          merchantId: benefit.merchantId,
+          merchantName: benefit.merchant.name,
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    successResponse(
+      res,
+      updatedBenefit,
+      'Stock actualizado exitosamente'
+    );
+  })
+);
+
+/**
+ * PATCH /api/v1/admin/benefits/:id
+ * Editar un beneficio completo
+ * Solo ADMIN
+ */
+router.patch(
+  '/benefits/:id',
+  authenticate,
+  authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
+  upload.single('image'),
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { title, description, pointsCost, stock, category, merchantId } = req.body;
+
+    // Verificar que el beneficio existe
+    const benefit = await prisma.benefit.findUnique({
+      where: { id },
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    if (!benefit) {
+      return errorResponse(res, 'Beneficio no encontrado', 404);
+    }
+
+    // Preparar datos de actualización
+    const updateData = {};
+    
+    if (title) updateData.title = title;
+    if (description) updateData.description = description;
+    if (pointsCost) updateData.pointsCost = parseInt(pointsCost);
+    if (stock !== undefined) updateData.stock = parseInt(stock);
+    if (category) updateData.category = category;
+    if (merchantId) updateData.merchantId = merchantId;
+
+    // Manejar imagen si se subió una nueva
+    if (req.file) {
+      try {
+        const uploadToCloudinary = (buffer, folder) => {
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              { folder },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+            Readable.from(buffer).pipe(stream);
+          });
+        };
+
+        const result = await uploadToCloudinary(req.file.buffer, 'puntos-ciudadanos/benefits');
+        updateData.imageUrl = result.secure_url;
+      } catch (uploadError) {
+        console.error('Error al subir imagen a Cloudinary:', uploadError);
+        return errorResponse(res, 'Error al subir la imagen', 500);
+      }
+    }
+
+    // Actualizar beneficio
+    const updatedBenefit = await prisma.benefit.update({
+      where: { id },
+      data: updateData,
+      include: {
+        merchant: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // Invalidar caché
+    cacheService.delPattern('all_benefits');
+
+    // Registrar acción en AdminLog
+    await prisma.adminLog.create({
+      data: {
+        adminId: req.user.id,
+        action: 'BENEFIT_UPDATED',
+        targetId: id,
+        description: `Beneficio "${benefit.title}" actualizado`,
+        metadata: {
+          benefitId: benefit.id,
+          changes: updateData,
+          oldValues: {
+            title: benefit.title,
+            description: benefit.description,
+            pointsCost: benefit.pointsCost,
+            stock: benefit.stock,
+            category: benefit.category,
+          },
+          timestamp: new Date().toISOString(),
+        },
+      },
+    });
+
+    successResponse(
+      res,
+      updatedBenefit,
+      'Beneficio actualizado exitosamente'
+    );
+  })
+);
+
+/**
  * GET /api/v1/admin/submissions
  * Obtener envíos pendientes de aprobación
  * Query params: status (PENDING, APPROVED, REJECTED)
