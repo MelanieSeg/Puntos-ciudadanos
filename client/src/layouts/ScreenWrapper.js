@@ -3,6 +3,7 @@
  * ScreenWrapper - Contenedor responsivo
  * Maneja diferencias entre Web y Mobile
  * Aplica SafeAreaView en mobile y max-width en web
+ * Detecta contexto admin para ajustar paddings
  */
 
 import React from 'react';
@@ -16,11 +17,14 @@ const ScreenWrapper = ({
   bgColor = COLORS.white,
   padding = SPACING.md,
   maxWidth = true,
+  isAdminPanel = false, // Nueva prop para detectar contexto admin
+  noPadding = false, // Opción para eliminar padding completamente
 }) => {
   const isWeb = Platform.OS === 'web';
 
   // Para web, aplicar max-width y centrado
-  const webStyles = isWeb && maxWidth
+  // En admin panel, usar ancho completo sin restricciones
+  const webStyles = isWeb && maxWidth && !isAdminPanel
     ? {
         maxWidth: LAYOUT.webMaxWidth,
         width: '100%',
@@ -28,6 +32,32 @@ const ScreenWrapper = ({
         marginHorizontal: 'auto',
       }
     : {};
+
+  // En admin panel web, usar paddings más amplios para dashboards
+  const getPadding = () => {
+    if (noPadding || padding === 0) return { paddingHorizontal: 0, paddingVertical: 0 };
+    
+    if (isWeb) {
+      if (isAdminPanel) {
+        // Admin panel: paddings más generosos
+        return {
+          paddingHorizontal: SPACING.xl,
+          paddingVertical: SPACING.lg,
+        };
+      }
+      // Web normal
+      return {
+        paddingHorizontal: SPACING.xl,
+        paddingVertical: SPACING.lg,
+      };
+    }
+    
+    // Mobile
+    return {
+      paddingHorizontal: padding,
+      paddingVertical: padding,
+    };
+  };
 
   const Container = safeArea && !isWeb ? SafeAreaView : View;
 
@@ -42,10 +72,7 @@ const ScreenWrapper = ({
         style={[
           styles.content,
           webStyles,
-          {
-            paddingHorizontal: padding !== 0 ? (isWeb ? SPACING.xl : padding) : 0,
-            paddingVertical: padding !== 0 ? (isWeb ? SPACING.lg : padding) : 0,
-          },
+          getPadding(),
         ]}
       >
         {children}

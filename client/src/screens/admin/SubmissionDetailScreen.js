@@ -6,17 +6,13 @@ import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 const isWeb = Platform.OS === 'web';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export default function SubmissionDetailScreen({ route, navigation }) {
+export default function SubmissionDetailScreen({ route, navigation, isWebModal = false }) {
   const { submission } = route.params || {};
 
-  if (!submission) {
-    return (
-      <View style={styles.container}>
-        <TouchableOpacity 
-          style={styles.backdrop} 
-          activeOpacity={1} 
-          onPress={() => navigation.goBack()} 
-        />
+  // En web dentro de modal, no necesitamos el container con backdrop
+  const renderContent = () => {
+    if (!submission) {
+      return (
         <View style={styles.modalContent}>
           <View style={styles.errorContainer}>
             <MaterialCommunityIcons name="alert-circle" size={48} color={COLORS.error} />
@@ -26,47 +22,10 @@ export default function SubmissionDetailScreen({ route, navigation }) {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    );
-  }
-
-  const getStatusColor = () => {
-    switch (submission.status) {
-      case 'PENDING': return '#FFF3CD'; // Warning light
-      case 'APPROVED': return '#D4EDDA'; // Success light
-      case 'REJECTED': return '#F8D7DA'; // Error light
-      default: return COLORS.light;
+      );
     }
-  };
 
-  const getStatusTextColor = () => {
-    switch (submission.status) {
-      case 'PENDING': return '#856404';
-      case 'APPROVED': return '#155724';
-      case 'REJECTED': return '#721C24';
-      default: return COLORS.gray;
-    }
-  };
-
-  const getStatusText = () => {
-    switch (submission.status) {
-      case 'PENDING': return 'Pendiente de Revisión';
-      case 'APPROVED': return 'Aprobado';
-      case 'REJECTED': return 'Rechazado';
-      default: return submission.status;
-    }
-  };
-
-  return (
-    <View style={styles.container}>
-      {/* Backdrop semitransparente */}
-      <TouchableOpacity 
-        style={styles.backdrop} 
-        activeOpacity={1} 
-        onPress={() => navigation.goBack()}
-      />
-
-      {/* Contenido del Modal */}
+    return (
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
           <Text style={styles.title}>Detalles de la Solicitud</Text>
@@ -177,6 +136,50 @@ export default function SubmissionDetailScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
       </View>
+    );
+  };
+
+  const getStatusColor = () => {
+    switch (submission?.status) {
+      case 'PENDING': return '#FFF3CD';
+      case 'APPROVED': return '#D4EDDA';
+      case 'REJECTED': return '#F8D7DA';
+      default: return COLORS.light;
+    }
+  };
+
+  const getStatusTextColor = () => {
+    switch (submission?.status) {
+      case 'PENDING': return '#856404';
+      case 'APPROVED': return '#155724';
+      case 'REJECTED': return '#721C24';
+      default: return COLORS.gray;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (submission?.status) {
+      case 'PENDING': return 'Pendiente de Revisión';
+      case 'APPROVED': return 'Aprobado';
+      case 'REJECTED': return 'Rechazado';
+      default: return submission?.status;
+    }
+  };
+
+  // En web con modal externo, solo renderizar el contenido
+  if (isWeb) {
+    return renderContent();
+  }
+
+  // En mobile, renderizar con backdrop
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.backdrop} 
+        activeOpacity={1} 
+        onPress={() => navigation.goBack()}
+      />
+      {renderContent()}
     </View>
   );
 }
