@@ -674,10 +674,6 @@ router.post(
       return errorResponse(res, 'Nombre y email son obligatorios', 400);
     }
 
-    if (address && address.length < 5) {
-      return errorResponse(res, 'La dirección es demasiado corta', 400);
-    }
-
     // Verificar que el email no exista
     const existingUser = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },

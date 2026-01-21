@@ -224,27 +224,21 @@ export const AuthProvider = ({ children }) => {
       const response = await api.get('/auth/me');
       const user = response.data.data;
 
-      // Preservar mustChangePassword del estado actual si no viene en la respuesta
-      const currentMustChangePassword = authState.mustChangePassword;
-      
-      // Actualizar el user object con mustChangePassword preservado
+      // Usar el valor de mustChangePassword que viene del backend
+      // Si no viene, usar false por defecto (el usuario ya está autenticado)
       const updatedUser = {
         ...user,
-        mustChangePassword: user.mustChangePassword !== undefined 
-          ? user.mustChangePassword 
-          : currentMustChangePassword,
+        mustChangePassword: user.mustChangePassword === true, // Convertir a boolean explícitamente
       };
 
       // Actualizar usuario en SecureStore
       await secureStorage.setItem('userData', JSON.stringify(updatedUser));
 
-      // Actualizar estado (preservando mustChangePassword si no viene del backend)
+      // Actualizar estado con el valor del backend
       setAuthState(prev => ({
         ...prev,
         user: updatedUser,
-        mustChangePassword: user.mustChangePassword !== undefined 
-          ? user.mustChangePassword 
-          : prev.mustChangePassword,
+        mustChangePassword: updatedUser.mustChangePassword,
       }));
 
       return updatedUser;
@@ -258,17 +252,23 @@ export const AuthProvider = ({ children }) => {
    * Función para cambiar el estado de mustChangePassword
    * Se usa después de que el usuario cambia su contraseña exitosamente
    */
-  const setNeedPasswordChange = (status) => {
-    setAuthState(prev => ({
-      ...prev,
-      mustChangePassword: status,
-    }));
-
-    // También actualizar en el usuario guardado si existe
-    if (authState.user) {
-      const updatedUser = { ...authState.user, mustChangePassword: status };
-      secureStorage.setItem('userData', JSON.stringify(updatedUser));
-    }
+  const setNeedPasswordChange = async (status) => {
+    setAuthState(prev => {
+      const updatedUser = prev.user ? { ...prev.user, mustChangePassword: status } : prev.user;
+      
+      // Actualizar en el almacenamiento de forma asíncrona
+      if (updatedUser) {
+        secureStorage.setItem('userData', JSON.stringify(updatedUser)).catch(error => {
+          logError('setNeedPasswordChange - storage', error);
+        });
+      }
+      
+      return {
+        ...prev,
+        mustChangePassword: status,
+        user: updatedUser,
+      };
+    });
   };
 
   const value = {

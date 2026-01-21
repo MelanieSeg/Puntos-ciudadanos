@@ -216,6 +216,7 @@ export const getMe = asyncHandler(async (req, res) => {
       email: true,
       role: true,
       status: true,
+      mustChangePassword: true,
       createdAt: true,
       wallet: {
         select: {
@@ -313,6 +314,7 @@ export const changePassword = asyncHandler(async (req, res) => {
     data: {
       passwordHash: newPasswordHash,
       mustChangePassword: false, // Marcar que la contraseña inicial ha sido cambiada
+      lastLoginAt: new Date(), // Actualizar último login
     },
     select: {
       id: true,
@@ -321,6 +323,12 @@ export const changePassword = asyncHandler(async (req, res) => {
       role: true,
       status: true,
       mustChangePassword: true,
+      wallet: {
+        select: {
+          id: true,
+          balance: true,
+        },
+      },
     },
   });
 
@@ -339,7 +347,19 @@ export const changePassword = asyncHandler(async (req, res) => {
     });
   }
 
-  successResponse(res, updatedUser, 'Contraseña actualizada exitosamente');
+  // IMPORTANTE: Generar un nuevo token completo sin scope limitado
+  // para que el usuario pueda acceder al sistema normalmente
+  const newToken = generateToken(createTokenPayload(updatedUser));
+
+  successResponse(
+    res, 
+    { 
+      user: updatedUser, 
+      token: newToken, // Devolver el nuevo token
+      message: 'Contraseña actualizada exitosamente. Ahora tienes acceso completo al sistema.' 
+    }, 
+    'Contraseña actualizada exitosamente'
+  );
 });
 
 /**

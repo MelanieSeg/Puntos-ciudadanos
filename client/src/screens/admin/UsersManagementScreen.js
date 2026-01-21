@@ -57,9 +57,11 @@ export default function UsersManagementScreen() {
   const merchantCount = merchantCountData?.data?.data?.users?.length || 0;
   
   const admins = adminCountData?.data?.data?.users || [];
-  const masterAdminCount = admins.filter(u => u.role === 'MASTER_ADMIN').length;
-  const supportAdminCount = admins.filter(u => u.role === 'SUPPORT_ADMIN').length;
-  const adminCount = admins.length;
+  // Filtrar solo los usuarios que sean realmente admins (MASTER_ADMIN o SUPPORT_ADMIN)
+  const onlyAdmins = admins.filter(u => u.role === 'MASTER_ADMIN' || u.role === 'SUPPORT_ADMIN');
+  const masterAdminCount = onlyAdmins.filter(u => u.role === 'MASTER_ADMIN').length;
+  const supportAdminCount = onlyAdmins.filter(u => u.role === 'SUPPORT_ADMIN').length;
+  const adminCount = onlyAdmins.length;
 
   const totalUsers = userCount + merchantCount + adminCount;
 

@@ -16,6 +16,8 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
 import * as validators from '../utils/validators';
@@ -83,18 +85,33 @@ export default function ChangePasswordScreen({ navigation }) {
 
     setLoading(true);
     try {
-      await api.put('/auth/change-password', {
+      const response = await api.put('/auth/change-password', {
         currentPassword,
         newPassword,
         confirmNewPassword: confirmPassword,
       });
+
+      // La respuesta contiene el usuario actualizado con mustChangePassword: false
+      // Y un nuevo token completo sin restricciones
+      const { user: updatedUser, token: newToken } = response.data.data;
+
+      // Actualizar el token en el almacenamiento y en axios
+      if (newToken) {
+        if (Platform.OS === 'web') {
+          await AsyncStorage.setItem('userToken', newToken);
+        } else {
+          await SecureStore.setItemAsync('userToken', newToken);
+        }
+        // Actualizar header de axios con el nuevo token
+        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+      }
 
       // Desbloquear la bandera de cambio obligatorio
       if (setNeedPasswordChange) {
         setNeedPasswordChange(false);
       }
 
-      // Actualizar estado del usuario
+      // Actualizar estado del usuario con los datos de la respuesta
       if (refreshUser) {
         await refreshUser();
       }
