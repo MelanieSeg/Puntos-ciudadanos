@@ -308,6 +308,7 @@ router.get(
         status: true,
         createdAt: true,
         validatedAt: true,
+        metadata: true, // Incluir metadata con URLs de imágenes adicionales
         mission: {
           select: {
             id: true,

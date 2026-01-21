@@ -234,6 +234,7 @@ model MissionSubmission {
   status         SubmissionStatus @default(PENDING)
   observation    String?          @db.Text
   validatedById  String?          @map("validatedById")
+  metadata       Json?            // Datos adicionales (ej: múltiples URLs de imágenes)
   
   // Timestamps
   createdAt      DateTime         @default(now()) @db.Timestamptz(3)

@@ -100,6 +100,23 @@ export function useAvailableMissions(limit = null) {
 }
 
 /**
+ * Hook para obtener detalles de una misión específica
+ * staleTime: 5 minutos - Los detalles de una misión son estáticos
+ */
+export function useMissionDetails(missionId) {
+  return useQuery({
+    queryKey: ['missions', 'details', missionId],
+    queryFn: async () => {
+      const response = await missionsAPI.getMissionById(missionId);
+      return response.data?.mission || response.data?.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    enabled: !!missionId, // Solo ejecutar si hay missionId
+    retry: 2,
+  });
+}
+
+/**
  * Hook para obtener beneficios disponibles
  * staleTime: 30 minutos - Los beneficios cambian poco frecuentemente
  */

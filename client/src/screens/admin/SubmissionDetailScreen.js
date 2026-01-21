@@ -207,8 +207,25 @@ export default function SubmissionDetailScreen({ route, navigation }) {
               )}
               {submission.evidenceUrl && (
                 <View style={styles.evidenceSection}>
-                  <Text style={styles.infoLabel}>Evidencia</Text>
-                  <Image source={{ uri: submission.evidenceUrl }} style={styles.evidenceImage} />
+                  <Text style={styles.infoLabel}>
+                    Evidencia {submission.metadata?.allImages ? `(${submission.metadata.allImages.length} imágenes)` : ''}
+                  </Text>
+                  {/* Si hay múltiples imágenes en metadata, mostrarlas todas */}
+                  {submission.metadata?.allImages ? (
+                    <View style={styles.imagesGrid}>
+                      {submission.metadata.allImages.map((imageUrl, index) => (
+                        <Image 
+                          key={index} 
+                          source={{ uri: imageUrl }} 
+                          style={styles.evidenceImageGrid}
+                          resizeMode="cover"
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    /* Si solo hay una imagen, mostrarla grande */
+                    <Image source={{ uri: submission.evidenceUrl }} style={styles.evidenceImage} resizeMode="cover" />
+                  )}
                 </View>
               )}
             </View>
@@ -294,8 +311,25 @@ export default function SubmissionDetailScreen({ route, navigation }) {
               )}
               {submission.evidenceUrl && (
                 <View style={styles.evidenceSection}>
-                  <Text style={styles.infoLabel}>Evidencia</Text>
-                  <Image source={{ uri: submission.evidenceUrl }} style={styles.evidenceImage} />
+                  <Text style={styles.infoLabel}>
+                    Evidencia {submission.metadata?.allImages ? `(${submission.metadata.allImages.length} imágenes)` : ''}
+                  </Text>
+                  {/* Si hay múltiples imágenes en metadata, mostrarlas todas */}
+                  {submission.metadata?.allImages ? (
+                    <View style={styles.imagesGrid}>
+                      {submission.metadata.allImages.map((imageUrl, index) => (
+                        <Image 
+                          key={index} 
+                          source={{ uri: imageUrl }} 
+                          style={styles.evidenceImageGrid}
+                          resizeMode="cover"
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    /* Si solo hay una imagen, mostrarla grande */
+                    <Image source={{ uri: submission.evidenceUrl }} style={styles.evidenceImage} resizeMode="cover" />
+                  )}
                 </View>
               )}
             </View>
@@ -439,5 +473,16 @@ const styles = StyleSheet.create({
     height: 300,
     borderRadius: LAYOUT.borderRadius.md,
     marginTop: SPACING.md,
+  },
+  imagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  evidenceImageGrid: {
+    width: '48%',
+    height: 200,
+    borderRadius: LAYOUT.borderRadius.md,
   },
 });

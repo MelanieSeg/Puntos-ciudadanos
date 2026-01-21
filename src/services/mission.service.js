@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 export async function createSubmission(data) {
   try {
-    const { userId, missionId, evidenceUrl, description } = data;
+    const { userId, missionId, evidenceUrl, description, metadata } = data;
 
     // Validar que el usuario existe
     const user = await prisma.user.findUnique({
@@ -100,6 +100,7 @@ export async function createSubmission(data) {
         evidenceUrl,
         observation: description, // Guardar la descripción del usuario
         status: 'PENDING', // Estado inicial es PENDING (esperando aprobación)
+        metadata: metadata || null, // Guardar metadata con URLs adicionales si existen
       },
       include: {
         mission: true,

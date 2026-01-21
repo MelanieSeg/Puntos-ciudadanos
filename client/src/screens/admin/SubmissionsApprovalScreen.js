@@ -61,6 +61,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
       status: sub.status,
       submittedAt: sub.createdAt,
       points: sub.mission?.points || 0,
+      metadata: sub.metadata || null, // Incluir metadata con URLs de imágenes adicionales
     }));
   }, [rawSubmissions]);
 

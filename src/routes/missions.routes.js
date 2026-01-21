@@ -1,10 +1,34 @@
 import { Router } from 'express';
+import { Readable } from 'stream';
 import prisma from '../config/database.js';
 import { authenticate } from '../middlewares/auth.js';
+import upload from '../middlewares/upload.js';
+import cloudinary from '../config/cloudinary.js';
 import * as missionService from '../services/mission.service.js';
 import * as cacheService from '../services/cache.service.js';
 
 const router = Router();
+
+/**
+ * Helper: Subir imagen a Cloudinary desde buffer
+ */
+const uploadToCloudinary = (buffer, folder = 'puntos-ciudadanos/missions') => {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        resource_type: 'image',
+      },
+      (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }
+    );
+
+    const readable = Readable.from(buffer);
+    readable.pipe(uploadStream);
+  });
+};
 
 /**
  * GET /api/v1/missions
@@ -155,13 +179,44 @@ router.get('/:id', authenticate, async (req, res) => {
 
 /**
  * POST /api/v1/missions/:missionId/submit
- * Enviar evidencia de completación de misión
+ * Enviar evidencia de completación de misión con imágenes (1-4 archivos)
  */
-router.post('/:missionId/submit', authenticate, async (req, res) => {
+router.post('/:missionId/submit', authenticate, upload.array('evidence', 4), async (req, res) => {
   try {
     const { missionId } = req.params;
-    const { evidenceUrl, description } = req.body;
+    const { description } = req.body;
     const userId = req.user.id;
+
+    // Validar que se subieron imágenes
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Debes adjuntar al menos una imagen como evidencia',
+      });
+    }
+
+    // Subir todas las imágenes a Cloudinary
+    const evidenceUrls = [];
+    try {
+      for (const file of req.files) {
+        const result = await uploadToCloudinary(file.buffer, 'puntos-ciudadanos/missions');
+        evidenceUrls.push(result.secure_url);
+      }
+    } catch (uploadError) {
+      console.error('Error subiendo imágenes a Cloudinary:', uploadError);
+      return res.status(500).json({
+        success: false,
+        message: 'Error al procesar las imágenes. Por favor, intenta de nuevo.',
+      });
+    }
+    
+    // Validar que al menos una imagen se subió correctamente
+    if (evidenceUrls.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No se pudo procesar ninguna imagen. Por favor, verifica que las fotos sean válidas e intenta de nuevo.',
+      });
+    }
 
     // Validar que la misión existe
     const mission = await prisma.mission.findUnique({
@@ -175,18 +230,38 @@ router.post('/:missionId/submit', authenticate, async (req, res) => {
       });
     }
 
+    // Usar la primera imagen como evidenceUrl principal
+    const primaryEvidenceUrl = evidenceUrls[0];
+    
+    if (!primaryEvidenceUrl || typeof primaryEvidenceUrl !== 'string' || primaryEvidenceUrl.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Error: No se pudo obtener una URL válida de la imagen principal. Por favor, intenta subir las fotos nuevamente.',
+      });
+    }
+
+    // Guardar todas las URLs en metadata si hay más de una
+    const metadata = evidenceUrls.length > 1 ? {
+      allImages: evidenceUrls,
+      imageCount: evidenceUrls.length
+    } : null;
+
     // Usar el servicio de misiones para crear la sumisión
     const submission = await missionService.createSubmission({
       userId,
       missionId,
-      evidenceUrl: evidenceUrl || 'https://via.placeholder.com/300',
-      description: description || null, // Guardar la descripción del usuario
+      evidenceUrl: primaryEvidenceUrl,
+      description: description || null,
+      metadata, // Guardar las URLs adicionales si existen
     });
 
     res.status(201).json({
       success: true,
       message: 'Evidencia enviada exitosamente',
-      data: submission,
+      data: {
+        ...submission,
+        evidenceUrls, // Devolver todas las URLs para confirmación
+      },
     });
   } catch (error) {
     console.error('Error enviando evidencia:', error);
