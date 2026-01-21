@@ -155,4 +155,16 @@ router.get(
   merchantController.getMyBenefits
 );
 
+/**
+ * POST /api/v1/merchant/benefits/:id/request-restock
+ * Solicitar reabastecimiento de stock para un beneficio
+ * Solo el comercio dueño del beneficio puede solicitar reabastecimiento
+ */
+router.post(
+  '/benefits/:id/request-restock',
+  authenticate,
+  isMerchantOrAdmin,
+  merchantController.requestRestock
+);
+
 export default router;

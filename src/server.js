@@ -126,17 +126,6 @@ app.use(`/api/${config.apiVersion}/missions`, missionsRoutes);
 import adminRoutes from './routes/admin.routes.js';
 app.use(`/api/${config.apiVersion}/admin`, adminRoutes);
 
-// TODO: Implementar rutas adicionales
-// import userRoutes from './routes/user.routes.js';
-// import walletRoutes from './routes/wallet.routes.js';
-// import benefitRoutes from './routes/benefit.routes.js';
-// import newsRoutes from './routes/news.routes.js';
-
-// app.use(`/api/${config.apiVersion}/users`, userRoutes);
-// app.use(`/api/${config.apiVersion}/wallets`, walletRoutes);
-// app.use(`/api/${config.apiVersion}/benefits`, benefitRoutes);
-// app.use(`/api/${config.apiVersion}/news`, newsRoutes);
-
 // ============================================
 // ERROR HANDLING
 // ============================================

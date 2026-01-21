@@ -14,6 +14,12 @@ import { sendVerificationEmail } from '../services/email.service.js';
 import config from '../config/index.js';
 import { getGlobalStats } from '../controllers/stats.controller.js';
 import { getAuditLogs, updateUserStatus } from '../controllers/audit.controller.js';
+import { 
+  createMission, 
+  getAllMissionsAdmin, 
+  updateMissionStatus, 
+  deleteMission 
+} from '../controllers/mission.controller.js';
 
 const router = express.Router();
 
@@ -37,6 +43,41 @@ router.get('/audit-logs', authenticate, authorize('MASTER_ADMIN'), getAuditLogs)
  * Solo MASTER_ADMIN
  */
 router.patch('/users/:id/status', authenticate, authorize('MASTER_ADMIN'), updateUserStatus);
+
+/**
+ * ========================================
+ * RUTAS DE GESTIÓN DE MISIONES
+ * ========================================
+ */
+
+/**
+ * POST /api/v1/admin/missions
+ * Crear una nueva misión
+ * Solo MASTER_ADMIN y SUPPORT_ADMIN
+ */
+router.post('/missions', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), createMission);
+
+/**
+ * GET /api/v1/admin/missions
+ * Listar todas las misiones (incluye inactivas para auditoría)
+ * Solo MASTER_ADMIN y SUPPORT_ADMIN
+ * Query params: status (active, inactive) - opcional
+ */
+router.get('/missions', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), getAllMissionsAdmin);
+
+/**
+ * PATCH /api/v1/admin/missions/:id/status
+ * Cambiar el estado de una misión (activar/desactivar)
+ * Solo MASTER_ADMIN y SUPPORT_ADMIN
+ */
+router.patch('/missions/:id/status', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), updateMissionStatus);
+
+/**
+ * DELETE /api/v1/admin/missions/:id
+ * Borrado lógico de una misión (cambia active a false)
+ * Solo MASTER_ADMIN y SUPPORT_ADMIN
+ */
+router.delete('/missions/:id', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), deleteMission);
 
 /**
  * Helper: Subir imagen a Cloudinary desde buffer
