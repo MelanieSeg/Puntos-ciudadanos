@@ -18,8 +18,10 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function AdminSettingsScreen({ navigation }) {
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
@@ -112,7 +114,7 @@ export default function AdminSettingsScreen({ navigation }) {
 
   if (loading) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
@@ -121,19 +123,43 @@ export default function AdminSettingsScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <ScrollView contentContainerStyle={{ paddingBottom: SPACING.xl }}>
-        {/* Cooldowns */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <MaterialCommunityIcons name="timer-sand" size={24} color={COLORS.primary} />
-            <Text style={styles.sectionTitle}>Cooldowns</Text>
+        {/* Apariencia */}
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
+            <MaterialCommunityIcons name="theme-light-dark" size={24} color={COLORS.admin} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Apariencia</Text>
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Cooldown entre Misiones</Text>
-              <Text style={styles.settingDescription}>Días entre envíos de misiones</Text>
+              <Text style={[styles.settingName, { color: theme.text }]}>Modo Nocturno</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                {isDarkMode ? 'Tema oscuro activado' : 'Tema claro activado'}
+              </Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#767577', true: COLORS.admin }}
+              thumbColor={isDarkMode ? COLORS.success : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
+          </View>
+        </View>
+
+        {/* Cooldowns */}
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
+            <MaterialCommunityIcons name="timer-sand" size={24} color={COLORS.primary} />
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Cooldowns</Text>
+          </View>
+
+          <View style={styles.settingItem}>
+            <View style={styles.settingLabel}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Cooldown entre Misiones</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Días entre envíos de misiones</Text>
             </View>
             <TextInput
               style={styles.numberInput}
@@ -149,16 +175,16 @@ export default function AdminSettingsScreen({ navigation }) {
         </View>
 
         {/* Límites de Puntos */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
             <MaterialCommunityIcons name="star-circle" size={24} color={COLORS.warning} />
-            <Text style={styles.sectionTitle}>Límites de Puntos</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Límites de Puntos</Text>
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Puntos Mínimos para Canje</Text>
-              <Text style={styles.settingDescription}>Puntos requeridos para redimir</Text>
+              <Text style={[styles.settingName, { color: theme.text }]}>Puntos Mínimos para Canje</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Puntos requeridos para redimir</Text>
             </View>
             <TextInput
               style={styles.numberInput}
@@ -173,8 +199,8 @@ export default function AdminSettingsScreen({ navigation }) {
 
           <View style={styles.settingItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Máximo Puntos por Día</Text>
-              <Text style={styles.settingDescription}>Puntos máximos ganables en 24h</Text>
+              <Text style={[styles.settingName, { color: theme.text }]}>Máximo Puntos por Día</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Puntos máximos ganables en 24h</Text>
             </View>
             <TextInput
               style={styles.numberInput}
@@ -189,8 +215,8 @@ export default function AdminSettingsScreen({ navigation }) {
 
           <View style={styles.settingItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Máximos Canjes por Día</Text>
-              <Text style={styles.settingDescription}>Beneficios canjeables en 24h</Text>
+              <Text style={[styles.settingName, { color: theme.text }]}>Máximos Canjes por Día</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>Beneficios canjeables en 24h</Text>
             </View>
             <TextInput
               style={styles.numberInput}
@@ -205,16 +231,16 @@ export default function AdminSettingsScreen({ navigation }) {
         </View>
 
         {/* Políticas */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
             <MaterialCommunityIcons name="shield-check" size={24} color={COLORS.success} />
-            <Text style={styles.sectionTitle}>Políticas</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Políticas</Text>
           </View>
 
           <View style={styles.toggleItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Requerir Aprobación para Canje</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Requerir Aprobación para Canje</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 Los canjes deben ser aprobados por admin
               </Text>
             </View>
@@ -231,8 +257,8 @@ export default function AdminSettingsScreen({ navigation }) {
 
           <View style={styles.toggleItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Permitir Múltiples Misiones/Día</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Permitir Múltiples Misiones/Día</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 Los usuarios pueden enviar múltiples misiones en 24h
               </Text>
             </View>
@@ -251,8 +277,8 @@ export default function AdminSettingsScreen({ navigation }) {
 
           <View style={styles.toggleItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Bonus de Nuevo Usuario</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Bonus de Nuevo Usuario</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 Puntos iniciales para usuarios nuevos
               </Text>
             </View>
@@ -270,8 +296,8 @@ export default function AdminSettingsScreen({ navigation }) {
           {settings.enableNewUserBonus && (
             <View style={styles.settingItem}>
               <View style={styles.settingLabel}>
-                <Text style={styles.settingName}>Puntos Bonus Inicial</Text>
-                <Text style={styles.settingDescription}>
+                <Text style={[styles.settingName, { color: theme.text }]}>Puntos Bonus Inicial</Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                   Puntos otorgados al registrarse
                 </Text>
               </View>
@@ -289,16 +315,16 @@ export default function AdminSettingsScreen({ navigation }) {
         </View>
 
         {/* Notificaciones */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.sectionHeader, { borderBottomColor: theme.border }]}>
             <MaterialCommunityIcons name="bell" size={24} color={COLORS.info} />
-            <Text style={styles.sectionTitle}>Notificaciones</Text>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Notificaciones</Text>
           </View>
 
           <View style={styles.toggleItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Notificar en Envío</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Notificar en Envío</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 Avisar cuando se envía una misión
               </Text>
             </View>
@@ -315,8 +341,8 @@ export default function AdminSettingsScreen({ navigation }) {
 
           <View style={styles.toggleItem}>
             <View style={styles.settingLabel}>
-              <Text style={styles.settingName}>Notificar en Aprobación</Text>
-              <Text style={styles.settingDescription}>
+              <Text style={[styles.settingName, { color: theme.text }]}>Notificar en Aprobación</Text>
+              <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
                 Avisar cuando se aprueba una misión
               </Text>
             </View>

@@ -27,6 +27,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { adminAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { useInfiniteUsers } from '../../hooks/useUserData';
@@ -35,6 +36,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 export default function UsersManagementScreen() {
   const queryClient = useQueryClient();
   const { authState } = React.useContext(AuthContext);
+  const { theme } = useTheme();
   const currentUserRole = authState?.user?.role;
   
   const { data: userCountData } = useQuery({ 
@@ -385,7 +387,7 @@ export default function UsersManagementScreen() {
   };
 
   const renderUserCard = ({ item }) => (
-    <View style={styles.userCard}>
+    <View style={[styles.userCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.userHeader}>
         <View style={[styles.avatar, { backgroundColor: `${getRoleColor(item.role)}20` }]}>
           <MaterialCommunityIcons
@@ -395,22 +397,22 @@ export default function UsersManagementScreen() {
           />
         </View>
         <View style={styles.userInfo}>
-          <Text style={styles.userName}>{item.name}</Text>
-          <Text style={styles.userEmail}>{item.email}</Text>
+          <Text style={[styles.userName, { color: theme.text }]}>{item.name}</Text>
+          <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{item.email}</Text>
           {item.role === 'MERCHANT' && item.merchantProfile?.address && (
             <View style={styles.addressRow}>
-              <MaterialCommunityIcons name="map-marker" size={14} color={COLORS.gray} />
-              <Text style={styles.addressText} numberOfLines={1}>{item.merchantProfile.address}</Text>
+              <MaterialCommunityIcons name="map-marker" size={14} color={theme.textSecondary} />
+              <Text style={[styles.addressText, { color: theme.textSecondary }]} numberOfLines={1}>{item.merchantProfile.address}</Text>
             </View>
           )}
           <View style={styles.metaRow}>
             {item.role === 'USER' && (
               <View style={styles.pointsContainer}>
                 <MaterialCommunityIcons name="star-circle" size={16} color={COLORS.primary} />
-                <Text style={styles.pointsText}>{item.wallet?.balance || 0} pts</Text>
+                <Text style={[styles.pointsText, { color: theme.text }]}>{item.wallet?.balance || 0} pts</Text>
               </View>
             )}
-            <Text style={styles.dateText}>
+            <Text style={[styles.dateText, { color: theme.textSecondary }]}>
               {new Date(item.createdAt).toLocaleDateString('es-ES', { 
                 day: '2-digit', 
                 month: 'short', 
@@ -430,11 +432,11 @@ export default function UsersManagementScreen() {
           <>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
-              <Text style={styles.statText}>{item._count?.missionCompletions || 0} aprobadas</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>{item._count?.missionCompletions || 0} aprobadas</Text>
             </View>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.warning} />
-              <Text style={styles.statText}>{item._count?.missionSubmissions || 0} solicitudes</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>{item._count?.missionSubmissions || 0} solicitudes</Text>
             </View>
           </>
         )}
@@ -443,11 +445,11 @@ export default function UsersManagementScreen() {
           <>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="gift" size={16} color={COLORS.primary} />
-              <Text style={styles.statText}>Beneficios del comercio</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>Beneficios del comercio</Text>
             </View>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="swap-horizontal" size={16} color={COLORS.gray} />
-              <Text style={styles.statText}>Canjes realizados</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>Canjes realizados</Text>
             </View>
           </>
         )}
@@ -456,7 +458,7 @@ export default function UsersManagementScreen() {
           <>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="clock-outline" size={16} color={COLORS.gray} />
-              <Text style={styles.statText}>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>
                 {item.lastLoginAt 
                   ? `Último acceso: ${new Date(item.lastLoginAt).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}`
                   : 'Nunca ha ingresado'
@@ -465,7 +467,7 @@ export default function UsersManagementScreen() {
             </View>
             <View style={styles.statItem}>
               <MaterialCommunityIcons name="shield-check" size={16} color={COLORS.primary} />
-              <Text style={styles.statText}>{getRoleLabel(item.role)}</Text>
+              <Text style={[styles.statText, { color: theme.textSecondary }]}>{getRoleLabel(item.role)}</Text>
             </View>
           </>
         )}
@@ -513,36 +515,37 @@ export default function UsersManagementScreen() {
 
   if (isLoading && !allUsers.length) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando usuarios...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando usuarios...</Text>
         </View>
       </ScreenWrapper>
     );
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       {/* Filters */}
-      <View style={styles.filtersContainer}>
+      <View style={[styles.filtersContainer, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         {getAvailableTabs().map((role) => (
           <TouchableOpacity
             key={role}
             style={[
               styles.filterButton,
+              { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border },
               activeTab === role && styles.filterButtonActive,
             ]}
             onPress={() => setActiveTab(role)}
           >
-            <Text style={[styles.filterButtonText, activeTab === role && styles.filterButtonTextActive]}>
+            <Text style={[styles.filterButtonText, { color: theme.textSecondary }, activeTab === role && styles.filterButtonTextActive]}>
               {getTabLabel(role)}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
       <View style={styles.userCountContainer}>
-        <Text style={styles.userCountText}>
+        <Text style={[styles.userCountText, { color: theme.textSecondary }]}>
             {`${getCategoryCount(activeTab)} de ${totalUsers || 0} usuarios`}
         </Text>
         {activeTab === 'MASTER_ADMIN' && (
@@ -554,12 +557,12 @@ export default function UsersManagementScreen() {
       </View>
 
       {/* Barra de Búsqueda */}
-      <View style={styles.searchContainer}>
-        <MaterialCommunityIcons name="magnify" size={20} color={COLORS.gray} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+        <MaterialCommunityIcons name="magnify" size={20} color={theme.textSecondary} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: theme.text }]}
           placeholder="Buscar por nombre o email..."
-          placeholderTextColor={COLORS.gray}
+          placeholderTextColor={theme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
           autoCapitalize="none"
@@ -573,12 +576,12 @@ export default function UsersManagementScreen() {
       </View>
 
       {/* Controles de Ordenamiento y Filtros */}
-      <View style={styles.controlsRow}>
+      <View style={[styles.controlsRow, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         {/* Ordenamiento */}
         <View style={styles.sortContainer}>
-          <Text style={styles.controlLabel}>Ordenar:</Text>
+          <Text style={[styles.controlLabel, { color: theme.textSecondary }]}>Ordenar:</Text>
           <TouchableOpacity
-            style={styles.sortButton}
+            style={[styles.sortButton, { backgroundColor: theme.inputBg, borderColor: theme.border }]}
             onPress={() => {
               // Opciones según el rol activo
               const options = activeTab === 'USER' 
@@ -594,12 +597,12 @@ export default function UsersManagementScreen() {
               size={16}
               color={COLORS.primary}
             />
-            <Text style={styles.sortButtonText}>
+            <Text style={[styles.sortButtonText, { color: theme.text }]}>
               {sortBy === 'name' ? 'Nombre' : sortBy === 'balance' ? 'Puntos' : 'Fecha'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.sortOrderButton}
+            style={[styles.sortOrderButton, { backgroundColor: theme.inputBg, borderColor: theme.border }]}
             onPress={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
           >
             <MaterialCommunityIcons
@@ -612,24 +615,24 @@ export default function UsersManagementScreen() {
 
         {/* Filtro de Estado */}
         <View style={styles.statusFilterContainer}>
-          <Text style={styles.controlLabel}>Estado:</Text>
+          <Text style={[styles.controlLabel, { color: theme.textSecondary }]}>Estado:</Text>
           <TouchableOpacity
-            style={[styles.miniFilterButton, !filterStatus && styles.miniFilterButtonActive]}
+            style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, !filterStatus && styles.miniFilterButtonActive]}
             onPress={() => setFilterStatus(null)}
           >
-            <Text style={[styles.miniFilterText, !filterStatus && styles.miniFilterTextActive]}>Todos</Text>
+            <Text style={[styles.miniFilterText, { color: theme.textSecondary }, !filterStatus && styles.miniFilterTextActive]}>Todos</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.miniFilterButton, filterStatus === 'ACTIVE' && styles.miniFilterButtonActive]}
+            style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterStatus === 'ACTIVE' && styles.miniFilterButtonActive]}
             onPress={() => setFilterStatus('ACTIVE')}
           >
-            <Text style={[styles.miniFilterText, filterStatus === 'ACTIVE' && styles.miniFilterTextActive]}>Activos</Text>
+            <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterStatus === 'ACTIVE' && styles.miniFilterTextActive]}>Activos</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.miniFilterButton, filterStatus === 'BANNED' && styles.miniFilterButtonActive]}
+            style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterStatus === 'BANNED' && styles.miniFilterButtonActive]}
             onPress={() => setFilterStatus('BANNED')}
           >
-            <Text style={[styles.miniFilterText, filterStatus === 'BANNED' && styles.miniFilterTextActive]}>Baneados</Text>
+            <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterStatus === 'BANNED' && styles.miniFilterTextActive]}>Baneados</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -697,7 +700,7 @@ export default function UsersManagementScreen() {
         onRequestClose={cancelAddUser}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <ScrollView 
               style={{ width: '100%' }}
               contentContainerStyle={{ alignItems: 'center', paddingBottom: 20 }}
@@ -708,10 +711,10 @@ export default function UsersManagementScreen() {
               size={48}
               color={COLORS.primary}
             />
-            <Text style={styles.modalTitle}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
               {addModalType === 'MERCHANT' ? 'Crear Cuenta de Comercio' : 'Crear Administrador de Soporte'}
             </Text>
-            <Text style={styles.modalSubtitle}>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
               {addModalType === 'MERCHANT'
                 ? 'El comercio podrá validar cupones.'
                 : 'Los administradores de soporte pueden aprobar misiones y gestionar usuarios, pero no pueden crear otros administradores.'}
@@ -719,12 +722,13 @@ export default function UsersManagementScreen() {
 
             <View style={styles.formContainer}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
+                <Text style={[styles.inputLabel, { color: theme.text }]}>
                   {addModalType === 'MERCHANT' ? 'Nombre del comercio' : 'Nombre completo'}
                 </Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                   placeholder={addModalType === 'MERCHANT' ? 'Ej: Restaurante El Buen Sabor' : 'Ej: Juan Pérez'}
+                  placeholderTextColor={theme.textSecondary}
                   value={newUserForm.name}
                   onChangeText={(text) => setNewUserForm({ ...newUserForm, name: text })}
                   autoCapitalize="words"
@@ -732,10 +736,11 @@ export default function UsersManagementScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
+                <Text style={[styles.inputLabel, { color: theme.text }]}>Email</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                   placeholder={addModalType === 'MERCHANT' ? 'comercio@ejemplo.com' : 'admin@ejemplo.com'}
+                  placeholderTextColor={theme.textSecondary}
                   value={newUserForm.email}
                   onChangeText={(text) => setNewUserForm({ ...newUserForm, email: text })}
                   autoCapitalize="none"
@@ -746,10 +751,11 @@ export default function UsersManagementScreen() {
               {addModalType === 'MERCHANT' && (
                 <>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Link de Google Maps / Dirección</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Link de Google Maps / Dirección</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="Ej: https://maps.app.goo.gl/..."
+                    placeholderTextColor={theme.textSecondary}
                     value={newUserForm.address}
                     onChangeText={(text) => setNewUserForm({ ...newUserForm, address: text })}
                     autoCapitalize="none"
@@ -757,10 +763,11 @@ export default function UsersManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Teléfono</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Teléfono</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="+569 1234 5678"
+                    placeholderTextColor={theme.textSecondary}
                     value={newUserForm.phone}
                     onChangeText={(text) => setNewUserForm({ ...newUserForm, phone: text })}
                     keyboardType="phone-pad"
@@ -768,10 +775,11 @@ export default function UsersManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>RUT</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>RUT</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="12.345.678-9"
+                    placeholderTextColor={theme.textSecondary}
                     value={newUserForm.rut}
                     onChangeText={(text) => setNewUserForm({ ...newUserForm, rut: text })}
                     autoCapitalize="none"
@@ -780,14 +788,14 @@ export default function UsersManagementScreen() {
                 </>
               )}
 
-              <Text style={styles.passwordNote}>
-                💡 Se generará una contraseña temporal automáticamente que deberá cambiarse en el primer inicio de sesión.
+              <Text style={[styles.passwordNote, { color: theme.textSecondary }]}>
+                Nota: Se generará una contraseña temporal automáticamente que deberá cambiarse en el primer inicio de sesión.
               </Text>
             </View>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={cancelAddUser}>
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+              <TouchableOpacity style={[styles.modalButtonCancel, { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border }]} onPress={cancelAddUser}>
+                <Text style={[styles.modalButtonCancelText, { color: theme.text }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={handleCreateUser}>
                 <Text style={styles.modalButtonConfirmText}>Crear</Text>
@@ -806,19 +814,19 @@ export default function UsersManagementScreen() {
         onRequestClose={cancelAction}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons
               name="alert-circle"
               size={48}
               color={pendingAction?.newStatus === 'BANNED' ? COLORS.error : COLORS.warning}
             />
-            <Text style={styles.modalTitle}>Confirmar acción</Text>
-            <Text style={styles.modalText}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Confirmar acción</Text>
+            <Text style={[styles.modalText, { color: theme.textSecondary }]}>
               ¿Estás seguro de que quieres {pendingAction?.actionText} a {pendingAction?.userName}?
             </Text>
             <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.modalButtonCancel} onPress={cancelAction}>
-                <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+              <TouchableOpacity style={[styles.modalButtonCancel, { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border }]} onPress={cancelAction}>
+                <Text style={[styles.modalButtonCancelText, { color: theme.text }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.modalButtonConfirm} onPress={confirmAction}>
                 <Text style={styles.modalButtonConfirmText}>Confirmar</Text>
@@ -836,44 +844,44 @@ export default function UsersManagementScreen() {
         onRequestClose={() => {}}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, styles.passwordModalContent]}>
+          <View style={[styles.modalContent, styles.passwordModalContent, { backgroundColor: theme.surface }]}>
             <MaterialCommunityIcons
               name="key-variant"
               size={64}
               color={COLORS.success}
             />
-            <Text style={styles.modalTitle}>¡Cuenta Creada Exitosamente!</Text>
-            <Text style={styles.modalSubtitle}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>¡Cuenta Creada Exitosamente!</Text>
+            <Text style={[styles.modalSubtitle, { color: theme.textSecondary }]}>
               {generatedPassword.userType} creado correctamente
             </Text>
 
-            <View style={styles.passwordInfoContainer}>
+            <View style={[styles.passwordInfoContainer, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
               <View style={styles.passwordInfoRow}>
                 <MaterialCommunityIcons name="account" size={20} color={COLORS.gray} />
-                <Text style={styles.passwordInfoLabel}>Nombre:</Text>
-                <Text style={styles.passwordInfoValue}>{generatedPassword.userName}</Text>
+                <Text style={[styles.passwordInfoLabel, { color: theme.textSecondary }]}>Nombre:</Text>
+                <Text style={[styles.passwordInfoValue, { color: theme.text }]}>{generatedPassword.userName}</Text>
               </View>
               
               <View style={styles.passwordInfoRow}>
                 <MaterialCommunityIcons name="email" size={20} color={COLORS.gray} />
-                <Text style={styles.passwordInfoLabel}>Email:</Text>
-                <Text style={styles.passwordInfoValue}>{generatedPassword.userEmail}</Text>
+                <Text style={[styles.passwordInfoLabel, { color: theme.textSecondary }]}>Email:</Text>
+                <Text style={[styles.passwordInfoValue, { color: theme.text }]}>{generatedPassword.userEmail}</Text>
               </View>
 
-              <View style={styles.passwordDivider} />
+              <View style={[styles.passwordDivider, { backgroundColor: theme.border }]} />
 
               <View style={styles.passwordSection}>
                 <View style={styles.passwordHeader}>
                   <MaterialCommunityIcons name="lock-alert" size={24} color={COLORS.warning} />
-                  <Text style={styles.passwordSectionTitle}>Contraseña Temporal</Text>
+                  <Text style={[styles.passwordSectionTitle, { color: theme.text }]}>Contraseña Temporal</Text>
                 </View>
-                <View style={styles.passwordBox}>
-                  <Text style={styles.passwordText} selectable>
+                <View style={[styles.passwordBox, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Text style={[styles.passwordText, { color: COLORS.primary }]} selectable>
                     {generatedPassword.password}
                   </Text>
                 </View>
-                <Text style={styles.passwordWarning}>
-                  ⚠️ Esta contraseña debe ser cambiada en el primer inicio de sesión
+                <Text style={[styles.passwordWarning, { color: COLORS.warning }]}>
+                  Importante: Esta contraseña debe ser cambiada en el primer inicio de sesión
                 </Text>
               </View>
             </View>

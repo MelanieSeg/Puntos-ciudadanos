@@ -20,10 +20,12 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { adminAPI } from '../../services/api';
 import { useInfiniteSubmissions } from '../../hooks/useUserData';
 
 export default function SubmissionsApprovalScreen({ navigation }) {
+  const { theme } = useTheme();
   const [filter, setFilter] = useState('PENDING'); // PENDING, APPROVED, REJECTED
   
   // React Query Infinite Query - Paginación de 20 envíos por página
@@ -129,7 +131,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   };
 
   const renderSubmissionCard = ({ item }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <TouchableOpacity
         onPress={() =>
           navigation.navigate('SubmissionDetail', {
@@ -143,8 +145,8 @@ export default function SubmissionsApprovalScreen({ navigation }) {
             <MaterialCommunityIcons name="account" size={24} color={COLORS.primary} />
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.userName}</Text>
-            <Text style={styles.userEmail}>{item.userEmail}</Text>
+            <Text style={[styles.userName, { color: theme.text }]}>{item.userName}</Text>
+            <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{item.userEmail}</Text>
           </View>
           <View style={[styles.badge, { 
             backgroundColor: item.status === 'PENDING' ? '#fff3cd' : item.status === 'APPROVED' ? '#d4edda' : '#f8d7da' 
@@ -158,7 +160,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
           <View style={styles.missionHeader}>
             <MaterialCommunityIcons name="target" size={20} color={COLORS.primary} />
             <View style={styles.missionDetails}>
-              <Text style={styles.missionName}>{item.missionName}</Text>
+              <Text style={[styles.missionName, { color: theme.text }]}>{item.missionName}</Text>
               <Text style={styles.points}>{`+${item.points} puntos`}</Text>
             </View>
           </View>
@@ -243,19 +245,21 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
-      <View style={styles.filters}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
+      <View style={[styles.filters, { backgroundColor: theme.surface }]}>
         {['PENDING', 'APPROVED', 'REJECTED'].map(status => (
           <TouchableOpacity
             key={status}
             style={[
               styles.filterButton,
+              { backgroundColor: theme.inputBg, borderColor: theme.border },
               filter === status && styles.filterButtonActive,
             ]}
             onPress={() => setFilter(status)}
           >
             <Text style={[
                 styles.filterButtonText,
+                { color: theme.textSecondary },
                 filter === status && styles.filterButtonTextActive,
               ]}>
               {status === 'PENDING' ? 'Pendientes' : status === 'APPROVED' ? 'Aprobados' : 'Rechazados'}
@@ -290,15 +294,15 @@ export default function SubmissionsApprovalScreen({ navigation }) {
       />
       <Modal visible={showConfirmModal} transparent={true} animationType="fade" onRequestClose={cancelAction}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
               <MaterialCommunityIcons name={pendingAction?.type === 'approve' ? 'check-circle' : 'alert-circle'} size={48} color={pendingAction?.type === 'approve' ? COLORS.primary : COLORS.error} />
             </View>
-            <Text style={styles.modalTitle}>{pendingAction?.type === 'approve' ? '¿Aprobar Envío?' : '¿Rechazar Envío?'}</Text>
-            <Text style={styles.modalMessage}>{pendingAction?.type === 'approve' ? 'El usuario recibirá los puntos asociados a esta misión.' : 'El usuario será notificado del rechazo.'}</Text>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>{pendingAction?.type === 'approve' ? '¿Aprobar Envío?' : '¿Rechazar Envío?'}</Text>
+            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>{pendingAction?.type === 'approve' ? 'El usuario recibirá los puntos asociados a esta misión.' : 'El usuario será notificado del rechazo.'}</Text>
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton]} onPress={cancelAction}>
-                <Text style={styles.modalCancelButtonText}>Cancelar</Text>
+              <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton, { backgroundColor: theme.inputBg, borderColor: theme.border }]} onPress={cancelAction}>
+                <Text style={[styles.modalCancelButtonText, { color: theme.text }]}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, pendingAction?.type === 'approve' ? styles.modalConfirmButton : styles.modalRejectButton]} onPress={confirmAction}>
                 <Text style={[styles.modalConfirmButtonText, pendingAction?.type === 'reject' && styles.modalRejectButtonText]}>{pendingAction?.type === 'approve' ? 'Aprobar' : 'Rechazar'}</Text>

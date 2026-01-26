@@ -19,8 +19,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function MissionsManagementScreen({ navigation }) {
+  const { theme } = useTheme();
   const [missions, setMissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -126,7 +128,7 @@ export default function MissionsManagementScreen({ navigation }) {
   };
 
   const renderMissionCard = ({ item }) => (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={styles.iconContainer}>
           <MaterialCommunityIcons
@@ -136,7 +138,7 @@ export default function MissionsManagementScreen({ navigation }) {
           />
         </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.missionName}>{item.name}</Text>
+          <Text style={[styles.missionName, { color: theme.text }]}>{item.name}</Text>
           <View style={styles.badgesRow}>
             <View
               style={[
@@ -258,16 +260,17 @@ export default function MissionsManagementScreen({ navigation }) {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       
       {/* Filtros */}
-      <View style={styles.filters}>
+      <View style={[styles.filters, { backgroundColor: theme.surface, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
         {['ALL', 'ACTIVE', 'PAUSED', 'ARCHIVED'].map(status => (
           <TouchableOpacity
             key={status}
             style={[
               styles.filterButton,
+              { backgroundColor: theme.inputBg },
               filter === status && styles.filterButtonActive,
             ]}
             onPress={() => setFilter(status)}
@@ -275,6 +278,7 @@ export default function MissionsManagementScreen({ navigation }) {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: theme.textSecondary },
                 filter === status && styles.filterButtonTextActive,
               ]}
             >
@@ -299,8 +303,8 @@ export default function MissionsManagementScreen({ navigation }) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="target" size={48} color={COLORS.light} />
-            <Text style={styles.emptyText}>No hay misiones creadas</Text>
+            <MaterialCommunityIcons name="target" size={48} color={theme.textSecondary} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No hay misiones creadas</Text>
             <TouchableOpacity
               style={styles.emptyButton}
               onPress={() => navigation.navigate('CreateMission')}

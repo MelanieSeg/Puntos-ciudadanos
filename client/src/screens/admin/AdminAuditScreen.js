@@ -24,6 +24,7 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { adminAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 // Mapeo de íconos según la acción
 const ACTION_ICONS = {
@@ -83,6 +84,7 @@ const formatRelativeTime = (dateString) => {
 export default function AdminAuditScreen() {
   const { authState } = React.useContext(AuthContext);
   const queryClient = useQueryClient();
+  const { theme } = useTheme();
   const [selectedLog, setSelectedLog] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,7 +110,7 @@ export default function AdminAuditScreen() {
     mutationFn: ({ userId, reason }) => adminAPI.suspendUser(userId, reason),
     onSuccess: () => {
       Alert.alert(
-        '✅ Usuario Baneado',
+        'Usuario Baneado',
         'El administrador ha sido baneado exitosamente y perderá acceso inmediato al sistema.',
         [{ text: 'Entendido', style: 'default' }]
       );
@@ -116,7 +118,7 @@ export default function AdminAuditScreen() {
     },
     onError: (error) => {
       Alert.alert(
-        '❌ Error',
+        'Error',
         error.response?.data?.message || 'No se pudo banear al usuario',
         [{ text: 'Cerrar', style: 'cancel' }]
       );
@@ -139,7 +141,7 @@ export default function AdminAuditScreen() {
 
     // Validaciones
     if (!targetAdmin) {
-      Alert.alert('⚠️ Error', 'No se pudo identificar al administrador', [
+      Alert.alert('Error', 'No se pudo identificar al administrador', [
         { text: 'Cerrar', style: 'cancel' },
       ]);
       return;
@@ -147,7 +149,7 @@ export default function AdminAuditScreen() {
 
     // No permitir auto-suspensión
     if (targetAdmin.id === authState.user.id) {
-      Alert.alert('⚠️ Acción No Permitida', 'No puedes suspenderte a ti mismo', [
+      Alert.alert('Acción No Permitida', 'No puedes suspenderte a ti mismo', [
         { text: 'Cerrar', style: 'cancel' },
       ]);
       return;
@@ -156,7 +158,7 @@ export default function AdminAuditScreen() {
     // Solo permitir suspender a SUPPORT_ADMIN
     if (targetAdmin.role !== 'SUPPORT_ADMIN') {
       Alert.alert(
-        '⚠️ Acción No Permitida',
+        'Acción No Permitida',
         'Solo puedes suspender a administradores de soporte (SUPPORT_ADMIN)',
         [{ text: 'Cerrar', style: 'cancel' }]
       );
@@ -173,8 +175,8 @@ export default function AdminAuditScreen() {
 
     // Confirmación crítica
     Alert.alert(
-      '🚨 Confirmar Baneo Inmediato',
-      `¿Confirmar baneo del administrador?\n\n👤 ${targetAdmin.name}\n📧 ${targetAdmin.email}\n\nEl administrador perderá acceso al sistema de forma instantánea por actividad sospechosa.`,
+      'Confirmar Baneo Inmediato',
+      `¿Confirmar baneo del administrador?\n\nNombre: ${targetAdmin.name}\nEmail: ${targetAdmin.email}\n\nEl administrador perderá acceso al sistema de forma instantánea por actividad sospechosa.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -196,7 +198,7 @@ export default function AdminAuditScreen() {
     const canSuspend = admin && admin.role === 'SUPPORT_ADMIN' && admin.status !== 'SUSPENDED';
 
     return (
-      <View style={styles.logCard}>
+      <View style={[styles.logCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         {/* Header con ícono y admin */}
         <View style={styles.logHeader}>
           <View style={styles.iconContainer}>
@@ -207,8 +209,8 @@ export default function AdminAuditScreen() {
             />
           </View>
           <View style={styles.adminInfo}>
-            <Text style={styles.adminName}>{admin?.name || 'Desconocido'}</Text>
-            <Text style={styles.adminEmail}>{admin?.email || ''}</Text>
+            <Text style={[styles.adminName, { color: theme.text }]}>{admin?.name || 'Desconocido'}</Text>
+            <Text style={[styles.adminEmail, { color: theme.textSecondary }]}>{admin?.email || ''}</Text>
           </View>
           {admin?.status === 'SUSPENDED' && (
             <View style={styles.suspendedBadge}>
@@ -219,8 +221,8 @@ export default function AdminAuditScreen() {
 
         {/* Descripción de la acción */}
         <View style={styles.logBody}>
-          <Text style={styles.actionDescription}>{item.description || item.action}</Text>
-          <Text style={styles.timestamp}>{formatRelativeTime(item.createdAt)}</Text>
+          <Text style={[styles.actionDescription, { color: theme.text }]}>{item.description || item.action}</Text>
+          <Text style={[styles.timestamp, { color: theme.textSecondary }]}>{formatRelativeTime(item.createdAt)}</Text>
         </View>
 
         {/* Botones de acción */}
@@ -249,7 +251,7 @@ export default function AdminAuditScreen() {
   };
 
   const renderMetadata = (metadata) => {
-    if (!metadata) return <Text style={styles.noMetadata}>Sin metadatos</Text>;
+    if (!metadata) return <Text style={[styles.noMetadata, { color: theme.textSecondary }]}>Sin metadatos</Text>;
 
     try {
       // Renderizar campos específicos de forma estructurada
@@ -257,8 +259,8 @@ export default function AdminAuditScreen() {
         if (!value) return null;
         return (
           <View key={label} style={styles.metadataField}>
-            <Text style={styles.metadataFieldLabel}>{label}:</Text>
-            <Text style={styles.metadataFieldValue}>{value}</Text>
+            <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>{label}:</Text>
+            <Text style={[styles.metadataFieldValue, { color: theme.text }]}>{value}</Text>
           </View>
         );
       };
@@ -270,11 +272,11 @@ export default function AdminAuditScreen() {
           {metadata.reason && renderField('Motivo', metadata.reason)}
           {metadata.targetUser && (
             <View style={styles.metadataField}>
-              <Text style={styles.metadataFieldLabel}>Usuario afectado:</Text>
-              <Text style={styles.metadataFieldValue}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Usuario afectado:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
                 {metadata.targetUser.name} ({metadata.targetUser.email})
               </Text>
-              <Text style={styles.metadataFieldValue}>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
                 Rol: {metadata.targetUser.role}
               </Text>
             </View>
@@ -309,10 +311,10 @@ export default function AdminAuditScreen() {
 
   if (isLoading && !data) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando logs de auditoría...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando logs de auditoría...</Text>
         </View>
       </ScreenWrapper>
     );
@@ -320,11 +322,11 @@ export default function AdminAuditScreen() {
 
   if (error) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
         <View style={styles.errorContainer}>
           <MaterialCommunityIcons name="alert-circle" size={64} color={COLORS.error} />
-          <Text style={styles.errorText}>Error al cargar logs</Text>
-          <Text style={styles.errorMessage}>
+          <Text style={[styles.errorText, { color: theme.text }]}>Error al cargar logs</Text>
+          <Text style={[styles.errorMessage, { color: theme.textSecondary }]}>
             {error.response?.data?.message || error.message}
           </Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
@@ -336,14 +338,14 @@ export default function AdminAuditScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       {/* Barra de Búsqueda */}
-      <View style={styles.searchContainer}>
-          <MaterialCommunityIcons name="magnify" size={20} color={COLORS.gray} style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <MaterialCommunityIcons name="magnify" size={20} color={theme.textSecondary} style={styles.searchIcon} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Buscar por admin, email o descripción..."
-            placeholderTextColor={COLORS.gray}
+            placeholderTextColor={theme.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
@@ -357,71 +359,71 @@ export default function AdminAuditScreen() {
         </View>
 
         {/* Filtros por tipo de acción */}
-        <View style={styles.controlsRow}>
+        <View style={[styles.controlsRow, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.filterButtons}
           >
             <TouchableOpacity
-              style={[styles.miniFilterButton, !filterAction && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, !filterAction && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction(null)}
             >
-              <Text style={[styles.miniFilterText, !filterAction && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, !filterAction && styles.miniFilterTextActive]}>
                 Todas
               </Text>
             </TouchableOpacity>
           
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'SUBMISSION_APPROVED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'SUBMISSION_APPROVED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('SUBMISSION_APPROVED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'SUBMISSION_APPROVED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'SUBMISSION_APPROVED' && styles.miniFilterTextActive]}>
                 Aprobadas
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'SUBMISSION_REJECTED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'SUBMISSION_REJECTED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('SUBMISSION_REJECTED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'SUBMISSION_REJECTED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'SUBMISSION_REJECTED' && styles.miniFilterTextActive]}>
                 Rechazadas
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'USER_STATUS_CHANGED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'USER_STATUS_CHANGED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('USER_STATUS_CHANGED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'USER_STATUS_CHANGED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'USER_STATUS_CHANGED' && styles.miniFilterTextActive]}>
                 Cambios estado
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'USER_CREATED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'USER_CREATED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('USER_CREATED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'USER_CREATED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'USER_CREATED' && styles.miniFilterTextActive]}>
                 Usuarios
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'BENEFIT_CREATED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'BENEFIT_CREATED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('BENEFIT_CREATED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'BENEFIT_CREATED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'BENEFIT_CREATED' && styles.miniFilterTextActive]}>
                 Benef. creados
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.miniFilterButton, filterAction === 'BENEFIT_DELETED' && styles.miniFilterButtonActive]}
+              style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterAction === 'BENEFIT_DELETED' && styles.miniFilterButtonActive]}
               onPress={() => setFilterAction('BENEFIT_DELETED')}
             >
-              <Text style={[styles.miniFilterText, filterAction === 'BENEFIT_DELETED' && styles.miniFilterTextActive]}>
+              <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterAction === 'BENEFIT_DELETED' && styles.miniFilterTextActive]}>
                 Benef. eliminados
               </Text>
             </TouchableOpacity>

@@ -8,11 +8,13 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 import { adminAPI } from '../../services/api';
 import { formatLargeNumber, formatPercentage } from '../../utils/formatNumber';
 
 export default function AdminDashboardScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const { theme } = useTheme();
 
   // Fetch de estadísticas
   const { data, isLoading, error, refetch } = useQuery({
@@ -61,10 +63,10 @@ export default function AdminDashboardScreen() {
 
   if (isLoading) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando estadísticas...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando estadísticas...</Text>
         </View>
       </ScreenWrapper>
     );
@@ -72,10 +74,10 @@ export default function AdminDashboardScreen() {
 
   if (error) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.errorContainer}>
           <MaterialCommunityIcons name="alert-circle" size={48} color={COLORS.error} />
-          <Text style={styles.errorText}>Error al cargar estadísticas</Text>
+          <Text style={[styles.errorText, { color: theme.text }]}>Error al cargar estadísticas</Text>
           <TouchableOpacity style={styles.retryButton} onPress={refetch}>
             <Text style={styles.retryButtonText}>Reintentar</Text>
           </TouchableOpacity>
@@ -85,7 +87,7 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} safeArea={false} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <ScrollView 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={styles.scrollContent}
@@ -95,25 +97,25 @@ export default function AdminDashboardScreen() {
       >
         <View style={styles.statsGrid}>
           {stats.map((stat) => (
-            <View key={stat.label} style={styles.statCard}>
+            <View key={stat.label} style={[styles.statCard, { backgroundColor: theme.surface }]}>
               <MaterialCommunityIcons
                 name={stat.icon}
                 size={32}
                 color={stat.color}
                 style={styles.statIcon}
               />
-              <Text style={styles.statValue}>{stat.value}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+              <Text style={[styles.statValue, { color: theme.text }]}>{stat.value}</Text>
+              <Text style={[styles.statLabel, { color: theme.textSecondary }]}>{stat.label}</Text>
             </View>
           ))}
         </View>
 
         {data.misiones.pendientesAprobacion > 0 && (
-          <TouchableOpacity style={styles.alertSection}>
+          <TouchableOpacity style={[styles.alertSection, { backgroundColor: theme.surface, borderLeftColor: COLORS.warning }]}>
             <MaterialCommunityIcons name="bell-alert" size={24} color={COLORS.warning} />
             <View style={styles.alertContent}>
-              <Text style={styles.alertTitle}>Misiones Pendientes</Text>
-              <Text style={styles.alertText}>
+              <Text style={[styles.alertTitle, { color: theme.text }]}>Misiones Pendientes</Text>
+              <Text style={[styles.alertText, { color: theme.textSecondary }]}>
                 {data.misiones.pendientesAprobacion} misiones esperando aprobación
               </Text>
             </View>
@@ -122,87 +124,87 @@ export default function AdminDashboardScreen() {
 
         {/* Sección de Reportes */}
         <View style={styles.reportsSection}>
-          <Text style={styles.reportsTitle}>📊 Reportes y Estadísticas</Text>
+          <Text style={[styles.reportsTitle, { color: theme.text }]}>Reportes y Estadísticas</Text>
           
-          <View style={styles.reportCard}>
-            <View style={styles.reportHeader}>
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
               <MaterialCommunityIcons name="chart-line" size={24} color={COLORS.primary} />
-              <Text style={styles.reportCardTitle}>Actividad de Usuarios</Text>
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Actividad de Usuarios</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Nuevos esta semana:</Text>
-              <Text style={styles.reportValue}>{data.actividadUsuarios.nuevosEstaSemana}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Nuevos esta semana:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.actividadUsuarios.nuevosEstaSemana}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Activos hoy:</Text>
-              <Text style={styles.reportValue}>{data.actividadUsuarios.activosHoy}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Activos hoy:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.actividadUsuarios.activosHoy}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Tasa de retención:</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Tasa de retención:</Text>
               <Text style={[styles.reportValue, { color: COLORS.success }]}>
                 {formatPercentage(data.actividadUsuarios.tasaRetencion)}
               </Text>
             </View>
           </View>
 
-          <View style={styles.reportCard}>
-            <View style={styles.reportHeader}>
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
               <MaterialCommunityIcons name="target" size={24} color={COLORS.warning} />
-              <Text style={styles.reportCardTitle}>Misiones Completadas</Text>
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Misiones Completadas</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Esta semana:</Text>
-              <Text style={styles.reportValue}>{data.misiones.completadasEstaSemana}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Esta semana:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.misiones.completadasEstaSemana}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Pendientes aprobación:</Text>
-              <Text style={styles.reportValue}>{data.misiones.pendientesAprobacion}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Pendientes aprobación:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.misiones.pendientesAprobacion}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Tasa de aprobación:</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Tasa de aprobación:</Text>
               <Text style={[styles.reportValue, { color: COLORS.success }]}>
                 {formatPercentage(data.misiones.tasaAprobacion)}
               </Text>
             </View>
           </View>
 
-          <View style={styles.reportCard}>
-            <View style={styles.reportHeader}>
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
               <MaterialCommunityIcons name="gift" size={24} color={COLORS.merchant} />
-              <Text style={styles.reportCardTitle}>Beneficios Canjeados</Text>
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Beneficios Canjeados</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Total esta semana:</Text>
-              <Text style={styles.reportValue}>{data.beneficios.canjeadosEstaSemana || 0}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Total esta semana:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.beneficios.canjeadosEstaSemana || 0}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Puntos gastados:</Text>
-              <Text style={styles.reportValue}>{formatLargeNumber(data.beneficios.puntosGastados || 0)} pts</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Puntos gastados:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{formatLargeNumber(data.beneficios.puntosGastados || 0)} pts</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Beneficio más popular:</Text>
-              <Text style={[styles.reportValue, { fontSize: TYPOGRAPHY.caption }]}>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Beneficio más popular:</Text>
+              <Text style={[styles.reportValue, { color: theme.text, fontSize: TYPOGRAPHY.caption }]}>
                 {data.beneficios.beneficioMasPopular || 'Sin actividad'}
               </Text>
             </View>
           </View>
 
-          <View style={styles.reportCard}>
-            <View style={styles.reportHeader}>
+          <View style={[styles.reportCard, { backgroundColor: theme.surface }]}>
+            <View style={[styles.reportHeader, { borderBottomColor: theme.border }]}>
               <MaterialCommunityIcons name="store" size={24} color={COLORS.success} />
-              <Text style={styles.reportCardTitle}>Comercios Activos</Text>
+              <Text style={[styles.reportCardTitle, { color: theme.text }]}>Comercios Activos</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Comercios registrados:</Text>
-              <Text style={styles.reportValue}>{data.comercios.comerciosRegistrados || 0}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Comercios registrados:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.comercios.comerciosRegistrados || 0}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Con canjes esta semana:</Text>
-              <Text style={styles.reportValue}>{data.comercios.conCanjesEstaSemana ?? 0}</Text>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Con canjes esta semana:</Text>
+              <Text style={[styles.reportValue, { color: theme.text }]}>{data.comercios.conCanjesEstaSemana ?? 0}</Text>
             </View>
             <View style={styles.reportRow}>
-              <Text style={styles.reportLabel}>Top comercio:</Text>
-              <Text style={[styles.reportValue, { fontSize: TYPOGRAPHY.caption }]}>
+              <Text style={[styles.reportLabel, { color: theme.textSecondary }]}>Top comercio:</Text>
+              <Text style={[styles.reportValue, { color: theme.text, fontSize: TYPOGRAPHY.caption }]}>
                 {data.comercios.comercioTop || 'Sin actividad'}
               </Text>
             </View>

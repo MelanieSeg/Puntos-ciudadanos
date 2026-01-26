@@ -18,9 +18,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 import api from '../../services/api';
 
 export default function BenefitsManagementScreen() {
+  const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [benefits, setBenefits] = useState([]);
   const [merchants, setMerchants] = useState([]);
@@ -354,7 +356,7 @@ export default function BenefitsManagementScreen() {
   };
 
   const renderBenefitCard = ({ item }) => (
-    <View style={styles.benefitCard}>
+    <View style={[styles.benefitCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
         <View style={styles.benefitImage}>
           <MaterialCommunityIcons 
@@ -364,15 +366,15 @@ export default function BenefitsManagementScreen() {
           />
         </View>
         <View style={styles.benefitInfo}>
-          <Text style={styles.benefitName}>{item.title}</Text>
+          <Text style={[styles.benefitName, { color: theme.text }]}>{item.title}</Text>
           <View style={styles.badgesRow}>
             <View style={[styles.badge, { backgroundColor: item.stock === 0 ? '#f8d7da' : '#d4edda' }]}>
               <Text style={[styles.badgeText, { color: item.stock === 0 ? '#721c24' : '#155724' }]}>
                 {item.stock === 0 ? 'Agotado' : 'Disponible'}
               </Text>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{item.category}</Text>
+            <View style={[styles.badge, { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border }]}>
+              <Text style={[styles.badgeText, { color: theme.text }]}>{item.category}</Text>
             </View>
           </View>
         </View>
@@ -382,7 +384,7 @@ export default function BenefitsManagementScreen() {
         </View>
       </View>
 
-      <Text style={styles.benefitDescription} numberOfLines={2}>
+      <Text style={[styles.benefitDescription, { color: theme.textSecondary }]} numberOfLines={2}>
         {item.description}
       </Text>
 
@@ -411,7 +413,7 @@ export default function BenefitsManagementScreen() {
             size={18}
             color={COLORS.primary}
           />
-          <Text style={styles.actionSmallText}>
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>
             {item.stock === 0 ? 'Restaurar' : 'Agotar'}
           </Text>
         </TouchableOpacity>
@@ -421,7 +423,7 @@ export default function BenefitsManagementScreen() {
           onPress={() => handleEditBenefit(item)}
         >
           <MaterialCommunityIcons name="pencil" size={18} color={COLORS.info} />
-          <Text style={styles.actionSmallText}>Editar</Text>
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>Editar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -429,7 +431,7 @@ export default function BenefitsManagementScreen() {
           onPress={() => handleDeleteBenefit(item.id, item.title)}
         >
           <MaterialCommunityIcons name="trash-can" size={18} color={COLORS.error} />
-          <Text style={styles.actionSmallText}>Eliminar</Text>
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -449,23 +451,24 @@ export default function BenefitsManagementScreen() {
 
   if (loading) {
     return (
-      <ScreenWrapper bgColor={COLORS.light}>
+      <ScreenWrapper bgColor={theme.background}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando beneficios...</Text>
+          <Text style={[styles.loadingText, { color: theme.text }]}>Cargando beneficios...</Text>
         </View>
       </ScreenWrapper>
     );
   }
 
   return (
-    <ScreenWrapper bgColor={COLORS.light} padding={0}>
-      <View style={styles.filters}>
+    <ScreenWrapper bgColor={theme.background} padding={0}>
+      <View style={[styles.filters, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         {['ALL', 'AVAILABLE', 'OUT_OF_STOCK'].map(status => (
           <TouchableOpacity
             key={status}
             style={[
               styles.filterButton,
+              { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border },
               filter === status && styles.filterButtonActive,
             ]}
             onPress={() => setFilter(status)}
@@ -473,6 +476,7 @@ export default function BenefitsManagementScreen() {
             <Text
               style={[
                 styles.filterButtonText,
+                { color: theme.textSecondary },
                 filter === status && styles.filterButtonTextActive,
               ]}
             >
@@ -518,30 +522,32 @@ export default function BenefitsManagementScreen() {
         onRequestClose={() => setShowAddModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <ScrollView 
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScrollContent}
             >
               <MaterialCommunityIcons name="gift-outline" size={48} color={COLORS.primary} />
-              <Text style={styles.modalTitle}>Crear Nuevo Beneficio</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Crear Nuevo Beneficio</Text>
 
               <View style={styles.formContainer}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Nombre del Beneficio *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Nombre del Beneficio *</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="Ej: Café Gratis"
+                    placeholderTextColor={theme.textSecondary}
                     value={newBenefit.title}
                     onChangeText={(text) => setNewBenefit({ ...newBenefit, title: text })}
                   />
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Descripción *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Descripción *</Text>
                   <TextInput
-                    style={[styles.input, styles.textArea]}
+                    style={[styles.input, styles.textArea, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="Describe el beneficio..."
+                    placeholderTextColor={theme.textSecondary}
                     value={newBenefit.description}
                     onChangeText={(text) => setNewBenefit({ ...newBenefit, description: text })}
                     multiline
@@ -551,10 +557,11 @@ export default function BenefitsManagementScreen() {
 
                 <View style={styles.inputRow}>
                   <View style={[styles.inputGroup, { flex: 1, marginRight: SPACING.sm }]}>
-                    <Text style={styles.inputLabel}>Costo (Puntos) *</Text>
+                    <Text style={[styles.inputLabel, { color: theme.text }]}>Costo (Puntos) *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                       placeholder="100"
+                      placeholderTextColor={theme.textSecondary}
                       value={newBenefit.pointsCost}
                       onChangeText={(text) => setNewBenefit({ ...newBenefit, pointsCost: text })}
                       keyboardType="numeric"
@@ -562,10 +569,11 @@ export default function BenefitsManagementScreen() {
                   </View>
 
                   <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.inputLabel}>Stock Inicial *</Text>
+                    <Text style={[styles.inputLabel, { color: theme.text }]}>Stock Inicial *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                       placeholder="50"
+                      placeholderTextColor={theme.textSecondary}
                       value={newBenefit.stock}
                       onChangeText={(text) => setNewBenefit({ ...newBenefit, stock: text })}
                       keyboardType="numeric"
@@ -574,8 +582,8 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Categoría *</Text>
-                  <View style={styles.pickerContainer}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Categoría *</Text>
+                  <View style={[styles.pickerContainer, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                     <Picker
                       selectedValue={newBenefit.category}
                       onValueChange={(value) => setNewBenefit({ ...newBenefit, category: value })}
@@ -592,8 +600,8 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Comercio Asociado *</Text>
-                  <View style={styles.pickerContainer}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Comercio Asociado *</Text>
+                  <View style={[styles.pickerContainer, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                     <Picker
                       selectedValue={newBenefit.merchantId}
                       onValueChange={(value) => setNewBenefit({ ...newBenefit, merchantId: value })}
@@ -612,7 +620,7 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Imagen del Beneficio (Opcional)</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Imagen del Beneficio (Opcional)</Text>
                   
                   {selectedImage ? (
                     <View style={styles.imagePreviewContainer}>
@@ -630,17 +638,17 @@ export default function BenefitsManagementScreen() {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={styles.imagePickerButton}
+                      style={[styles.imagePickerButton, { backgroundColor: theme.surface, borderColor: COLORS.primary }]}
                       onPress={pickImage}
                     >
                       <MaterialCommunityIcons name="camera-plus" size={32} color={COLORS.primary} />
-                      <Text style={styles.imagePickerText}>📷 Seleccionar Foto</Text>
-                      <Text style={styles.imagePickerSubtext}>Galería o cámara</Text>
+                      <Text style={styles.imagePickerText}>Seleccionar Foto</Text>
+                      <Text style={[styles.imagePickerSubtext, { color: theme.textSecondary }]}>Galería o cámara</Text>
                     </TouchableOpacity>
                   )}
                 </View>
 
-                <Text style={styles.noteText}>
+                <Text style={[styles.noteText, { color: COLORS.warning }]}>
                   * Campos requeridos
                 </Text>
               </View>
@@ -677,28 +685,28 @@ export default function BenefitsManagementScreen() {
         onRequestClose={() => !deleting && setShowDeleteModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.deleteModalContent}>
+          <View style={[styles.deleteModalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.deleteModalHeader}>
               <MaterialCommunityIcons name="alert-circle" size={48} color={COLORS.error} />
-              <Text style={styles.deleteModalTitle}>Confirmar eliminación</Text>
+              <Text style={[styles.deleteModalTitle, { color: theme.text }]}>Confirmar eliminación</Text>
             </View>
             
-            <Text style={styles.deleteModalMessage}>
+            <Text style={[styles.deleteModalMessage, { color: theme.text }]}>
               ¿Estás seguro de que deseas eliminar el beneficio{' '}
               <Text style={styles.deleteModalBenefitName}>"{benefitToDelete?.name}"</Text>?
             </Text>
             
-            <Text style={styles.deleteModalWarning}>
+            <Text style={[styles.deleteModalWarning, { color: theme.textSecondary }]}>
               Esta acción no se puede deshacer.
             </Text>
 
             <View style={styles.deleteModalButtons}>
               <TouchableOpacity
-                style={[styles.deleteModalButton, styles.deleteModalButtonCancel]}
+                style={[styles.deleteModalButton, styles.deleteModalButtonCancel, { backgroundColor: theme.inputBg, borderColor: theme.border }]}
                 onPress={() => setShowDeleteModal(false)}
                 disabled={deleting}
               >
-                <Text style={styles.deleteModalButtonCancelText}>Cancelar</Text>
+                <Text style={[styles.deleteModalButtonCancelText, { color: theme.text }]}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -728,22 +736,22 @@ export default function BenefitsManagementScreen() {
         onRequestClose={() => !updatingStock && setShowStockModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.deleteModalContent}>
+          <View style={[styles.deleteModalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.deleteModalHeader}>
               <MaterialCommunityIcons 
                 name={benefitToToggleStock?.stock === 0 ? 'package-up' : 'package-down'} 
                 size={48} 
                 color={COLORS.primary} 
               />
-              <Text style={styles.deleteModalTitle}>Cambiar disponibilidad</Text>
+              <Text style={[styles.deleteModalTitle, { color: theme.text }]}>Cambiar disponibilidad</Text>
             </View>
             
-            <Text style={styles.deleteModalMessage}>
+            <Text style={[styles.deleteModalMessage, { color: theme.text }]}>
               ¿Deseas {benefitToToggleStock?.stock === 0 ? 'restaurar stock' : 'agotar stock'} de{' '}
               <Text style={styles.deleteModalBenefitName}>"{benefitToToggleStock?.title}"</Text>?
             </Text>
             
-            <Text style={styles.deleteModalWarning}>
+            <Text style={[styles.deleteModalWarning, { color: theme.textSecondary }]}>
               El stock se {benefitToToggleStock?.stock === 0 ? 'cambiará a 10 unidades' : 'reducirá a 0 unidades'}.
             </Text>
 
@@ -787,30 +795,32 @@ export default function BenefitsManagementScreen() {
         onRequestClose={() => !updating && setShowEditModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <ScrollView 
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.modalScrollContent}
             >
               <MaterialCommunityIcons name="pencil-outline" size={48} color={COLORS.info} />
-              <Text style={styles.modalTitle}>Editar Beneficio</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Editar Beneficio</Text>
 
               <View style={styles.formContainer}>
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Nombre del Beneficio *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Nombre del Beneficio *</Text>
                   <TextInput
-                    style={styles.input}
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="Ej: Café Gratis"
+                    placeholderTextColor={theme.textSecondary}
                     value={editBenefit.title}
                     onChangeText={(text) => setEditBenefit({ ...editBenefit, title: text })}
                   />
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Descripción *</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Descripción *</Text>
                   <TextInput
-                    style={[styles.input, styles.textArea]}
+                    style={[styles.input, styles.textArea, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                     placeholder="Describe el beneficio..."
+                    placeholderTextColor={theme.textSecondary}
                     value={editBenefit.description}
                     onChangeText={(text) => setEditBenefit({ ...editBenefit, description: text })}
                     multiline
@@ -820,10 +830,11 @@ export default function BenefitsManagementScreen() {
 
                 <View style={styles.inputRow}>
                   <View style={[styles.inputGroup, { flex: 1, marginRight: SPACING.sm }]}>
-                    <Text style={styles.inputLabel}>Costo (Puntos) *</Text>
+                    <Text style={[styles.inputLabel, { color: theme.text }]}>Costo (Puntos) *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                       placeholder="100"
+                      placeholderTextColor={theme.textSecondary}
                       value={editBenefit.pointsCost}
                       onChangeText={(text) => setEditBenefit({ ...editBenefit, pointsCost: text })}
                       keyboardType="numeric"
@@ -831,10 +842,11 @@ export default function BenefitsManagementScreen() {
                   </View>
 
                   <View style={[styles.inputGroup, { flex: 1 }]}>
-                    <Text style={styles.inputLabel}>Stock *</Text>
+                    <Text style={[styles.inputLabel, { color: theme.text }]}>Stock *</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
                       placeholder="50"
+                      placeholderTextColor={theme.textSecondary}
                       value={editBenefit.stock}
                       onChangeText={(text) => setEditBenefit({ ...editBenefit, stock: text })}
                       keyboardType="numeric"
@@ -843,8 +855,8 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Categoría *</Text>
-                  <View style={styles.pickerContainer}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Categoría *</Text>
+                  <View style={[styles.pickerContainer, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                     <Picker
                       selectedValue={editBenefit.category}
                       onValueChange={(value) => setEditBenefit({ ...editBenefit, category: value })}
@@ -861,8 +873,8 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Comercio Asociado *</Text>
-                  <View style={styles.pickerContainer}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Comercio Asociado *</Text>
+                  <View style={[styles.pickerContainer, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
                     <Picker
                       selectedValue={editBenefit.merchantId}
                       onValueChange={(value) => setEditBenefit({ ...editBenefit, merchantId: value })}
@@ -881,7 +893,7 @@ export default function BenefitsManagementScreen() {
                 </View>
 
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Cambiar Imagen (Opcional)</Text>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Cambiar Imagen (Opcional)</Text>
                   
                   {selectedImage ? (
                     <View style={styles.imagePreviewContainer}>
@@ -899,26 +911,26 @@ export default function BenefitsManagementScreen() {
                     </View>
                   ) : (
                     <TouchableOpacity
-                      style={styles.imagePickerButton}
+                      style={[styles.imagePickerButton, { backgroundColor: theme.surface, borderColor: COLORS.primary }]}
                       onPress={pickImage}
                     >
                       <MaterialCommunityIcons name="camera-plus" size={32} color={COLORS.primary} />
-                      <Text style={styles.imagePickerText}>📷 Seleccionar Nueva Foto</Text>
-                      <Text style={styles.imagePickerSubtext}>
+                      <Text style={styles.imagePickerText}>Seleccionar Nueva Foto</Text>
+                      <Text style={[styles.imagePickerSubtext, { color: theme.textSecondary }]}>
                         {benefitToEdit?.imageUrl ? 'Dejar vacío para mantener imagen actual' : 'Galería o cámara'}
                       </Text>
                     </TouchableOpacity>
                   )}
                 </View>
 
-                <Text style={styles.noteText}>
+                <Text style={[styles.noteText, { color: COLORS.warning }]}>
                   * Campos requeridos
                 </Text>
               </View>
 
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={styles.modalButtonCancel}
+                  style={[styles.modalButtonCancel, { backgroundColor: theme.inputBg, borderWidth: 1, borderColor: theme.border }]}
                   onPress={() => {
                     setShowEditModal(false);
                     setBenefitToEdit(null);
@@ -926,7 +938,7 @@ export default function BenefitsManagementScreen() {
                   }}
                   disabled={updating}
                 >
-                  <Text style={styles.modalButtonCancelText}>Cancelar</Text>
+                  <Text style={[styles.modalButtonCancelText, { color: theme.text }]}>Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalButtonConfirm, updating && styles.buttonDisabled]}
@@ -964,10 +976,15 @@ const styles = StyleSheet.create({
   },
   filters: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    gap: SPACING.xs,
+    alignItems: 'center',
     backgroundColor: COLORS.white,
+    padding: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: LAYOUT.borderRadius.md,
+    ...LAYOUT.shadowSmall,
+    gap: SPACING.sm,
   },
   filterButton: {
     flex: 1,

@@ -15,6 +15,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -30,6 +31,7 @@ import AdminSettingsScreen from '../screens/admin/AdminSettingsScreen';
 import AdminAuditScreen from '../screens/admin/AdminAuditScreen';
 import { COLORS, TAB_CONFIG, SPACING, LAYOUT, TYPOGRAPHY } from '../theme/theme';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -44,7 +46,7 @@ const HEADER_HEIGHT = 64;
 // WEB SIDEBAR COMPONENT
 // ============================================
 function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMasterAdmin, onLogout }) {
-  const { isDarkMode, toggleTheme, theme } = useContext(AuthContext);
+  const { isDarkMode, toggleTheme, theme } = useTheme();
   const sidebarWidth = useRef(new Animated.Value(isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED)).current;
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showTooltip, setShowTooltip] = useState(null);
@@ -77,7 +79,7 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
   ];
 
   return (
-    <Animated.View style={[styles.webSidebar, { width: sidebarWidth }]}>
+    <Animated.View style={[styles.webSidebar, { width: sidebarWidth, backgroundColor: theme.sidebarBg, borderRightColor: theme.border }]}>
       {/* Logo y Toggle */}
       <View style={styles.logoContainer}>
         <View style={styles.logoContent}>
@@ -151,8 +153,30 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
         })}
       </ScrollView>
 
-      {/* Footer con Logout */}
+      {/* Footer con Theme Toggle y Logout */}
       <View style={styles.sidebarFooter}>
+        {/* Control de Tema */}
+        {!isCollapsed && (
+          <TouchableOpacity style={styles.themeToggleBtn} onPress={toggleTheme} activeOpacity={0.7}>
+            <MaterialCommunityIcons 
+              name={isDarkMode ? 'weather-sunny' : 'weather-night'} 
+              size={20} 
+              color={COLORS.white} 
+            />
+            <Text style={styles.themeToggleText}>
+              {isDarkMode ? 'Modo Claro' : 'Modo Oscuro'}
+            </Text>
+            <Switch
+              value={isDarkMode}
+              onValueChange={toggleTheme}
+              trackColor={{ false: '#767577', true: COLORS.admin }}
+              thumbColor={isDarkMode ? COLORS.success : '#f4f3f4'}
+              ios_backgroundColor="#3e3e3e"
+            />
+          </TouchableOpacity>
+        )}
+        
+        {/* Botón de Cerrar Sesión */}
         <TouchableOpacity 
           style={styles.logoutBtn} 
           onPress={() => setShowLogoutModal(true)}
@@ -185,12 +209,12 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
         onRequestClose={() => setShowLogoutModal(false)}
       >
         <View style={styles.modalOverlayLogout}>
-          <View style={styles.logoutModalContent}>
+          <View style={[styles.logoutModalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalIconContainer}>
               <MaterialCommunityIcons name="logout" size={56} color={COLORS.error} />
             </View>
-            <Text style={styles.logoutModalTitle}>Cerrar Sesión</Text>
-            <Text style={styles.logoutModalMessage}>¿Estás seguro que deseas salir de tu cuenta?</Text>
+            <Text style={[styles.logoutModalTitle, { color: theme.text }]}>Cerrar Sesión</Text>
+            <Text style={[styles.logoutModalMessage, { color: theme.textSecondary }]}>¿Estás seguro que deseas salir de tu cuenta?</Text>
             
             <View style={styles.modalButtons}>
               <TouchableOpacity 
@@ -221,6 +245,8 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
 // WEB HEADER COMPONENT (Admin específico)
 // ============================================
 function AdminWebHeader({ title, userName, userEmail, userRole }) {
+  const { theme } = useTheme();
+  
   const getRoleBadge = () => {
     if (userRole === 'MASTER_ADMIN') {
       return { label: 'Master Admin', color: '#9C27B0' };
@@ -241,9 +267,9 @@ function AdminWebHeader({ title, userName, userEmail, userRole }) {
   };
 
   return (
-    <View style={styles.webHeader}>
+    <View style={[styles.webHeader, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       <View style={styles.headerLeft}>
-        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={[styles.headerTitle, { color: theme.text }]}>{title}</Text>
       </View>
       <View style={styles.headerRight}>
         <View style={[styles.roleBadge, { backgroundColor: `${roleBadge.color}15` }]}>
@@ -255,8 +281,8 @@ function AdminWebHeader({ title, userName, userEmail, userRole }) {
             <Text style={styles.avatarText}>{getInitials(userName)}</Text>
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{userName || 'Admin'}</Text>
-            <Text style={styles.userEmail}>{userEmail || ''}</Text>
+            <Text style={[styles.userName, { color: theme.text }]}>{userName || 'Admin'}</Text>
+            <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{userEmail || ''}</Text>
           </View>
         </View>
       </View>
@@ -269,6 +295,7 @@ function AdminWebHeader({ title, userName, userEmail, userRole }) {
 // ============================================
 function WebLayout() {
   const { logout, authState } = useContext(AuthContext);
+  const { theme } = useTheme();
   const [activeTab, setActiveTab] = useState('AdminDashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
   
@@ -342,7 +369,7 @@ function WebLayout() {
   };
 
   return (
-    <View style={styles.webLayoutContainer}>
+    <View style={[styles.webLayoutContainer, { backgroundColor: theme.background }]}>
       {/* Sidebar */}
       <WebSidebar
         activeTab={activeTab}
@@ -497,6 +524,7 @@ function MobileLayout() {
   }
 
   const isMasterAdmin = authState?.user?.role === 'MASTER_ADMIN';
+  const { theme } = useTheme();
 
   return (
     <Tab.Navigator
@@ -506,9 +534,11 @@ function MobileLayout() {
         return {
           headerShown: true,
           headerStyle: {
-            backgroundColor: COLORS.admin,
+            backgroundColor: theme.surface,
+            borderBottomWidth: 1,
+            borderBottomColor: theme.border,
           },
-          headerTintColor: COLORS.white,
+          headerTintColor: theme.text,
           headerTitleStyle: {
             fontWeight: '600',
             fontSize: 18,
@@ -518,7 +548,7 @@ function MobileLayout() {
               onPress={handleLogout}
               style={styles.mobileLogoutButton}
             >
-              <MaterialCommunityIcons name="logout" size={20} color={COLORS.white} />
+              <MaterialCommunityIcons name="logout" size={20} color={theme.text} />
             </TouchableOpacity>
           ),
           tabBarIcon: ({ focused }) => {
@@ -541,9 +571,11 @@ function MobileLayout() {
           },
           tabBarLabel: tabConfig?.label,
           tabBarActiveTintColor: tabConfig?.color,
-          tabBarInactiveTintColor: COLORS.gray,
+          tabBarInactiveTintColor: theme.textSecondary,
           tabBarStyle: { 
-            ...styles.mobileTabBar, 
+            backgroundColor: theme.surface,
+            borderTopWidth: 1,
+            borderTopColor: theme.border,
             paddingBottom: insets.bottom, 
             height: 60 + insets.bottom 
           },
@@ -724,6 +756,27 @@ const styles = StyleSheet.create({
     borderTopColor: '#2a2f46',
     paddingTop: 8,
     position: 'relative',
+  },
+  themeToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: 'rgba(156, 39, 176, 0.1)',
+    gap: 12,
+    marginBottom: 8,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+      },
+    }),
+  },
+  themeToggleText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '500',
+    flex: 1,
   },
   logoutBtn: {
     flexDirection: 'row',

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform, Dimensions } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
+import { useTheme } from '../../context/ThemeContext';
 
 const isWeb = Platform.OS === 'web';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SubmissionDetailScreen({ route, navigation, isWebModal = false }) {
   const { submission } = route.params || {};
+  const { theme } = useTheme();
 
   // En web dentro de modal, no necesitamos el container con backdrop
   const renderContent = () => {
@@ -26,11 +28,11 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
     }
 
     return (
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.title}>Detalles de la Solicitud</Text>
+      <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+        <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.title, { color: theme.text }]}>Detalles de la Solicitud</Text>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerCloseButton}>
-            <MaterialCommunityIcons name="close" size={24} color={COLORS.gray} />
+            <MaterialCommunityIcons name="close" size={24} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -47,38 +49,38 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
 
           {/* User Info Card */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Usuario</Text>
-            <View style={styles.userInfoCard}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Usuario</Text>
+            <View style={[styles.userInfoCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.avatarContainer}>
                   <MaterialCommunityIcons name="account" size={32} color={COLORS.white} />
               </View>
               <View style={styles.userDetails}>
-                <Text style={styles.userName}>{submission.userName}</Text>
-                <Text style={styles.userEmail}>{submission.userEmail}</Text>
+                <Text style={[styles.userName, { color: theme.text }]}>{submission.userName}</Text>
+                <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{submission.userEmail}</Text>
               </View>
             </View>
           </View>
 
           {/* Mission Info */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Misión</Text>
-            <View style={styles.infoRow}>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>Misión</Text>
+            <View style={[styles.infoRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Nombre</Text>
-                <Text style={styles.infoValue}>{submission.missionName}</Text>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Nombre</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>{submission.missionName}</Text>
               </View>
               <View style={styles.infoItemRight}>
-                <Text style={styles.infoLabel}>Puntos</Text>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Puntos</Text>
                 <Text style={[styles.infoValue, { color: COLORS.primary, fontWeight: '700' }]}>+{submission.points}</Text>
               </View>
             </View>
             
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: theme.border }]} />
             
-            <View style={styles.infoRow}>
+            <View style={[styles.infoRow, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <View style={styles.infoItem}>
-                <Text style={styles.infoLabel}>Fecha de Envío</Text>
-                <Text style={styles.infoValue}>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Fecha de Envío</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>
                   {new Date(submission.submittedAt).toLocaleDateString('es-ES', {
                     day: '2-digit',
                     month: 'long',
@@ -92,10 +94,10 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
 
             {submission.observation && (
               <>
-                <View style={styles.divider} />
-                <View style={styles.infoItem}>
-                  <Text style={styles.infoLabel}>Observaciones</Text>
-                  <Text style={styles.observationText}>{submission.observation}</Text>
+                <View style={[styles.divider, { backgroundColor: theme.border }]} />
+                <View style={[styles.infoItem, { backgroundColor: theme.surface }]}>
+                  <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>Observaciones</Text>
+                  <Text style={[styles.observationText, { color: theme.text }]}>{submission.observation}</Text>
                 </View>
               </>
             )}
@@ -104,7 +106,7 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
           {/* Evidence */}
           {submission.evidenceUrl && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
                 Evidencia {submission.metadata?.allImages ? `(${submission.metadata.allImages.length})` : ''}
               </Text>
               
@@ -130,9 +132,9 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
           )}
         </ScrollView>
         
-        <View style={styles.modalFooter}>
-          <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.closeButtonText}>Cerrar</Text>
+        <View style={[styles.modalFooter, { borderTopColor: theme.border, backgroundColor: theme.surface }]}>
+          <TouchableOpacity style={[styles.closeButton, { backgroundColor: theme.inputBg, borderColor: theme.border }]} onPress={() => navigation.goBack()}>
+            <Text style={[styles.closeButtonText, { color: theme.text }]}>Cerrar</Text>
           </TouchableOpacity>
         </View>
       </View>
