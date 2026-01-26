@@ -10,10 +10,13 @@ import {
   Platform,
   ActivityIndicator,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
 import * as validators from '../utils/validators';
 import { getErrorMessage } from '../utils/errorHandler';
+import { useTheme } from '../context/ThemeContext';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -22,6 +25,9 @@ export default function LoginScreen({ navigation }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const { login } = useContext(AuthContext);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 768;
+  const { theme, isDarkMode, toggleTheme } = useTheme();
 
   // Validar campos en tiempo real
   useEffect(() => {
@@ -86,20 +92,57 @@ export default function LoginScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text style={styles.title}>Puntos Ciudadanos</Text>
-          <Text style={styles.subtitle}>Energía CO2 Neutral</Text>
+      <TouchableOpacity
+        style={[styles.themeButton, { backgroundColor: theme.surface }]}
+        onPress={toggleTheme}
+      >
+        <MaterialCommunityIcons name={isDarkMode ? "weather-sunny" : "weather-night"} size={24} color={theme.text} />
+      </TouchableOpacity>
 
-          <View style={styles.form}>
+      <View style={[styles.mainContainer, isDesktop && styles.mainContainerDesktop]}>
+        {/* Panel Izquierdo (Solo Desktop) */}
+        {isDesktop && (
+          <View style={styles.leftPanel}>
+            <View style={styles.leftPanelContent}>
+              <MaterialCommunityIcons name="leaf" size={80} color="#fff" style={{ marginBottom: 20 }} />
+              <Text style={styles.brandingTitle}>Puntos Ciudadanos</Text>
+              <Text style={styles.brandingSubtitle}>
+                Energía CO2 Neutral.{'\n'}
+                Únete a la comunidad que premia tus contribuciones a la sociedad.
+              </Text>
+            </View>
+            <View style={styles.circle1} />
+            <View style={styles.circle2} />
+          </View>
+        )}
+
+        <ScrollView 
+          contentContainerStyle={[styles.scrollContent, isDesktop && styles.scrollContentDesktop, { backgroundColor: isDesktop ? theme.background : 'transparent' }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={[styles.content, isDesktop && styles.contentDesktop]}>
+            {!isDesktop ? (
+              <>
+                <Text style={[styles.title, { color: theme.text }]}>Puntos Ciudadanos</Text>
+                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Energía CO2 Neutral</Text>
+              </>
+            ) : (
+              <View style={styles.desktopHeader}>
+                <Text style={[styles.desktopTitle, { color: theme.text }]}>Bienvenido</Text>
+                <Text style={[styles.desktopSubtitle, { color: theme.textSecondary }]}>Ingresa a tu cuenta para continuar</Text>
+              </View>
+            )}
+
+            <View style={styles.form}>
             {/* Campo Email */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Email</Text>
               <TextInput
                 style={[
                   styles.input,
+                  { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text },
                   touched.email && errors.email && styles.inputError,
                 ]}
                 placeholder="tu@email.com"
@@ -110,7 +153,7 @@ export default function LoginScreen({ navigation }) {
                 keyboardType="email-address"
                 autoCorrect={false}
                 editable={!loading}
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textSecondary}
               />
               {touched.email && errors.email && (
                 <Text style={styles.errorText}>{errors.email}</Text>
@@ -119,10 +162,11 @@ export default function LoginScreen({ navigation }) {
 
             {/* Campo Contraseña */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.label}>Contraseña</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Contraseña</Text>
               <TextInput
                 style={[
                   styles.input,
+                  { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text },
                   touched.password && errors.password && styles.inputError,
                 ]}
                 placeholder="Ingresa tu contraseña"
@@ -133,7 +177,7 @@ export default function LoginScreen({ navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!loading}
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textSecondary}
               />
               {touched.password && errors.password && (
                 <Text style={styles.errorText}>{errors.password}</Text>
@@ -162,22 +206,9 @@ export default function LoginScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Usuarios de prueba:</Text>
-            <View style={styles.demoBox}>
-              <Text style={styles.demoLabel}>Usuario Regular:</Text>
-              <Text style={styles.demoValue}>maria@example.com</Text>
-              <Text style={styles.demoValue}>user123</Text>
-            </View>
-            <View style={styles.demoBox}>
-              <Text style={styles.demoLabel}>Comerciante:</Text>
-              <Text style={styles.demoValue}>mati@mechada.com</Text>
-              <Text style={styles.demoValue}>merchant123</Text>
-            </View>
-          </View>
         </View>
       </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -185,27 +216,112 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+  },
+  themeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  mainContainerDesktop: {
+    flexDirection: 'row',
+  },
+  leftPanel: {
+    flex: 1,
+    backgroundColor: '#4CAF50',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  leftPanelContent: {
+    zIndex: 2,
+    alignItems: 'center',
+    padding: 40,
+  },
+  brandingTitle: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  brandingSubtitle: {
+    fontSize: 18,
+    color: 'rgba(255,255,255,0.9)',
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  circle1: {
+    position: 'absolute',
+    width: 400,
+    height: 400,
+    borderRadius: 200,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    top: -100,
+    left: -100,
+  },
+  circle2: {
+    position: 'absolute',
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    bottom: -50,
+    right: -50,
   },
   scrollContent: {
     flexGrow: 1,
+    justifyContent: 'center',
+  },
+  scrollContentDesktop: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    width: '100%',
+  },
+  contentDesktop: {
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+    padding: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#2E7D32',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: '#666',
     marginBottom: 40,
+  },
+  desktopHeader: {
+    marginBottom: 40,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  desktopTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  desktopSubtitle: {
+    fontSize: 16,
   },
   form: {
     width: '100%',
@@ -217,17 +333,14 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 8,
     fontSize: 16,
     borderWidth: 1,
-    borderColor: '#ddd',
   },
   inputError: {
     borderColor: '#f44336',
@@ -267,36 +380,5 @@ const styles = StyleSheet.create({
   registerBold: {
     fontWeight: 'bold',
     color: '#2E7D32',
-  },
-  footer: {
-    marginTop: 40,
-    alignItems: 'center',
-    width: '100%',
-  },
-  footerText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 16,
-  },
-  demoBox: {
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    width: '100%',
-    maxWidth: 400,
-  },
-  demoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2E7D32',
-    marginBottom: 4,
-  },
-  demoValue: {
-    fontSize: 13,
-    color: '#1B5E20',
-    fontFamily: 'monospace',
   },
 });
