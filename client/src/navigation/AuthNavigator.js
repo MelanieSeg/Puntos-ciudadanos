@@ -1,13 +1,8 @@
-// src/navigation/AuthNavigator.js
-/**
- * AuthNavigator
- * Stack de autenticación: Login y Register
- */
-
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 import { COLORS } from '../theme/theme';
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +28,10 @@ export default function AuthNavigator() {
           animationEnabled: true,
           presentation: 'card',
         }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPasswordScreen}
       />
     </Stack.Navigator>
   );

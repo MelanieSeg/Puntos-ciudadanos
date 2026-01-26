@@ -8,6 +8,9 @@ import {
   changePassword,
   logout,
   verifyEmail,
+  forgotPassword,
+  resetPassword,
+  renderResetPasswordPage,
 } from '../controllers/auth.controller.js';
 import { authenticate } from '../middlewares/auth.js';
 import { validatePasswordChangeScope } from '../middlewares/roleCheck.js';
@@ -109,5 +112,30 @@ router.put(
  * @access  Private
  */
 router.post('/logout', authenticate, logout);
+
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Solicitar recuperación de contraseña
+ * @access  Public
+ */
+router.post(
+  '/forgot-password',
+  authLimiter, // Rate limit estricto para evitar spam
+  forgotPassword
+);
+
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Restablecer contraseña
+ * @access  Public
+ */
+router.post('/reset-password', authLimiter, resetPassword);
+
+/**
+ * @route   GET /api/v1/auth/reset-password-page
+ * @desc    Página web para restablecer contraseña (link de email)
+ * @access  Public
+ */
+router.get('/reset-password-page', renderResetPasswordPage);
 
 export default router;

@@ -54,6 +54,17 @@ function generateVerificationToken(userId) {
 }
 
 /**
+ * Genera un token JWT para restablecimiento de contraseña (válido por 15 min)
+ */
+function generateResetToken(userId) {
+  return jwt.sign(
+    { userId, type: 'password_reset' },
+    config.jwt.secret,
+    { expiresIn: '15m' }
+  );
+}
+
+/**
  * Envía correo de verificación al usuario (diferente según rol)
  */
 async function sendVerificationEmail(user, baseUrl = 'http://localhost:3000') {
@@ -338,8 +349,97 @@ function verifyEmailToken(token) {
   }
 }
 
+/**
+ * Envía correo de restablecimiento de contraseña
+ */
+async function sendResetPasswordEmail(user, baseUrl = 'http://localhost:3000') {
+  const token = generateResetToken(user.id);
+  // En producción, esto debería ser la URL del frontend o deep link de la app
+  // Ejemplo App: puntosciudadanos://reset-password?token=...
+  const resetUrl = `${baseUrl}/api/v1/auth/reset-password-page?token=${token}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_FROM || '"Puntos Ciudadanos" <noreply@puntosciudadanos.com>',
+    to: user.email,
+    subject: '🔑 Restablecer contraseña - Puntos Ciudadanos',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body { font-family: sans-serif; color: #333; background-color: #f5f5f5; padding: 20px; }
+          .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+          .header { background-color: #4CAF50; color: white; padding: 20px; text-align: center; }
+          .content { padding: 30px; }
+          .button { display: inline-block; background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; margin: 20px 0; }
+          .footer { padding: 20px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Recuperación de Contraseña</h1>
+          </div>
+          <div class="content">
+            <p>Hola ${user.name},</p>
+            <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en Puntos Ciudadanos.</p>
+            <p>Si fuiste tú, haz clic en el siguiente botón para crear una nueva contraseña:</p>
+            
+            <div style="text-align: center;">
+              <a href="${resetUrl}" class="button">Restablecer Contraseña</a>
+            </div>
+            
+            <p>Este enlace expirará en 15 minutos por seguridad.</p>
+            <p>Si no solicitaste este cambio, puedes ignorar este correo y tu contraseña seguirá siendo la misma.</p>
+          </div>
+          <div class="footer">
+            <p>Puntos Ciudadanos - Energía CO2 Neutral</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+    text: `Hola ${user.name}. Para restablecer tu contraseña, visita: ${resetUrl}. Este enlace expira en 15 minutos.`
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    if (nodemailer.getTestMessageUrl(info)) {
+      console.log('📧 Email de reset enviado (Preview):', nodemailer.getTestMessageUrl(info));
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('❌ Error enviando email de reset:', error);
+    throw new Error('No se pudo enviar el correo de recuperación');
+  }
+}
+
+/**
+ * Verifica un token de restablecimiento de contraseña
+ */
+function verifyResetToken(token) {
+  try {
+    const decoded = jwt.verify(token, config.jwt.secret);
+    
+    if (decoded.type !== 'password_reset') {
+      throw new Error('Tipo de token inválido');
+    }
+    
+    return decoded.userId;
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      throw new Error('El enlace ha expirado. Por favor solicita uno nuevo.');
+    }
+    throw new Error('Enlace inválido o corrupto');
+  }
+}
+
 export {
   sendVerificationEmail,
   verifyEmailToken,
   generateVerificationToken,
+  sendResetPasswordEmail,
+  verifyResetToken,
+  generateResetToken,
 };

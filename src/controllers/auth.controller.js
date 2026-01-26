@@ -11,7 +11,7 @@ import { generateToken, createTokenPayload } from '../utils/jwt.js';
 import { validatePassword } from '../utils/password.js';
 import prisma from '../config/database.js';
 import config from '../config/index.js';
-import { sendVerificationEmail, verifyEmailToken } from '../services/email.service.js';
+import { sendVerificationEmail, verifyEmailToken, sendResetPasswordEmail, verifyResetToken } from '../services/email.service.js';
 
 /**
  * @route   POST /api/v1/auth/register
@@ -597,6 +597,167 @@ export const verifyEmail = asyncHandler(async (req, res) => {
         <p>${isAdminOrMerchant ? 'Inicia sesión para continuar con el cambio de contraseña.' : 'Gracias por unirte a <strong>Puntos Ciudadanos</strong>.'}</p>
         <a href="http://localhost:8081" class="button">${isAdminOrMerchant ? 'Iniciar Sesión y Cambiar Contraseña' : 'Iniciar Sesión'}</a>
       </div>
+    </body>
+    </html>
+  `);
+});
+
+/**
+ * @route   POST /api/v1/auth/forgot-password
+ * @desc    Solicitar restablecimiento de contraseña
+ * @access  Public
+ */
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    throw new ValidationError('El email es requerido');
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  // Por seguridad, siempre respondemos con éxito aunque el usuario no exista
+  // para evitar enumeración de usuarios.
+  if (user && user.status !== 'DELETED') {
+    try {
+      const baseUrl = process.env.API_BASE_URL || `http://localhost:${config.port}`;
+      // En un entorno real móvil, baseUrl debería ser el esquema de la app (ej: puntosciudadanos://)
+      // o una página web intermedia que maneje el deep linking.
+      await sendResetPasswordEmail(user, baseUrl);
+    } catch (error) {
+      console.error('Error enviando email de recuperación:', error);
+      // No lanzamos error al cliente para no revelar fallos internos específicos
+    }
+  }
+
+  successResponse(res, null, 'Si el correo existe, recibirás un enlace para restablecer tu contraseña.');
+});
+
+/**
+ * @route   POST /api/v1/auth/reset-password
+ * @desc    Restablecer contraseña con token
+ * @access  Public
+ */
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    throw new ValidationError('Token y nueva contraseña son requeridos');
+  }
+
+  // Validar fortaleza de contraseña (8+ caracteres, mayúscula, minúscula, número)
+  const passwordValidation = validatePassword(newPassword);
+  if (!passwordValidation.valid) {
+    throw new ValidationError(passwordValidation.errors.join('. '));
+  }
+
+  const userId = verifyResetToken(token);
+
+  const passwordHash = await bcrypt.hash(newPassword, config.bcrypt.rounds);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash,
+      mustChangePassword: false, // Si estaba forzado a cambiarla, ya cumplió
+    },
+  });
+
+  successResponse(res, null, 'Contraseña restablecida exitosamente. Ya puedes iniciar sesión.');
+});
+
+/**
+ * @route   GET /api/v1/auth/reset-password-page
+ * @desc    Renderizar formulario web de restablecimiento de contraseña
+ * @access  Public
+ */
+export const renderResetPasswordPage = asyncHandler(async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    return res.status(400).send('<h1>Error: Token requerido</h1>');
+  }
+
+  try {
+    verifyResetToken(token);
+  } catch (error) {
+    return res.status(400).send(`<h1>Enlace expirado o inválido</h1><p>${error.message}</p><p>Por favor solicita un nuevo correo de recuperación en la aplicación.</p>`);
+  }
+
+  const apiUrl = process.env.API_BASE_URL || `http://localhost:${config.port}`;
+  const postUrl = `${apiUrl}/api/v1/auth/reset-password`;
+
+  // Evitar cacheo
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  
+  // Permitir scripts inline para esta página
+  res.setHeader('Content-Security-Policy', "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'");
+
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Restablecer Contraseña - Puntos Ciudadanos</title>
+      <link rel="icon" href="data:,">
+      <style>
+        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+        h2 { color: #1a1a1a; text-align: center; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 1rem; }
+        button:hover { background-color: #45a049; }
+        button:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .msg { text-align: center; margin-top: 1rem; font-size: 14px; }
+      </style>
+    </head>
+    <body>
+      <div class="card">
+        <h2>Nueva Contraseña</h2>
+        <p style="text-align: center; color: #666; font-size: 14px; margin-bottom: 1rem;">Mínimo 8 caracteres, con mayúscula, minúscula y número</p>
+        <form id="resetForm" onsubmit="return false;">
+          <input type="password" id="pass" placeholder="Nueva contraseña (mín. 8 caracteres)" required minlength="8" autocomplete="new-password">
+          <input type="password" id="confirm" placeholder="Confirmar contraseña" required minlength="8" autocomplete="new-password">
+          <button type="button" id="btn" onclick="submitForm()">Cambiar Contraseña</button>
+        </form>
+        <div id="msg" class="msg"></div>
+      </div>
+      <script>
+        async function submitForm() {
+          const p = document.getElementById('pass').value;
+          const c = document.getElementById('confirm').value;
+          const msg = document.getElementById('msg');
+          const btn = document.getElementById('btn');
+          
+          if(p !== c) {
+            msg.style.color = 'red';
+            msg.textContent = 'Las contraseñas no coinciden';
+            return;
+          }
+          
+          btn.disabled = true;
+          btn.textContent = 'Enviando...';
+          msg.textContent = '';
+          
+          try {
+            const res = await fetch('${postUrl}', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token:'${token}', newPassword:p}) });
+            const data = await res.json();
+            msg.style.color = res.ok ? 'green' : 'red';
+            msg.textContent = res.ok ? '✅ ¡Contraseña cambiada! Ya puedes cerrar esta página e iniciar sesión en la app.' : (data.message || 'Error al cambiar contraseña');
+            if (res.ok) document.getElementById('resetForm').reset();
+          } catch(e) { msg.style.color = 'red'; msg.textContent='Error de conexión'; }
+          
+          if (msg.style.color !== 'green') {
+            btn.disabled = false; 
+            btn.textContent = 'Cambiar Contraseña';
+          }
+        }
+      </script>
     </body>
     </html>
   `);
