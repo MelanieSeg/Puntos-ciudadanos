@@ -338,3 +338,15 @@ model BenefitRedemption {
   @@index([scannedByMerchantId])
   @@map("benefit_redemptions")
 }
+/// Configuración del sistema (tabla singleton - una sola fila)
+model SystemConfig {
+  id                  Int      @id @default(1)
+  maintenanceMode     Boolean  @default(false) @map("maintenance_mode")      // Modo mantenimiento: desactiva envíos de misiones
+  homeBannerMessage   String?  @db.Text @map("home_banner_message")          // Mensaje global en pantalla de inicio
+  
+  // Timestamps
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  
+  @@map("system_config")
+}

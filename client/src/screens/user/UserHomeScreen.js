@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getCategoryIcon } from '../../utils/missionCategories';
+import { configAPI } from '../../services/api';
 import {
   useUserBalance,
   useAllTransactions,
@@ -36,6 +37,9 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
   const { theme } = useTheme();
 
   const monthlyGoal = 500;
+
+  // Estado para configuración del sistema
+  const [bannerMessage, setBannerMessage] = useState(null);
 
   // React Query hooks - Reemplazan todos los useState y useEffect
   const {
@@ -65,6 +69,21 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     error: benefitsError,
     refetch: refetchBenefits,
   } = useAvailableBenefits(4);
+
+  // Cargar mensaje de bienvenida del sistema
+  useEffect(() => {
+    const loadBannerMessage = async () => {
+      try {
+        const response = await configAPI.getPublicConfig();
+        if (response.data.success && response.data.data.config.homeBannerMessage) {
+          setBannerMessage(response.data.data.config.homeBannerMessage);
+        }
+      } catch (error) {
+        console.error('Error cargando configuración:', error);
+      }
+    };
+    loadBannerMessage();
+  }, []);
 
   // Procesar datos del usuario
   const userData = {
@@ -270,6 +289,13 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
+        {/* Mensaje de Bienvenida del Admin */}
+        {bannerMessage && (
+          <View style={[styles.bannerMessage, { backgroundColor: theme.primary + '15', borderLeftColor: theme.primary }]}>
+            <MaterialCommunityIcons name="information" size={20} color={theme.primary} style={styles.bannerIcon} />
+            <Text style={[styles.bannerText, { color: theme.text }]}>{bannerMessage}</Text>
+          </View>
+        )}
         {/* EN MÓVIL, SIN HEADER (React Navigation lo maneja) */}
 
         {/* SALUDO */}
@@ -1004,5 +1030,24 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontWeight: '600',
     fontSize: TYPOGRAPHY.body1,
+  },
+  bannerMessage: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  bannerIcon: {
+    marginRight: SPACING.sm,
+    marginTop: 2,
+  },
+  bannerText: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.body2,
+    lineHeight: 20,
   },
 });

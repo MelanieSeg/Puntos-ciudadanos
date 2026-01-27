@@ -188,6 +188,15 @@ router.post('/:missionId/submit', authenticate, upload.array('evidence', 4), asy
     const { description } = req.body;
     const userId = req.user.id;
 
+    // Verificar si el sistema está en modo mantenimiento
+    const systemConfig = await prisma.systemConfig.findFirst();
+    if (systemConfig?.maintenanceMode) {
+      return res.status(503).json({
+        success: false,
+        message: 'El sistema está en mantenimiento. No se pueden enviar misiones en este momento. Por favor, intenta más tarde.',
+      });
+    }
+
     // Validar que se subieron imágenes
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({

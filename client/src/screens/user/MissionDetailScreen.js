@@ -3,7 +3,7 @@
  * Pantalla que muestra información completa de una misión y permite al usuario enviar evidencia
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,11 +17,28 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { getFrequencyLabel } from '../../utils/missionCategories';
+import { configAPI } from '../../services/api';
 
 export default function MissionDetailScreen({ route, navigation }) {
   const { missionId, mission } = route.params || {};
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    // Cargar estado de mantenimiento
+    const loadMaintenanceStatus = async () => {
+      try {
+        const response = await configAPI.getPublicConfig();
+        if (response.data.success) {
+          setMaintenanceMode(response.data.data.config.maintenanceMode || false);
+        }
+      } catch (error) {
+        console.error('[MissionDetail] Error al cargar config:', error);
+      }
+    };
+    loadMaintenanceStatus();
+  }, []);
 
   React.useEffect(() => {
     // Por hacer: conectar a GET /api/v1/missions/{missionId}
@@ -63,7 +80,7 @@ export default function MissionDetailScreen({ route, navigation }) {
     );
   }
 
-  const canSubmit = data.hoursRemaining > 0;
+  const canSubmit = data.hoursRemaining > 0 && !maintenanceMode;
 
   return (
     <ScreenWrapper bgColor={theme.background} safeArea={false}>
@@ -144,7 +161,22 @@ export default function MissionDetailScreen({ route, navigation }) {
             </View>
           </View>
         </View>
-        {!canSubmit && (
+        {maintenanceMode && (
+          <View style={[styles.cooldownAlert, { backgroundColor: COLORS.warning + '15', borderLeftColor: COLORS.warning }]}>
+            <MaterialCommunityIcons
+              name="tools"
+              size={32}
+              color={COLORS.warning}
+            />
+            <View style={{ flex: 1, marginLeft: SPACING.md }}>
+              <Text style={[styles.cooldownTitle, { color: COLORS.warning }]}>Sistema en Mantenimiento</Text>
+              <Text style={styles.cooldownText}>
+                No se pueden enviar misiones en este momento. Por favor, intenta más tarde.
+              </Text>
+            </View>
+          </View>
+        )}
+        {!canSubmit && !maintenanceMode && (
           <View style={styles.cooldownAlert}>
             <MaterialCommunityIcons
               name="clock-alert"
@@ -170,7 +202,7 @@ export default function MissionDetailScreen({ route, navigation }) {
             <>
               <MaterialCommunityIcons name="send" size={20} color={COLORS.white} />
               <Text style={styles.submitButtonText}>
-                {canSubmit ? 'Enviar Evidencia' : 'En Cooldown'}
+                {maintenanceMode ? 'Mantenimiento' : canSubmit ? 'Enviar Evidencia' : 'En Cooldown'}
               </Text>
             </>
           )}

@@ -208,6 +208,15 @@ export const adminAPI = {
   updateMission: (id, data) => api.put(`/admin/missions/${id}`, data),
   updateMissionStatus: (id, active) => api.patch(`/admin/missions/${id}/status`, { active }),
   deleteMission: (id) => api.delete(`/admin/missions/${id}`),
+  
+  // Configuración del sistema
+  getSettings: () => api.get('/admin/settings'),
+  updateSettings: (data) => api.patch('/admin/settings', data),
+};
+
+// Configuración pública (sin autenticación)
+export const configAPI = {
+  getPublicConfig: () => api.get('/config'),
 };
 
 export default api;

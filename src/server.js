@@ -126,6 +126,10 @@ app.use(`/api/${config.apiVersion}/missions`, missionsRoutes);
 import adminRoutes from './routes/admin.routes.js';
 app.use(`/api/${config.apiVersion}/admin`, adminRoutes);
 
+// Config público (sin autenticación)
+import { getPublicConfig } from './controllers/settings.controller.js';
+app.get(`/api/${config.apiVersion}/config`, getPublicConfig);
+
 // ============================================
 // ERROR HANDLING
 // ============================================

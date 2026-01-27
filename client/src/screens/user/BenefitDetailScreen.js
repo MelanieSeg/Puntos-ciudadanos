@@ -17,7 +17,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
-import { benefitsAPI, pointsAPI, walletAPI } from '../../services/api';
+import { benefitsAPI, pointsAPI, walletAPI, configAPI } from '../../services/api';
 import { AuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getErrorMessage } from '../../utils/errorHandler';
@@ -45,11 +45,25 @@ export default function BenefitDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(false);
   const [isRedeeming, setIsRedeeming] = useState(false);
   const [userBalance, setUserBalance] = useState(initialBalance || 0);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     // Cargar balance actualizado
     loadBalance();
+    // Cargar estado de mantenimiento
+    loadMaintenanceStatus();
   }, []);
+
+  const loadMaintenanceStatus = async () => {
+    try {
+      const response = await configAPI.getPublicConfig();
+      if (response.data.success) {
+        setMaintenanceMode(response.data.data.config.maintenanceMode || false);
+      }
+    } catch (error) {
+      console.error('[BenefitDetail] Error al cargar config:', error);
+    }
+  };
 
   const loadBalance = async () => {
     try {
@@ -70,7 +84,7 @@ export default function BenefitDetailScreen({ route, navigation }) {
     active: false,
   };
 
-  const canRedeem = userBalance >= data.pointsCost && data.stock > 0 && data.active;
+  const canRedeem = userBalance >= data.pointsCost && data.stock > 0 && data.active && !maintenanceMode;
   const insufficientBalance = userBalance < data.pointsCost;
   const noStock = data.stock <= 0;
 
@@ -84,7 +98,13 @@ export default function BenefitDetailScreen({ route, navigation }) {
 
     if (!canRedeem) {
       console.log('[BenefitDetail] No puede canjear - mostrando alerta');
-      if (insufficientBalance) {
+      if (maintenanceMode) {
+        showAlert(
+          'Sistema en Mantenimiento',
+          'No se pueden canjear beneficios en este momento. Por favor, intenta más tarde.',
+          [{ text: 'Entendido', style: 'default' }]
+        );
+      } else if (insufficientBalance) {
         showAlert(
           'Saldo Insuficiente',
           `Necesitas ${data.pointsCost} puntos para canjear este beneficio.\n\nTu saldo actual: ${userBalance} puntos\nFaltan: ${data.pointsCost - userBalance} puntos`,
@@ -318,7 +338,8 @@ export default function BenefitDetailScreen({ route, navigation }) {
             <>
               <MaterialCommunityIcons name="gift" size={20} color={COLORS.white} />
               <Text style={styles.redeemButtonText}>
-                {insufficientBalance ? `Faltan ${data.pointsCost - userBalance} pts` : 
+                {maintenanceMode ? 'Mantenimiento' :
+                 insufficientBalance ? `Faltan ${data.pointsCost - userBalance} pts` : 
                  noStock ? 'Sin Stock' :
                  'Canjear Ahora'}
               </Text>

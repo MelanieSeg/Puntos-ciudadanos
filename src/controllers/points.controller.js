@@ -2,6 +2,9 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/response.js';
 import * as pointsService from '../services/points.service.js';
 import * as cacheService from '../services/cache.service.js';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 /**
  * GET /api/v1/points/transactions
@@ -63,6 +66,15 @@ export const addPoints = asyncHandler(async (req, res) => {
 export const redeemBenefit = asyncHandler(async (req, res) => {
   const { benefitId } = req.body;
   const userId = req.user.id;
+
+  // Verificar si el sistema está en modo mantenimiento
+  const systemConfig = await prisma.systemConfig.findFirst();
+  if (systemConfig?.maintenanceMode) {
+    return res.status(503).json({
+      success: false,
+      message: 'El sistema está en mantenimiento. No se pueden canjear beneficios en este momento. Por favor, intenta más tarde.',
+    });
+  }
 
   const result = await pointsService.redeemBenefit(userId, benefitId);
 

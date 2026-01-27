@@ -14,6 +14,7 @@ import { sendVerificationEmail } from '../services/email.service.js';
 import config from '../config/index.js';
 import { getGlobalStats } from '../controllers/stats.controller.js';
 import { getAuditLogs, updateUserStatus } from '../controllers/audit.controller.js';
+import { getSettings, updateSettings } from '../controllers/settings.controller.js';
 import { 
   createMission, 
   getAllMissionsAdmin,
@@ -1053,5 +1054,21 @@ router.post(
     );
   })
 );
+
+// ============================================
+// RUTAS DE CONFIGURACIÓN DEL SISTEMA
+// ============================================
+
+/**
+ * GET /api/v1/admin/settings
+ * Obtener configuración del sistema
+ */
+router.get('/settings', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), getSettings);
+
+/**
+ * PATCH /api/v1/admin/settings
+ * Actualizar configuración del sistema
+ */
+router.patch('/settings', authenticate, authorize('MASTER_ADMIN'), updateSettings);
 
 export default router;
