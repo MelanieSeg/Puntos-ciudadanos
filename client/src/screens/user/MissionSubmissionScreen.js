@@ -24,18 +24,56 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { missionsAPI } from '../../services/api';
 import { useTheme } from '../../context/ThemeContext';
+import { getCategoryIcon } from '../../utils/missionCategories';
 
 const MAX_IMAGES = 4;
 const MIN_IMAGES = 1;
 
 export default function MissionSubmissionScreen({ route, navigation }) {
-  const { missionId, missionName, missionPoints } = route.params || {};
+  const { missionId, missionName, missionPoints, evidenceType = 'PHOTO', category } = route.params || {};
   const { theme } = useTheme();
   
   const [description, setDescription] = useState('');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Determinar tipo de evidencia y texto de ayuda
+  const getEvidenceInfo = () => {
+    switch(evidenceType) {
+      case 'DOCUMENT':
+        return {
+          title: 'Documento Requerido',
+          description: 'Sube foto clara del documento oficial',
+          icon: 'file-document',
+          examples: 'Ej: DNI, certificado oficial, documento sellado',
+        };
+      case 'CERTIFICATE':
+        return {
+          title: 'Certificado Requerido',
+          description: 'Sube foto del certificado o diploma',
+          icon: 'certificate',
+          examples: 'Ej: Certificado de asistencia, diploma, constancia',
+        };
+      case 'RECEIPT':
+        return {
+          title: 'Comprobante Requerido',
+          description: 'Sube foto clara del recibo o comprobante',
+          icon: 'receipt',
+          examples: 'Ej: Ticket de compra, boleta, factura',
+        };
+      case 'PHOTO':
+      default:
+        return {
+          title: 'Fotografía Requerida',
+          description: 'Sube foto clara de la actividad realizada',
+          icon: 'camera',
+          examples: 'Ej: Foto de ti completando la misión',
+        };
+    }
+  };
+
+  const evidenceInfo = getEvidenceInfo();
 
   /**
    * Solicitar permisos de galería y seleccionar imagen
@@ -227,7 +265,7 @@ export default function MissionSubmissionScreen({ route, navigation }) {
 
         {/* Misión Info */}
         <View style={[styles.missionCard, { backgroundColor: theme.surface }]}>
-          <MaterialCommunityIcons name="target" size={32} color={COLORS.primary} />
+          <MaterialCommunityIcons name={getCategoryIcon(category)} size={32} color={COLORS.primary} />
           <View style={styles.missionInfo}>
             <Text style={[styles.missionName, { color: theme.text }]}>{missionName || 'Misión'}</Text>
             <View style={styles.pointsBadge}>
@@ -318,9 +356,12 @@ export default function MissionSubmissionScreen({ route, navigation }) {
 
         {/* Requisitos */}
         <View style={[styles.requirements, { backgroundColor: theme.surface }]}>
-          <MaterialCommunityIcons name="information" size={20} color={COLORS.info} />
+          <MaterialCommunityIcons name={evidenceInfo.icon} size={20} color={COLORS.info} />
           <View style={styles.requirementsContent}>
-            <Text style={[styles.requirementsTitle, { color: theme.text }]}>Requisitos</Text>
+            <Text style={[styles.requirementsTitle, { color: theme.text }]}>{evidenceInfo.title}</Text>
+            <Text style={[styles.evidenceDescription, { color: theme.textSecondary }]}>
+              {evidenceInfo.description}
+            </Text>
             <View style={styles.requirement}>
               <MaterialCommunityIcons name="check" size={16} color={COLORS.success} />
               <Text style={[styles.requirementText, { color: theme.textSecondary }]}>
@@ -330,7 +371,7 @@ export default function MissionSubmissionScreen({ route, navigation }) {
             <View style={styles.requirement}>
               <MaterialCommunityIcons name="check" size={16} color={COLORS.success} />
               <Text style={[styles.requirementText, { color: theme.textSecondary }]}>
-                Imágenes claras y legibles
+                {evidenceInfo.examples}
               </Text>
             </View>
             <View style={styles.requirement}>
@@ -524,7 +565,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.body1,
     fontWeight: '600',
     color: COLORS.dark,
+    marginBottom: SPACING.xs,
+  },
+  evidenceDescription: {
+    fontSize: TYPOGRAPHY.body2,
+    color: COLORS.gray,
     marginBottom: SPACING.sm,
+    fontStyle: 'italic',
   },
   requirement: {
     flexDirection: 'row',

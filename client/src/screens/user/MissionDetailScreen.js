@@ -16,6 +16,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { getFrequencyLabel } from '../../utils/missionCategories';
 
 export default function MissionDetailScreen({ route, navigation }) {
   const { missionId, mission } = route.params || {};
@@ -31,6 +32,9 @@ export default function MissionDetailScreen({ route, navigation }) {
     navigation.navigate('MissionSubmission', {
       missionId: mission?.id,
       missionName: mission?.name,
+      missionPoints: mission?.points,
+      evidenceType: mission?.evidenceType,
+      category: mission?.category,
     });
   };
 
@@ -94,7 +98,7 @@ export default function MissionDetailScreen({ route, navigation }) {
             <MaterialCommunityIcons name="timer" size={20} color={COLORS.info} />
             <View>
               <Text style={styles.badgeLabel}>Frecuencia</Text>
-              <Text style={styles.badgeValue}>{data.frequency}</Text>
+              <Text style={styles.badgeValue}>{getFrequencyLabel(data.frequency)}</Text>
             </View>
           </View>
           <View style={styles.infoBadge}>

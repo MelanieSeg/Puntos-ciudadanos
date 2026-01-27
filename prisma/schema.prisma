@@ -64,6 +64,18 @@ enum EvidenceType {
   RECEIPT     // Recibo o comprobante
 }
 
+enum MissionCategory {
+  VOTING          // Participación electoral
+  ENVIRONMENT     // Medio ambiente, reciclaje, limpieza
+  COMMUNITY       // Actividades vecinales y comunitarias
+  VOLUNTEERING    // Voluntariado
+  EDUCATION       // Talleres, cursos, capacitación
+  DONATION        // Donaciones
+  REPORTING       // Reportes de problemas
+  EVENT           // Eventos y participación
+  OTHER           // Otras actividades
+}
+
 // ============================================
 // MODELS
 // ============================================
@@ -201,19 +213,20 @@ model MerchantProfile {
 
 /// Catálogo Dinámico de Misiones (gestionable por administrador)
 model Mission {
-  id            String         @id @default(uuid())
-  name          String         @unique @db.VarChar(255)
-  description   String?        @db.Text
+  id            String            @id @default(uuid())
+  name          String            @unique @db.VarChar(255)
+  description   String?           @db.Text
   points        Int
   frequency     FrequencyType
-  cooldownDays  Int            @default(0) @map("cooldownDays")
-  evidenceType  EvidenceType   @default(PHOTO) @map("evidenceType")
-  active        Boolean        @default(true)
-  expiresAt     DateTime?      @map("expiresAt") @db.Timestamptz(3)
+  cooldownDays  Int               @default(0) @map("cooldownDays")
+  evidenceType  EvidenceType      @default(PHOTO) @map("evidenceType")
+  category      MissionCategory   @default(OTHER)
+  active        Boolean           @default(true)
+  expiresAt     DateTime?         @map("expiresAt") @db.Timestamptz(3)
   
   // Timestamps
-  createdAt     DateTime       @default(now()) @map("createdAt") @db.Timestamptz(3)
-  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  createdAt     DateTime          @default(now()) @map("createdAt") @db.Timestamptz(3)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
   
   // Relaciones
   submissions   MissionSubmission[]
@@ -221,6 +234,7 @@ model Mission {
   
   @@index([active])
   @@index([frequency])
+  @@index([category])
   @@index([expiresAt])
   @@map("missions")
 }

@@ -16,7 +16,8 @@ import { getGlobalStats } from '../controllers/stats.controller.js';
 import { getAuditLogs, updateUserStatus } from '../controllers/audit.controller.js';
 import { 
   createMission, 
-  getAllMissionsAdmin, 
+  getAllMissionsAdmin,
+  updateMission, 
   updateMissionStatus, 
   deleteMission 
 } from '../controllers/mission.controller.js';
@@ -64,6 +65,13 @@ router.post('/missions', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'
  * Query params: status (active, inactive) - opcional
  */
 router.get('/missions', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), getAllMissionsAdmin);
+
+/**
+ * PUT /api/v1/admin/missions/:id
+ * Actualizar una misión completa
+ * Solo MASTER_ADMIN y SUPPORT_ADMIN
+ */
+router.put('/missions/:id', authenticate, authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'), updateMission);
 
 /**
  * PATCH /api/v1/admin/missions/:id/status

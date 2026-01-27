@@ -18,6 +18,7 @@ import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { getCategoryIcon } from '../../utils/missionCategories';
 import {
   useUserBalance,
   useAllTransactions,
@@ -206,13 +207,15 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
 
   // Procesar misiones
   const earnOptions = useMemo(() => {
-    return missions.map(m => ({
-      id: m.id,
-      title: m.title || m.name,
-      description: m.description?.substring(0, 40) + '...' || 'Completa esta misión',
-      points: `+${m.points}`,
-      icon: m.icon || 'star',
-    }));
+    return missions.map(m => {
+      return {
+        id: m.id,
+        title: m.name,
+        description: m.description?.substring(0, 40) + '...' || 'Completa esta misión',
+        points: `+${m.points}`,
+        icon: getCategoryIcon(m.category || 'OTHER'),
+      };
+    });
   }, [missions]);
 
   // Estado de carga y errores

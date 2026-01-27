@@ -13,6 +13,7 @@ import { useTheme } from '../../context/ThemeContext';
 import MissionSkeleton from '../../components/skeletons/MissionSkeleton';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useAvailableMissions } from '../../hooks/useUserData';
+import { getCategoryIcon } from '../../utils/missionCategories';
 
 function EarnScreenComponent({ navigation: navigationProp }) {
   const { theme } = useTheme();
@@ -44,6 +45,8 @@ function EarnScreenComponent({ navigation: navigationProp }) {
       missionId: mission.id,
       missionName: mission.name || mission.title,
       missionPoints: mission.points,
+      evidenceType: mission.evidenceType,
+      category: mission.category,
     };
     
     if (Platform.OS === 'web') {
@@ -56,11 +59,9 @@ function EarnScreenComponent({ navigation: navigationProp }) {
   };
 
   const renderMission = ({ item, index }) => {
-    // Mapear categorías a colores e íconos
-    const icons = ['recycle', 'water', 'account-heart', 'leaf', 'blood-bag', 'food', 'fire-truck', 'volume-high'];
+    // Usar el icono basado en la categoría
+    const icon = getCategoryIcon(item.category);
     const colors = ['#4CAF50', '#2196F3', '#E91E63', '#FF9800', '#9C27B0', '#F44336', '#00BCD4', '#FFC107'];
-    
-    const icon = item.icon || icons[index % icons.length];
     const color = colors[index % colors.length];
 
     // Calcular fecha de expiración

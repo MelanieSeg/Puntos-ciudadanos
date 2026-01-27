@@ -65,6 +65,7 @@ router.get('/', authenticate, async (req, res) => {
         frequency: true,
         cooldownDays: true,
         evidenceType: true,
+        category: true,
         active: true,
         createdAt: true,
         expiresAt: true,

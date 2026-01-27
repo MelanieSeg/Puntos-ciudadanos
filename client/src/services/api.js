@@ -198,6 +198,16 @@ export const adminAPI = {
   updateUserStatus: (userId, status) => api.patch(`/admin/users/${userId}/status`, { status }),
   createSupportAdmin: (data) => api.post('/admin/support-admins', data),
   createMerchant: (data) => api.post('/admin/merchants', data),
+  
+  // Misiones
+  getAllMissions: (status) => {
+    const url = status ? `/admin/missions?status=${status}` : '/admin/missions';
+    return api.get(url);
+  },
+  createMission: (data) => api.post('/admin/missions', data),
+  updateMission: (id, data) => api.put(`/admin/missions/${id}`, data),
+  updateMissionStatus: (id, active) => api.patch(`/admin/missions/${id}/status`, { active }),
+  deleteMission: (id) => api.delete(`/admin/missions/${id}`),
 };
 
 export default api;

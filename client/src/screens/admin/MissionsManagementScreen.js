@@ -14,12 +14,15 @@ import {
   RefreshControl,
   Alert,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { adminAPI } from '../../services/api';
+import { getCategoryIcon, getFrequencyLabel } from '../../utils/missionCategories';
 
 export default function MissionsManagementScreen({ navigation }) {
   const { theme } = useTheme();
@@ -37,12 +40,23 @@ export default function MissionsManagementScreen({ navigation }) {
   const loadMissions = async () => {
     try {
       setLoading(true);
-      // Por hacer: conectar a GET /api/v1/admin/missions?status={filter}
-      // const response = await adminAPI.getMissions(filter);
-      // setMissions(response.data.data);
-      setMissions([]);
+      // Mapear filtros del frontend al formato del backend
+      let statusParam = null;
+      if (filter === 'ACTIVE') statusParam = 'active';
+      else if (filter === 'PAUSED') statusParam = 'inactive';
+      // 'ALL' y 'ARCHIVED' se manejan sin parámetro (todas las misiones)
+      
+      console.log('[MissionsManagement] Loading missions with status:', statusParam);
+      const response = await adminAPI.getAllMissions(statusParam);
+      setMissions(response.data.data.missions || []);
     } catch (error) {
       console.error('Error loading missions:', error);
+      console.error('Error response:', error.response?.data);
+      if (Platform.OS === 'web') {
+        alert('Error al cargar misiones: ' + (error.response?.data?.message || error.message));
+      } else {
+        Alert.alert('Error', 'No se pudieron cargar las misiones');
+      }
       setMissions([]);
     } finally {
       setLoading(false);
@@ -56,83 +70,98 @@ export default function MissionsManagementScreen({ navigation }) {
   };
 
   const handleEditMission = (mission) => {
-    navigation.navigate('EditMission', { mission });
+    navigation.navigate('MissionForm', { mission });
   };
 
-  const handleDeleteMission = (missionId) => {
-    Alert.alert(
-      'Eliminar Misión',
-      '¿Estás seguro? Se eliminarán todos los envíos asociados.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Por hacer: conectar a DELETE /api/v1/admin/missions/{id}
-              // await adminAPI.deleteMission(missionId);
-              await new Promise(r => setTimeout(r, 600));
-              
-              setMissions(missions.filter(m => m.id !== missionId));
-              alert('Misión eliminada');
-            } catch (error) {
-              alert('Error al eliminar: ' + error.message);
-            }
-          },
-        },
-      ]
-    );
+  const handleDeleteMission = async (missionId) => {
+    const mensaje = '¿Estás seguro? Se eliminarán todos los envíos asociados.';
+    
+    // En web usar confirm, en mobile usar Alert
+    const confirmed = Platform.OS === 'web'
+      ? window.confirm(mensaje)
+      : await new Promise((resolve) => {
+          Alert.alert(
+            'Eliminar Misión',
+            mensaje,
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Eliminar', style: 'destructive', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (!confirmed) return;
+    
+    try {
+      await adminAPI.deleteMission(missionId);
+      
+      setMissions(missions.filter(m => m.id !== missionId));
+      
+      if (Platform.OS === 'web') {
+        alert('Misión eliminada exitosamente');
+      } else {
+        Alert.alert('Éxito', 'Misión eliminada exitosamente');
+      }
+    } catch (error) {
+      const mensaje = error.response?.data?.message || error.message;
+      if (Platform.OS === 'web') {
+        alert('Error al eliminar: ' + mensaje);
+      } else {
+        Alert.alert('Error', mensaje);
+      }
+    }
   };
 
-  const handleToggleStatus = (mission) => {
-    const newStatus = mission.status === 'ACTIVE' ? 'PAUSED' : 'ACTIVE';
-    Alert.alert(
-      newStatus === 'ACTIVE' ? 'Reactivar' : 'Pausar',
-      `¿Estás seguro de que deseas ${newStatus === 'ACTIVE' ? 'reactivar' : 'pausar'} esta misión?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Continuar',
-          style: 'default',
-          onPress: async () => {
-            try {
-              // Por hacer: conectar a PATCH /api/v1/admin/missions/{id}/status
-              // await adminAPI.updateMissionStatus(mission.id, newStatus);
-              await new Promise(r => setTimeout(r, 600));
-              
-              setMissions(
-                missions.map(m =>
-                  m.id === mission.id ? { ...m, status: newStatus } : m
-                )
-              );
-            } catch (error) {
-              alert('Error: ' + error.message);
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const difficultyColor = {
-    EASY: COLORS.success,
-    MEDIUM: '#ff9800',
-    HARD: COLORS.danger,
-  };
-
-  const statusColor = {
-    ACTIVE: COLORS.success,
-    PAUSED: COLORS.warning,
-    ARCHIVED: COLORS.gray,
+  const handleToggleStatus = async (mission) => {
+    const newActive = !mission.active;
+    const mensaje = `¿Estás seguro de que deseas ${newActive ? 'reactivar' : 'pausar'} esta misión?`;
+    
+    // En web usar confirm, en mobile usar Alert
+    const confirmed = Platform.OS === 'web' 
+      ? window.confirm(mensaje)
+      : await new Promise((resolve) => {
+          Alert.alert(
+            newActive ? 'Reactivar Misión' : 'Pausar Misión',
+            mensaje,
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Continuar', style: 'default', onPress: () => resolve(true) },
+            ]
+          );
+        });
+    
+    if (!confirmed) return;
+    
+    try {
+      await adminAPI.updateMissionStatus(mission.id, newActive);
+      
+      setMissions(
+        missions.map(m =>
+          m.id === mission.id ? { ...m, active: newActive } : m
+        )
+      );
+      
+      if (Platform.OS === 'web') {
+        alert(`Misión ${newActive ? 'reactivada' : 'pausada'} exitosamente`);
+      } else {
+        Alert.alert('Éxito', `Misión ${newActive ? 'reactivada' : 'pausada'}`);
+      }
+    } catch (error) {
+      const mensaje = error.response?.data?.message || error.message;
+      if (Platform.OS === 'web') {
+        alert('Error: ' + mensaje);
+      } else {
+        Alert.alert('Error', mensaje);
+      }
+    }
   };
 
   const renderMissionCard = ({ item }) => (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.cardHeader}>
-        <View style={styles.iconContainer}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.inputBg }]}>
           <MaterialCommunityIcons
-            name={item.icon}
+            name={getCategoryIcon(item.category || 'OTHER')}
             size={28}
             color={COLORS.primary}
           />
@@ -143,41 +172,18 @@ export default function MissionsManagementScreen({ navigation }) {
             <View
               style={[
                 styles.badge,
-                { backgroundColor: difficultyColor[item.difficulty] + '20' },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.badgeText,
-                  { color: difficultyColor[item.difficulty] },
-                ]}
-              >
-                {item.difficulty === 'EASY'
-                  ? 'Fácil'
-                  : item.difficulty === 'MEDIUM'
-                  ? 'Media'
-                  : 'Difícil'}
-              </Text>
-            </View>
-            <View
-              style={[
-                styles.badge,
                 {
-                  backgroundColor: statusColor[item.status] + '20',
+                  backgroundColor: (item.active ? COLORS.success : COLORS.gray) + '20',
                 },
               ]}
             >
               <Text
                 style={[
                   styles.badgeText,
-                  { color: statusColor[item.status] },
+                  { color: item.active ? COLORS.success : COLORS.gray },
                 ]}
               >
-                {item.status === 'ACTIVE'
-                  ? 'Activa'
-                  : item.status === 'PAUSED'
-                  ? 'Pausada'
-                  : 'Archivada'}
+                {item.active ? 'Activa' : 'Pausada'}
               </Text>
             </View>
           </View>
@@ -192,27 +198,29 @@ export default function MissionsManagementScreen({ navigation }) {
         </View>
       </View>
 
-      <Text style={styles.description} numberOfLines={2}>
+      <Text style={[styles.description, { color: theme.textSecondary }]} numberOfLines={2}>
         {item.description}
       </Text>
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <MaterialCommunityIcons name="inbox-multiple" size={16} color={COLORS.info} />
-          <Text style={styles.statText}>
-            {item.submissionsCount} envío(s)
-          </Text>
-        </View>
-        <View style={styles.stat}>
-          <MaterialCommunityIcons name="check-circle" size={16} color={COLORS.success} />
-          <Text style={styles.statText}>
-            {item.approvalsCount} aprobado(s)
+          <Text style={[styles.statText, { color: theme.textSecondary }]}>
+            {item.totalSubmissions || 0} envío(s)
           </Text>
         </View>
         <View style={styles.stat}>
           <MaterialCommunityIcons name="repeat" size={16} color={COLORS.gray} />
-          <Text style={styles.statText}>{item.frequency}</Text>
+          <Text style={[styles.statText, { color: theme.textSecondary }]}>{getFrequencyLabel(item.frequency)}</Text>
         </View>
+        {item.expiresAt && (
+          <View style={styles.stat}>
+            <MaterialCommunityIcons name="calendar-clock" size={16} color={COLORS.warning} />
+            <Text style={[styles.statText, { color: theme.textSecondary }]}>
+              Expira: {new Date(item.expiresAt).toLocaleDateString()}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.actions}>
@@ -221,12 +229,12 @@ export default function MissionsManagementScreen({ navigation }) {
           onPress={() => handleToggleStatus(item)}
         >
           <MaterialCommunityIcons
-            name={item.status === 'ACTIVE' ? 'pause-circle' : 'play-circle'}
+            name={item.active ? 'pause-circle' : 'play-circle'}
             size={18}
             color={COLORS.primary}
           />
-          <Text style={styles.actionSmallText}>
-            {item.status === 'ACTIVE' ? 'Pausar' : 'Reactivar'}
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>
+            {item.active ? 'Pausar' : 'Reactivar'}
           </Text>
         </TouchableOpacity>
 
@@ -235,7 +243,7 @@ export default function MissionsManagementScreen({ navigation }) {
           onPress={() => handleEditMission(item)}
         >
           <MaterialCommunityIcons name="pencil" size={18} color={COLORS.info} />
-          <Text style={styles.actionSmallText}>Editar</Text>
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>Editar</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -243,7 +251,7 @@ export default function MissionsManagementScreen({ navigation }) {
           onPress={() => handleDeleteMission(item.id)}
         >
           <MaterialCommunityIcons name="trash-can" size={18} color={COLORS.danger} />
-          <Text style={styles.actionSmallText}>Eliminar</Text>
+          <Text style={[styles.actionSmallText, { color: theme.text }]}>Eliminar</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -307,7 +315,7 @@ export default function MissionsManagementScreen({ navigation }) {
             <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No hay misiones creadas</Text>
             <TouchableOpacity
               style={styles.emptyButton}
-              onPress={() => navigation.navigate('CreateMission')}
+              onPress={() => navigation.navigate('MissionForm')}
             >
               <MaterialCommunityIcons name="plus" size={20} color={COLORS.white} />
               <Text style={styles.emptyButtonText}>Crear Primera Misión</Text>
@@ -315,6 +323,14 @@ export default function MissionsManagementScreen({ navigation }) {
           </View>
         }
       />
+
+      {/* FAB - Botón flotante para crear misión */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('MissionForm')}
+      >
+        <MaterialCommunityIcons name="plus" size={28} color={COLORS.white} />
+      </TouchableOpacity>
     </ScreenWrapper>
   );
 }
@@ -534,5 +550,28 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
     fontWeight: '700',
+  },
+  fab: {
+    position: 'absolute',
+    right: SPACING.lg,
+    bottom: SPACING.xl,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+    }),
   },
 });

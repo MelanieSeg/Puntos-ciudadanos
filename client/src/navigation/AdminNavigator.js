@@ -27,6 +27,7 @@ import BenefitsManagementScreen from '../screens/admin/BenefitsManagementScreen'
 import SubmissionsApprovalScreen from '../screens/admin/SubmissionsApprovalScreen';
 import SubmissionDetailScreen from '../screens/admin/SubmissionDetailScreen';
 import MissionsManagementScreen from '../screens/admin/MissionsManagementScreen';
+import MissionFormScreen from '../screens/admin/MissionFormScreen';
 import AdminSettingsScreen from '../screens/admin/AdminSettingsScreen';
 import AdminAuditScreen from '../screens/admin/AdminAuditScreen';
 import { COLORS, TAB_CONFIG, SPACING, LAYOUT, TYPOGRAPHY } from '../theme/theme';
@@ -302,6 +303,10 @@ function WebLayout() {
   // Modal para SubmissionDetail en web
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSubmission, setSelectedSubmission] = useState(null);
+  
+  // Modal para MissionForm en web
+  const [showMissionFormModal, setShowMissionFormModal] = useState(false);
+  const [selectedMission, setSelectedMission] = useState(null);
 
   const isMasterAdmin = authState?.user?.role === 'MASTER_ADMIN';
   const userName = authState?.user?.name || 'Administrador';
@@ -326,11 +331,19 @@ function WebLayout() {
       if (screen === 'SubmissionDetail') {
         setSelectedSubmission(params?.submission);
         setShowDetailModal(true);
+      } else if (screen === 'MissionForm') {
+        setSelectedMission(params?.mission || null);
+        setShowMissionFormModal(true);
       }
     },
     goBack: () => {
-      setShowDetailModal(false);
-      setSelectedSubmission(null);
+      if (showMissionFormModal) {
+        setShowMissionFormModal(false);
+        setSelectedMission(null);
+      } else if (showDetailModal) {
+        setShowDetailModal(false);
+        setSelectedSubmission(null);
+      }
     },
   };
 
@@ -352,7 +365,7 @@ function WebLayout() {
       case 'AdminDashboard':
         return <AdminDashboardScreen />;
       case 'Missions':
-        return <MissionsManagementScreen />;
+        return <MissionsManagementScreen navigation={mockNavigation} />;
       case 'Benefits':
         return <BenefitsManagementScreen />;
       case 'Approvals':
@@ -418,6 +431,33 @@ function WebLayout() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal para Formulario de Misión */}
+      <Modal
+        visible={showMissionFormModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowMissionFormModal(false);
+          setSelectedMission(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable 
+            style={styles.modalBackdrop} 
+            onPress={() => {
+              setShowMissionFormModal(false);
+              setSelectedMission(null);
+            }}
+          />
+          <View style={styles.modalContainer}>
+            <MissionFormScreen
+              route={{ params: { mission: selectedMission } }}
+              navigation={mockNavigation}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -441,6 +481,7 @@ function MobileLayout() {
   function MissionsStack() {
     return (
       <Stack.Navigator
+        initialRouteName="MissionsMain"
         screenOptions={{
           headerShown: true,
           headerStyle: {
@@ -456,6 +497,11 @@ function MobileLayout() {
           name="MissionsMain"
           component={MissionsManagementScreen}
           options={{ title: 'Gestión de Misiones' }}
+        />
+        <Stack.Screen
+          name="MissionForm"
+          component={MissionFormScreen}
+          options={{ title: 'Nueva Misión', presentation: 'card' }}
         />
       </Stack.Navigator>
     );
