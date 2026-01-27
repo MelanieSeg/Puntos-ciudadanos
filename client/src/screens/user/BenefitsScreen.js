@@ -264,9 +264,16 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
           <View style={styles.filterHeader}>
             <View style={styles.filterTitleRow}>
               <MaterialCommunityIcons name="filter-variant" size={20} color={COLORS.primary} />
-              <Text style={[styles.filterLabel, { color: theme.text }]}>Filtrar Beneficios</Text>
+                <Text style={[styles.filterLabel, { color: theme.text }]}>
+                  {Platform.OS === 'web' ? 'Filtrar Beneficios' : 'Filtrar'}
+                </Text>
             </View>
-            <View style={styles.filterButtons}>
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.filterScrollView}
+                contentContainerStyle={styles.filterButtons}
+              >
               {['Todos', 'Comida', 'Descuentos', 'Servicios', 'Productos'].map((filter) => {
                 const isActive = activeFilter === filter;
                 const count = filter === 'Todos' ? allBenefits.length : 
@@ -290,7 +297,7 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
                   </TouchableOpacity>
                 );
               })}
-            </View>
+            </ScrollView>
           </View>
         </View>
 
@@ -353,10 +360,9 @@ const styles = StyleSheet.create({
     }),
   },
   filterHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.md,
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    alignItems: Platform.OS === 'web' ? 'center' : 'flex-start',
+    gap: Platform.OS === 'web' ? SPACING.md : SPACING.sm,
   },
   filterTitleRow: {
     flexDirection: 'row',
@@ -368,11 +374,15 @@ const styles = StyleSheet.create({
     color: COLORS.gray,
     fontWeight: '600',
   },
+  filterScrollView: {
+    flex: Platform.OS === 'web' ? 1 : 0,
+    width: '100%',
+  },
   filterButtons: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    flex: 1,
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingRight: SPACING.md,
   },
   filterButton: {
     flexDirection: 'row',

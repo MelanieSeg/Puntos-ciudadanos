@@ -259,7 +259,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
   }
 
   return (
-    <ScreenWrapper bgColor={theme.background} padding={0} maxWidth={Platform.OS === 'web'} safeArea={Platform.OS !== 'web'}>
+    <ScreenWrapper bgColor={theme.background} padding={0} maxWidth={Platform.OS === 'web'} safeArea={false}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
