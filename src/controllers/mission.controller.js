@@ -162,6 +162,11 @@ export const createMission = asyncHandler(async (req, res) => {
     return errorResponse(res, `Categoría inválida. Debe ser una de: ${validCategories.join(', ')}`, 400);
   }
 
+  // Validar fecha de expiración (debe ser futura)
+  if (expiresAt && new Date(expiresAt) <= new Date()) {
+    return errorResponse(res, 'La fecha de expiración debe ser futura', 400);
+  }
+
   // Mapear frequency a cooldownDays automáticamente si no se proporciona
   let finalCooldownDays = cooldownDays ? parseInt(cooldownDays) : null;
   
