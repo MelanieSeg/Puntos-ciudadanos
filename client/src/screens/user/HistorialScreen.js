@@ -300,36 +300,36 @@ export default function HistorialScreen() {
         statusBarTranslucent={true}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
               <MaterialCommunityIcons 
                 name={selectedDetail?.icon || 'information'} 
                 size={28} 
                 color={selectedDetail?.color || COLORS.primary} 
               />
-              <Text style={styles.modalTitle}>Detalle de Transacción</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Detalle de transacción</Text>
               <TouchableOpacity 
                 onPress={() => setShowDetailModal(false)}
                 style={styles.closeButton}
               >
-                <MaterialCommunityIcons name="close" size={24} color={COLORS.dark} />
+                <MaterialCommunityIcons name="close" size={24} color={theme.text} />
               </TouchableOpacity>
             </View>
 
             {selectedDetail && (
               <View style={styles.detailContent}>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Título</Text>
-                  <Text style={styles.detailValue}>{selectedDetail.title}</Text>
+                  <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Título</Text>
+                  <Text style={[styles.detailValue, { color: theme.text }]}>{selectedDetail.title}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Descripción</Text>
-                  <Text style={styles.detailValue}>{selectedDetail.description}</Text>
+                  <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Descripción</Text>
+                  <Text style={[styles.detailValue, { color: theme.text }]}>{selectedDetail.description}</Text>
                 </View>
 
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Puntos</Text>
+                  <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Puntos</Text>
                   <Text style={[styles.detailValue, { color: selectedDetail.color, fontWeight: '700' }]}>
                     {selectedDetail.points}
                   </Text>
@@ -337,8 +337,8 @@ export default function HistorialScreen() {
 
                 {selectedDetail.metadata?.submittedAt && (
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Fecha de Solicitud</Text>
-                    <Text style={styles.detailValue}>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Fecha de Solicitud</Text>
+                    <Text style={[styles.detailValue, { color: theme.text }]}>
                       {new Date(selectedDetail.metadata.submittedAt).toLocaleDateString('es-ES', {
                         day: '2-digit',
                         month: 'long',
@@ -352,8 +352,8 @@ export default function HistorialScreen() {
 
                 {selectedDetail.metadata?.approvedAt && (
                   <View style={styles.detailRow}>
-                    <Text style={styles.detailLabel}>Fecha de Aprobación</Text>
-                    <Text style={styles.detailValue}>
+                    <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Fecha de Aprobación</Text>
+                    <Text style={[styles.detailValue, { color: theme.text }]}>
                       {new Date(selectedDetail.metadata.approvedAt).toLocaleDateString('es-ES', {
                         day: '2-digit',
                         month: 'long',
@@ -366,8 +366,8 @@ export default function HistorialScreen() {
                 )}
 
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Fecha de Transacción</Text>
-                  <Text style={styles.detailValue}>{formatDate(selectedDetail.date)}</Text>
+                  <Text style={[styles.detailLabel, { color: theme.textSecondary }]}>Fecha de Transacción</Text>
+                  <Text style={[styles.detailValue, { color: theme.text }]}>{formatDate(selectedDetail.date)}</Text>
                 </View>
               </View>
             )}
