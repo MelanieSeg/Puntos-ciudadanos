@@ -4,7 +4,7 @@
  */
 
 import React, { useContext, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert, Switch, Modal, TextInput, KeyboardAvoidingView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, ActivityIndicator, Alert, Switch, Modal, TextInput, KeyboardAvoidingView, Linking } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { AuthContext } from '../../context/AuthContext';
@@ -131,6 +131,21 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
+  const handleSupport = async () => {
+    const email = 'soporte@puntosciudadanos.com';
+    const subject = 'Ayuda - Puntos Ciudadanos';
+    const url = `mailto:${email}?subject=${encodeURIComponent(subject)}`;
+
+    try {
+      // Intentar abrir la app de correo predeterminada
+      await Linking.openURL(url);
+    } catch (error) {
+      console.error('Error opening email:', error);
+      const msg = `Por favor contáctanos directamente a: ${email}`;
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('Contacto de Soporte', msg);
+    }
+  };
+
   return (
     <ScreenWrapper bgColor={theme.background} safeArea={false}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingTop: Platform.OS === 'web' ? 90 : SPACING.md }]}>
@@ -203,7 +218,10 @@ export default function ProfileScreen({ navigation }) {
             <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.optionItem, { backgroundColor: theme.surface }]}>
+          <TouchableOpacity 
+            style={[styles.optionItem, { backgroundColor: theme.surface }]}
+            onPress={handleSupport}
+          >
             <MaterialCommunityIcons name="help-circle" size={24} color={COLORS.primary} style={styles.optionIcon} />
             <View style={styles.optionContent}>
               <Text style={[styles.optionText, { color: theme.text }]}>Ayuda y Soporte</Text>
