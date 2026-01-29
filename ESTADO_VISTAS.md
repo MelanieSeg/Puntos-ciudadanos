@@ -3,12 +3,12 @@
 
 ## Resumen General
 
-En total tenemos **30 pantallas** en la aplicación. De estas:
+En total tenemos **29 pantallas** en la aplicación. De estas:
 - **25 están completamente funcionales** y conectadas al backend
-- **2 están pendientes de conectar** al backend
+- **1 está pendiente de conectar** al backend
 - **3 no necesitan backend** porque solo muestran información que ya tienen
 
-**Estado del MVP**: **95% COMPLETO** - Solo faltan 2 conectores menores
+**Estado del MVP**: **97% COMPLETO** - Solo falta 1 conector menor (MissionDetailScreen deep linking)
 
 ## Pantallas de Autenticación (Raíz)
 
@@ -118,15 +118,21 @@ Escaneo con cámara para móviles. Totalmente funcional con **mismas medidas de 
 - Marco visual para enfocar código
 - Solo funciona en móvil
 
-### MerchantStockScreen ⚠️ Pendiente de conectar
-Debería mostrar inventario de beneficios del comercio. **El endpoint ya existe**: `GET /merchant/benefits` (merchant.routes.js línea 151) implementado en `merchantController.getMyBenefits`. 
-
-**Pendiente**: Solo falta conectar en el frontend llamando a `merchantAPI.getMyBenefits()` que ya está definido en `api.js`.
-
-**Prioridad**: MEDIA - MerchantBenefitsScreen ya funciona para gestión, esta pantalla es complementaria para vista de stock.
-
 ### MerchantBenefitsScreen Conectado
-Gestión de beneficios del comercio. Conectada completamente. Permite ver beneficios, actualizar stock, y gestionar inventario. **Sin datos mock**.
+Vista de beneficios del comercio. **Completamente funcional** pero **solo lectura**.
+
+**Características**:
+- Lista de beneficios asignados al comerciante
+- Visualización de stock disponible con badges (AGOTADO, BAJO STOCK, disponible)
+- Estadísticas: puntos del beneficio, cantidad de canjes
+- Imágenes de beneficios desde Cloudinary
+- Estado activo/inactivo
+- Pull-to-refresh para actualizar datos
+- **Sin capacidad de edición**: Los comerciantes NO pueden modificar stock (solo el admin)
+
+**Eliminado**: Botón "Ajustar Stock" y modal de edición. El stock solo se modifica desde BenefitsManagementScreen (admin).
+
+**Endpoint backend eliminado**: `PATCH /merchant/benefits/:id/stock` - Los comerciantes ya no pueden actualizar stock.
 
 ### HistoryScreen (del comerciante) Conectado
 Historial de cupones validados por el comercio. Completamente funcional. Obtiene validaciones del backend con fecha, usuario, beneficio y puntos. Estado vacío con mensaje cuando no hay historial.
@@ -310,11 +316,6 @@ Las siguientes pantallas mencionadas en el documento original **ya no existen** 
    - **Esfuerzo**: 10 minutos
    - **Impacto**: Bajo - La navegación normal funciona
 
-2. **Conectar MerchantStockScreen**: Llamar a `merchantAPI.getMyBenefits()` que ya existe
-   - **Endpoint**: Ya existe en backend  
-   - **Esfuerzo**: 15 minutos
-   - **Impacto**: Bajo - MerchantBenefitsScreen ya permite gestión completa
-
 ### Mejoras Futuras (Post-MVP):
 3. **Recuperación de contraseña**: ForgotPasswordScreen + ResetPasswordScreen
    - Backend ya implementado con nodemailer
@@ -425,12 +426,11 @@ Las siguientes pantallas mencionadas en el documento original **ya no existen** 
 - ✅ ProfileScreen - Perfil y stats
 - ✅ AssociatesScreen - Comercios asociados
 
-#### Comerciante (6 pantallas)
+#### Comerciante (5 pantallas)
 - ✅ MerchantDashboardScreen - Stats del comercio
 - ✅ ScannerScreen - Validar QR (web)
 - ✅ QRScannerScreen - Escanear QR (móvil)
-- ✅ MerchantBenefitsScreen - Gestión de beneficios
-- ⚠️ MerchantStockScreen - Vista de stock (endpoint existe)
+- ✅ MerchantBenefitsScreen - Vista de beneficios (solo lectura)
 - ✅ HistoryScreen - Historial de validaciones
 - ✅ MerchantProfileScreen - Perfil y config
 
@@ -478,26 +478,9 @@ const loadMission = async () => {
 };
 ```
 
-#### 2. MerchantStockScreen - Conectar API
-**Estado**: UI completa, endpoint existe
-**Faltante**: Llamar a `merchantAPI.getMyBenefits()`
-**Endpoint backend**: Ya existe (merchant.routes.js:151)
-**API frontend**: Ya definida en api.js:150
-**Código necesario**:
-```javascript
-const loadBenefits = async () => {
-  try {
-    const response = await merchantAPI.getMyBenefits();
-    setBenefits(response.data.data.benefits || []);
-  } catch (error) {
-    console.error('Error:', error);
-  }
-};
-```
-
 ### RESUMEN EJECUTIVO
 
-**MVP ACTUAL: 95% COMPLETO**
+**MVP ACTUAL: 97% COMPLETO**
 
 **Core Features Funcionando al 100%:**
 - ✅ Sistema de autenticación completo (login, registro, verificación)
@@ -512,11 +495,9 @@ const loadBenefits = async () => {
 - ✅ Auditoría de acciones administrativas
 - ✅ Modo mantenimiento con protección completa
 - ✅ Sistema de configuración (settings)
+- ✅ Vista de stock para comerciantes (solo lectura)
 
-**Faltantes No Bloqueantes (5% restante):**
-- ⚠️ MissionDetailScreen sin params (edge case)
-- ⚠️ MerchantStockScreen sin conectar (alternativa: MerchantBenefitsScreen)
+**Faltantes No Bloqueantes (3% restante):**
+- ⚠️ MissionDetailScreen sin params (edge case de deep linking)
 
-Todas las funcionalidades core están completas y probadas. Los 2 puntos pendientes son:
-1. Un edge case de navegación (deep linking)
-2. Una pantalla complementaria que tiene alternativa funcional
+Solo queda 1 edge case de navegación que no afecta el flujo normal de la aplicación. Todas las funcionalidades core están completas y probadas.

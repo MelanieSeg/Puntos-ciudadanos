@@ -77,74 +77,6 @@ router.get(
 );
 
 /**
- * PATCH /api/v1/merchant/benefits/:id/stock
- * Actualizar stock de un beneficio
- * Solo el comercio dueño del beneficio puede actualizarlo
- */
-router.patch(
-  '/benefits/:id/stock',
-  authenticate,
-  isMerchantOrAdmin,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { amount } = req.body;
-
-      if (!amount || isNaN(amount)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Cantidad inválida',
-        });
-      }
-
-      // Verificar que el beneficio existe y pertenece al comercio
-      const benefit = await prisma.benefit.findUnique({
-        where: { id },
-      });
-
-      if (!benefit) {
-        return res.status(404).json({
-          success: false,
-          message: 'Beneficio no encontrado',
-        });
-      }
-
-      if (benefit.merchantId !== req.user.id && req.user.role !== 'MASTER_ADMIN') {
-        return res.status(403).json({
-          success: false,
-          message: 'No tienes permiso para modificar este beneficio',
-        });
-      }
-
-      // Actualizar stock
-      const updatedBenefit = await prisma.benefit.update({
-        where: { id },
-        data: {
-          stock: {
-            increment: parseInt(amount),
-          },
-        },
-      });
-
-      // Invalidar caché
-      await cacheService.delPattern('ALL_BENEFITS');
-
-      res.json({
-        success: true,
-        message: 'Stock actualizado exitosamente',
-        data: updatedBenefit,
-      });
-    } catch (error) {
-      console.error('Error actualizando stock:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Error al actualizar stock',
-      });
-    }
-  }
-);
-
-/**
  * GET /api/v1/merchant/benefits
  * Obtener beneficios del comercio con stock y estadísticas
  */
@@ -153,18 +85,6 @@ router.get(
   authenticate,
   isMerchantOrAdmin,
   merchantController.getMyBenefits
-);
-
-/**
- * POST /api/v1/merchant/benefits/:id/request-restock
- * Solicitar reabastecimiento de stock para un beneficio
- * Solo el comercio dueño del beneficio puede solicitar reabastecimiento
- */
-router.post(
-  '/benefits/:id/request-restock',
-  authenticate,
-  isMerchantOrAdmin,
-  merchantController.requestRestock
 );
 
 export default router;

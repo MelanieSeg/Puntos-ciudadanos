@@ -149,7 +149,7 @@ async function main() {
         },
         merchantProfile: {
           create: {
-            storeName: 'Fuente de Soda Mati Mechada',
+            storeName: 'Mati Mechada',
             address: 'Av. Providencia 1234, Santiago',
             phone: '+56987654321',
             rut: '76.543.210-K'
