@@ -236,9 +236,11 @@ function WebLayout() {
   };
 
   const homeNavigationMock = {
-    navigate: (screen) => {
+    navigate: (screen, params) => {
       if (screen === 'Associates') {
         handleAssociatesPress();
+      } else if (screen === 'MissionSubmission') {
+        handleMissionPress(params);
       } else {
         setActiveTab(screen);
       }

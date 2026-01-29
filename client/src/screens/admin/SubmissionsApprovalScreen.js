@@ -16,6 +16,9 @@ import {
   RefreshControl,
   Alert,
   Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
@@ -42,6 +45,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   // Modal de confirmación
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // { type: 'approve'|'reject', submissionId, reason? }
+  const [rejectionReason, setRejectionReason] = useState('');
 
   // Aplanar todas las páginas
   const rawSubmissions = useMemo(() => {
@@ -83,6 +87,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   };
 
   const handleReject = (submissionId) => {
+    setRejectionReason('');
     setPendingAction({ type: 'reject', submissionId });
     setShowConfirmModal(true);
   };
@@ -90,20 +95,28 @@ export default function SubmissionsApprovalScreen({ navigation }) {
   const confirmAction = async () => {
     if (!pendingAction) return;
     
+    // Validar motivo de rechazo si es rechazo
+    if (pendingAction.type === 'reject' && !rejectionReason.trim()) {
+      Alert.alert('Error', 'Debes proporcionar un motivo del rechazo');
+      return;
+    }
+    
     setShowConfirmModal(false);
     
     if (pendingAction.type === 'approve') {
       await approveSubmissionDirectly(pendingAction.submissionId);
     } else if (pendingAction.type === 'reject') {
-      await rejectSubmissionDirectly(pendingAction.submissionId, pendingAction.reason || 'Rechazado por el administrador');
+      await rejectSubmissionDirectly(pendingAction.submissionId, rejectionReason.trim());
     }
     
     setPendingAction(null);
+    setRejectionReason('');
   };
 
   const cancelAction = () => {
     setShowConfirmModal(false);
     setPendingAction(null);
+    setRejectionReason('');
   };
 
   const approveSubmissionDirectly = async (submissionId) => {
@@ -293,23 +306,75 @@ export default function SubmissionsApprovalScreen({ navigation }) {
         windowSize={10}
       />
       <Modal visible={showConfirmModal} transparent={true} animationType="fade" onRequestClose={cancelAction}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
-              <MaterialCommunityIcons name={pendingAction?.type === 'approve' ? 'check-circle' : 'alert-circle'} size={48} color={pendingAction?.type === 'approve' ? COLORS.primary : COLORS.error} />
+              <MaterialCommunityIcons 
+                name={pendingAction?.type === 'approve' ? 'check-circle' : 'alert-circle'} 
+                size={48} 
+                color={pendingAction?.type === 'approve' ? COLORS.primary : COLORS.error} 
+              />
             </View>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>{pendingAction?.type === 'approve' ? '¿Aprobar Envío?' : '¿Rechazar Envío?'}</Text>
-            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>{pendingAction?.type === 'approve' ? 'El usuario recibirá los puntos asociados a esta misión.' : 'El usuario será notificado del rechazo.'}</Text>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>
+              {pendingAction?.type === 'approve' ? '¿Aprobar Envío?' : '¿Rechazar Envío?'}
+            </Text>
+            <Text style={[styles.modalMessage, { color: theme.textSecondary }]}>
+              {pendingAction?.type === 'approve' 
+                ? 'El usuario recibirá los puntos asociados a esta misión.' 
+                : 'Debes explicar el motivo del rechazo al usuario.'}
+            </Text>
+            
+            {/* Input de motivo de rechazo */}
+            {pendingAction?.type === 'reject' && (
+              <View style={styles.reasonContainer}>
+                <Text style={[styles.reasonLabel, { color: theme.text }]}>Motivo del rechazo *</Text>
+                <TextInput
+                  style={[styles.reasonInput, { 
+                    backgroundColor: theme.inputBg, 
+                    borderColor: theme.border, 
+                    color: theme.text 
+                  }]}
+                  multiline
+                  numberOfLines={4}
+                  placeholder="Ej: La foto no muestra evidencia clara de la actividad realizada..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={rejectionReason}
+                  onChangeText={setRejectionReason}
+                  autoFocus
+                />
+              </View>
+            )}
+            
             <View style={styles.modalActions}>
-              <TouchableOpacity style={[styles.modalButton, styles.modalCancelButton, { backgroundColor: theme.inputBg, borderColor: theme.border }]} onPress={cancelAction}>
+              <TouchableOpacity 
+                style={[styles.modalButton, styles.modalCancelButton, { 
+                  backgroundColor: theme.inputBg, 
+                  borderColor: theme.border 
+                }]} 
+                onPress={cancelAction}
+              >
                 <Text style={[styles.modalCancelButtonText, { color: theme.text }]}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, pendingAction?.type === 'approve' ? styles.modalConfirmButton : styles.modalRejectButton]} onPress={confirmAction}>
-                <Text style={[styles.modalConfirmButtonText, pendingAction?.type === 'reject' && styles.modalRejectButtonText]}>{pendingAction?.type === 'approve' ? 'Aprobar' : 'Rechazar'}</Text>
+              <TouchableOpacity 
+                style={[
+                  styles.modalButton, 
+                  pendingAction?.type === 'approve' ? styles.modalConfirmButton : styles.modalRejectButton
+                ]} 
+                onPress={confirmAction}
+              >
+                <Text style={[
+                  styles.modalConfirmButtonText, 
+                  pendingAction?.type === 'reject' && styles.modalRejectButtonText
+                ]}>
+                  {pendingAction?.type === 'approve' ? 'Aprobar' : 'Rechazar'}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScreenWrapper>
   );
@@ -570,6 +635,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.lg,
     lineHeight: 20,
+  },
+  reasonContainer: {
+    width: '100%',
+    marginBottom: SPACING.lg,
+  },
+  reasonLabel: {
+    fontSize: TYPOGRAPHY.body2,
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+  },
+  reasonInput: {
+    borderWidth: 1,
+    borderRadius: LAYOUT.borderRadius.md,
+    padding: SPACING.md,
+    fontSize: TYPOGRAPHY.body2,
+    textAlignVertical: 'top',
+    minHeight: 100,
   },
   modalActions: {
     flexDirection: 'row',

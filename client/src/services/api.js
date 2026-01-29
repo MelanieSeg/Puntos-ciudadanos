@@ -161,6 +161,8 @@ export const missionsAPI = {
         'Content-Type': 'multipart/form-data',
       },
     }),
+  markAsRead: (submissionId) => api.patch(`/missions/submissions/${submissionId}/read`),
+  getMyRejectedSubmissions: () => api.get('/missions/submissions/my-rejected'),
 };
 
 // Servicios de admin

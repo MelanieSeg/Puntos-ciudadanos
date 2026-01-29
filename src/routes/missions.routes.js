@@ -133,6 +133,54 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 /**
+ * GET /api/v1/missions/submissions/my-rejected
+ * Obtener envíos rechazados del usuario actual (no leídos)
+ */
+router.get('/submissions/my-rejected', authenticate, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const rejectedSubmissions = await prisma.missionSubmission.findMany({
+      where: {
+        userId: userId,
+        status: 'REJECTED',
+        isRead: false,
+      },
+      include: {
+        mission: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            points: true,
+            evidenceType: true,
+            category: true,
+          },
+        },
+      },
+      orderBy: {
+        validatedAt: 'desc',
+      },
+    });
+
+    res.json({
+      success: true,
+      message: 'Envíos rechazados obtenidos exitosamente',
+      data: {
+        submissions: rejectedSubmissions,
+      },
+    });
+  } catch (error) {
+    console.error('Error al obtener envíos rechazados:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener envíos rechazados',
+      error: error.message,
+    });
+  }
+});
+
+/**
  * GET /api/v1/missions/:id
  * Obtener detalles de una misión específica
  */
@@ -278,6 +326,55 @@ router.post('/:missionId/submit', authenticate, upload.array('evidence', 4), asy
     res.status(400).json({
       success: false,
       message: error.message || 'Error al enviar evidencia',
+    });
+  }
+});
+
+/**
+ * PATCH /api/v1/missions/submissions/:id/read
+ * Marcar una notificación de rechazo como leída
+ * Usuario marca que ya vio el motivo del rechazo
+ */
+router.patch('/submissions/:id/read', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    // Verificar que el envío existe y pertenece al usuario
+    const submission = await prisma.missionSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: 'Envío no encontrado',
+      });
+    }
+
+    if (submission.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'No tienes permiso para marcar este envío',
+      });
+    }
+
+    // Marcar como leído
+    const updated = await prisma.missionSubmission.update({
+      where: { id },
+      data: { isRead: true },
+    });
+
+    res.json({
+      success: true,
+      message: 'Notificación marcada como leída',
+      data: { submission: updated },
+    });
+  } catch (error) {
+    console.error('Error marcando como leído:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al marcar notificación',
     });
   }
 });

@@ -704,6 +704,8 @@ router.post(
         validatedAt: new Date(),
         validatedById: req.user.id,
         observation: reason,
+        rejectionReason: reason,
+        isRead: false, // Marcar como no leído para notificaciones
       },
       include: {
         user: true,

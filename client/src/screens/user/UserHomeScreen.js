@@ -9,17 +9,19 @@ import {
   RefreshControl,
   Dimensions,
   Platform,
+  Modal,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import ScreenWrapper from '../../layouts/ScreenWrapper';
 import HomeSkeleton from '../../components/skeletons/HomeSkeleton';
-import { COLORS, SPACING, TYPOGRAPHY } from '../../theme/theme';
+import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { getErrorMessage } from '../../utils/errorHandler';
 import { AuthContext } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { getCategoryIcon } from '../../utils/missionCategories';
-import { configAPI } from '../../services/api';
+import { configAPI, adminAPI, missionsAPI } from '../../services/api';
 import {
   useUserBalance,
   useAllTransactions,
@@ -40,6 +42,9 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
 
   // Estado para configuración del sistema
   const [bannerMessage, setBannerMessage] = useState(null);
+  const [rejectedSubmissions, setRejectedSubmissions] = useState([]);
+  const [showRejectionModal, setShowRejectionModal] = useState(false);
+  const [selectedRejection, setSelectedRejection] = useState(null);
 
   // React Query hooks - Reemplazan todos los useState y useEffect
   const {
@@ -70,7 +75,7 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     refetch: refetchBenefits,
   } = useAvailableBenefits(4);
 
-  // Cargar mensaje de bienvenida del sistema
+  // Cargar mensaje de bienvenida del sistema y rechazos
   useEffect(() => {
     const loadBannerMessage = async () => {
       try {
@@ -82,8 +87,21 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
         console.error('Error cargando configuración:', error);
       }
     };
+    
+    const loadRejectedSubmissions = async () => {
+      try {
+        const response = await missionsAPI.getMyRejectedSubmissions();
+        if (response.data.success) {
+          setRejectedSubmissions(response.data.data.submissions);
+        }
+      } catch (error) {
+        console.error('Error cargando rechazos:', error);
+      }
+    };
+    
     loadBannerMessage();
-  }, []);
+    loadRejectedSubmissions();
+  }, [authState.user?.id]);
 
   // Procesar datos del usuario
   const userData = {
@@ -252,6 +270,50 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
     ]);
   };
 
+  // Funciones para manejar notificaciones de rechazo
+  const handleOpenRejection = (rejection) => {
+    setSelectedRejection(rejection);
+    setShowRejectionModal(true);
+  };
+
+  const handleMarkAsRead = async () => {
+    if (!selectedRejection) return;
+    
+    try {
+      await missionsAPI.markAsRead(selectedRejection.id);
+      // Remover de la lista local
+      setRejectedSubmissions(prev => prev.filter(r => r.id !== selectedRejection.id));
+      setShowRejectionModal(false);
+      setSelectedRejection(null);
+      
+      if (Platform.OS === 'web') {
+        alert('Notificación marcada como leída');
+      } else {
+        Alert.alert('Éxito', 'Notificación marcada como leída');
+      }
+    } catch (error) {
+      console.error('Error marcando como leído:', error);
+      if (Platform.OS === 'web') {
+        alert('Error al marcar como leída');
+      } else {
+        Alert.alert('Error', 'No se pudo marcar como leída');
+      }
+    }
+  };
+
+  const handleTryAgain = () => {
+    setShowRejectionModal(false);
+    if (selectedRejection && selectedRejection.mission) {
+      navigation.navigate('MissionSubmission', {
+        missionId: selectedRejection.mission.id,
+        missionName: selectedRejection.mission.name,
+        missionPoints: selectedRejection.mission.points,
+        evidenceType: selectedRejection.mission.evidenceType,
+        category: selectedRejection.mission.category,
+      });
+    }
+  };
+
   // Mostrar skeleton mientras carga datos iniciales
   if (loading && !user) {
     return (
@@ -296,6 +358,25 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
             <Text style={[styles.bannerText, { color: theme.text }]}>{bannerMessage}</Text>
           </View>
         )}
+
+        {/* Notificación de Misión Rechazada */}
+        {rejectedSubmissions.length > 0 && (
+          <TouchableOpacity 
+            style={[styles.rejectionBanner, { backgroundColor: COLORS.error + '20', borderLeftColor: COLORS.error }]}
+            onPress={() => handleOpenRejection(rejectedSubmissions[0])}
+            activeOpacity={0.7}
+          >
+            <MaterialCommunityIcons name="alert-circle" size={24} color={COLORS.error} style={styles.bannerIcon} />
+            <View style={styles.rejectionContent}>
+              <Text style={[styles.rejectionTitle, { color: COLORS.error }]}>Misión Rechazada</Text>
+              <Text style={[styles.rejectionText, { color: theme.text }]}>
+                Tienes {rejectedSubmissions.length} {rejectedSubmissions.length === 1 ? 'misión rechazada' : 'misiones rechazadas'}. Toca para ver el motivo.
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.error} />
+          </TouchableOpacity>
+        )}
+        
         {/* EN MÓVIL, SIN HEADER (React Navigation lo maneja) */}
 
         {/* SALUDO */}
@@ -509,6 +590,68 @@ export default function UserHomeScreen({ navigation: navigationProp }) {
           <MaterialCommunityIcons name="chevron-right" size={24} color={COLORS.gray} />
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Modal de Notificación de Rechazo */}
+      <Modal
+        visible={showRejectionModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowRejectionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <MaterialCommunityIcons name="close-circle" size={56} color={COLORS.error} />
+            </View>
+            
+            {/* Título */}
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Misión Rechazada</Text>
+            
+            {/* Misión */}
+            {selectedRejection && (
+              <View style={styles.modalMissionInfo}>
+                <Text style={[styles.modalMissionLabel, { color: theme.textSecondary }]}>Misión:</Text>
+                <Text style={[styles.modalMissionName, { color: theme.text }]}>
+                  {selectedRejection.mission?.name || 'Misión desconocida'}
+                </Text>
+              </View>
+            )}
+            
+            {/* Motivo del rechazo */}
+            <View style={styles.modalReasonContainer}>
+              <Text style={[styles.modalReasonLabel, { color: theme.textSecondary }]}>Motivo del rechazo:</Text>
+              <View style={[styles.modalReasonBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                <Text style={[styles.modalReasonText, { color: theme.text }]}>
+                  {selectedRejection?.rejectionReason || selectedRejection?.observation || 'No se especificó un motivo detallado.'}
+                </Text>
+              </View>
+            </View>
+            
+            {/* Botones */}
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.tryAgainButton]}
+                onPress={handleTryAgain}
+              >
+                <MaterialCommunityIcons name="refresh" size={20} color={COLORS.white} />
+                <Text style={styles.tryAgainButtonText}>Intentar de Nuevo</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.modalButton, styles.dismissButton, { 
+                  backgroundColor: theme.inputBg, 
+                  borderColor: theme.border 
+                }]}
+                onPress={handleMarkAsRead}
+              >
+                <MaterialCommunityIcons name="check" size={20} color={theme.text} />
+                <Text style={[styles.dismissButtonText, { color: theme.text }]}>Entendido</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScreenWrapper>
   );
 }
@@ -1049,5 +1192,111 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: TYPOGRAPHY.body2,
     lineHeight: 20,
+  },
+  // Notificación de rechazo
+  rejectionBanner: {
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    ...LAYOUT.shadowSmall,
+  },
+  rejectionContent: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+  },
+  rejectionTitle: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  rejectionText: {
+    fontSize: TYPOGRAPHY.body2,
+    lineHeight: 18,
+  },
+  // Modal de rechazo
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 440,
+    borderRadius: 16,
+    padding: SPACING.xl,
+    ...LAYOUT.shadowLarge,
+  },
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  modalTitle: {
+    fontSize: TYPOGRAPHY.h3,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  modalMissionInfo: {
+    marginBottom: SPACING.lg,
+  },
+  modalMissionLabel: {
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  modalMissionName: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
+  },
+  modalReasonContainer: {
+    marginBottom: SPACING.xl,
+  },
+  modalReasonLabel: {
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: '600',
+    marginBottom: SPACING.sm,
+  },
+  modalReasonBox: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: SPACING.md,
+    minHeight: 100,
+  },
+  modalReasonText: {
+    fontSize: TYPOGRAPHY.body2,
+    lineHeight: 20,
+  },
+  modalActions: {
+    gap: SPACING.md,
+  },
+  modalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: 12,
+    gap: SPACING.sm,
+  },
+  tryAgainButton: {
+    backgroundColor: COLORS.primary,
+  },
+  tryAgainButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '700',
+  },
+  dismissButton: {
+    borderWidth: 1,
+  },
+  dismissButtonText: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
   },
 });

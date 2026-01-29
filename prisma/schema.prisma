@@ -249,6 +249,8 @@ model MissionSubmission {
   observation    String?          @db.Text
   validatedById  String?          @map("validatedById")
   metadata       Json?            // Datos adicionales (ej: múltiples URLs de imágenes)
+  rejectionReason String?         @db.Text @map("rejection_reason") // Motivo del rechazo
+  isRead         Boolean          @default(false) @map("is_read")   // Para notificaciones in-app
   
   // Timestamps
   createdAt      DateTime         @default(now()) @db.Timestamptz(3)
@@ -263,6 +265,7 @@ model MissionSubmission {
   @@index([missionId])
   @@index([status])
   @@index([validatedById])
+  @@index([isRead])
   @@map("mission_submissions")
 }
 
