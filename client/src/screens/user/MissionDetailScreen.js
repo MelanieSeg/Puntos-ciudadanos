@@ -17,13 +17,15 @@ import ScreenWrapper from '../../layouts/ScreenWrapper';
 import { COLORS, SPACING, TYPOGRAPHY, LAYOUT } from '../../theme/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { getFrequencyLabel } from '../../utils/missionCategories';
-import { configAPI } from '../../services/api';
+import { configAPI, missionsAPI } from '../../services/api';
 
 export default function MissionDetailScreen({ route, navigation }) {
   const { missionId, mission } = route.params || {};
   const { theme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [missionData, setMissionData] = useState(mission || null);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Cargar estado de mantenimiento
@@ -40,24 +42,64 @@ export default function MissionDetailScreen({ route, navigation }) {
     loadMaintenanceStatus();
   }, []);
 
-  React.useEffect(() => {
-    // Por hacer: conectar a GET /api/v1/missions/{missionId}
-    // para obtener datos completos si no está en route.params
-  }, [missionId]);
+  useEffect(() => {
+    // Si no hay datos de misión pero hay ID, cargar desde backend
+    if (!mission && missionId) {
+      loadMission();
+    }
+  }, [missionId, mission]);
+
+  const loadMission = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await missionsAPI.getMissionById(missionId);
+      if (response.data.success) {
+        setMissionData(response.data.data.mission);
+      }
+    } catch (error) {
+      console.error('[MissionDetail] Error al cargar misión:', error);
+      setError(error.response?.data?.message || 'Error al cargar la misión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmitMission = () => {
     navigation.navigate('MissionSubmission', {
-      missionId: mission?.id,
-      missionName: mission?.name,
-      missionPoints: mission?.points,
-      evidenceType: mission?.evidenceType,
-      category: mission?.category,
+      missionId: missionData?.id,
+      missionName: missionData?.name,
+      missionPoints: missionData?.points,
+      evidenceType: missionData?.evidenceType,
+      category: missionData?.category,
     });
   };
 
-  const data = mission || null;
+  const data = missionData;
 
-  if (!data) {
+  // Estado de carga
+  if (loading) {
+    return (
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
+        <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.title, { color: theme.text }]}>Detalles de Misión</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={{ fontSize: TYPOGRAPHY.body1, color: theme.textSecondary, marginTop: SPACING.md }}>
+            Cargando misión...
+          </Text>
+        </View>
+      </ScreenWrapper>
+    );
+  }
+
+  // Estado de error o no encontrada
+  if (!data || error) {
     return (
       <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
@@ -70,11 +112,19 @@ export default function MissionDetailScreen({ route, navigation }) {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }}>
           <MaterialCommunityIcons name="alert-circle-outline" size={64} color={COLORS.gray} />
           <Text style={{ fontSize: TYPOGRAPHY.h3, fontWeight: '600', color: theme.text, marginTop: SPACING.lg }}>
-            Misión no encontrada
+            {error || 'Misión no encontrada'}
           </Text>
           <Text style={{ fontSize: TYPOGRAPHY.body1, color: theme.textSecondary, textAlign: 'center', marginTop: SPACING.sm }}>
-            No se pudo cargar la información de esta misión.
+            {error ? 'Ocurrió un error al cargar la misión.' : 'No se pudo cargar la información de esta misión.'}
           </Text>
+          {error && (
+            <TouchableOpacity 
+              style={[styles.retryButton, { backgroundColor: COLORS.primary }]}
+              onPress={loadMission}
+            >
+              <Text style={styles.retryButtonText}>Reintentar</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScreenWrapper>
     );
@@ -375,6 +425,17 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   submitButtonText: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '600',
+  },
+  retryButton: {
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: LAYOUT.borderRadius.md,
+  },
+  retryButtonText: {
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
     fontWeight: '600',
