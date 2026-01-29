@@ -361,7 +361,6 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: '#f44336',
-    backgroundColor: '#ffebee',
   },
   errorText: {
     color: '#f44336',

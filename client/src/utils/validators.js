@@ -13,10 +13,10 @@ const NAME_MIN_LENGTH = 2;
  */
 export const validateEmail = (email) => {
   if (!email || !email.trim()) {
-    return { valid: false, error: 'El email es requerido' };
+    return { valid: false, error: 'El email es requerido.' };
   }
   if (!EMAIL_REGEX.test(email)) {
-    return { valid: false, error: 'Email inválido. Verifica el formato' };
+    return { valid: false, error: 'Email inválido. Verifica el formato.' };
   }
   return { valid: true, error: null };
 };
@@ -27,7 +27,7 @@ export const validateEmail = (email) => {
  */
 export const validatePassword = (password) => {
   if (!password || !password.trim()) {
-    return { valid: false, error: 'La contraseña es requerida' };
+    return { valid: false, error: 'La contraseña es requerida.' };
   }
   
   // Usar el validador de seguridad de contraseñas
@@ -48,7 +48,7 @@ export const validatePassword = (password) => {
  */
 export const validatePasswordMatch = (password, confirmPassword) => {
   if (password !== confirmPassword) {
-    return { valid: false, error: 'Las contraseñas no coinciden' };
+    return { valid: false, error: 'Las contraseñas no coinciden.' };
   }
   return { valid: true, error: null };
 };
@@ -64,7 +64,7 @@ export const validateName = (name) => {
   if (name.trim().length < NAME_MIN_LENGTH) {
     return {
       valid: false,
-      error: `El nombre debe tener mínimo ${NAME_MIN_LENGTH} caracteres`,
+      error: `El nombre debe tener mínimo ${NAME_MIN_LENGTH} caracteres.`,
     };
   }
   return { valid: true, error: null };
@@ -76,7 +76,7 @@ export const validateName = (name) => {
  */
 export const validateRequired = (value, fieldName = 'Este campo') => {
   if (!value || !value.toString().trim()) {
-    return { valid: false, error: `${fieldName} es requerido` };
+    return { valid: false, error: `${fieldName} es requerido.` };
   }
   return { valid: true, error: null };
 };
