@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   View,
   ScrollView,
@@ -15,12 +15,14 @@ import {
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { AuthContext } from '../../context/AuthContext';
 import { adminAPI } from '../../services/api';
 import api from '../../services/api';
 import * as validators from '../../utils/validators';
 
 export default function AdminSettingsScreen({ navigation }) {
   const { theme, toggleTheme, isDarkMode } = useTheme();
+  const { logout } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -136,6 +138,27 @@ export default function AdminSettingsScreen({ navigation }) {
     } finally {
       setPasswordLoading(false);
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Cerrar Sesión',
+      '¿Estás seguro que deseas salir?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Salir',
+          onPress: async () => {
+            try {
+              await logout();
+            } catch (error) {
+              console.error('Error logging out:', error);
+            }
+          },
+          style: 'destructive'
+        }
+      ]
+    );
   };
 
   if (loading) {
@@ -349,6 +372,14 @@ export default function AdminSettingsScreen({ navigation }) {
           <Text style={styles.saveButtonText}>Guardar Cambios</Text>
         )}
       </TouchableOpacity>
+
+      {/* Logout (Solo móvil, en web está en sidebar) */}
+      {Platform.OS !== 'web' && (
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <MaterialCommunityIcons name="logout" size={20} color="#FFFFFF" />
+          <Text style={styles.logoutText}>Cerrar Sesión</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Modal de Cambio de Contraseña */}
       <Modal
@@ -571,6 +602,31 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   saveButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F44336',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 8,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+  },
+  logoutText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
