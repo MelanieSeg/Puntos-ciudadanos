@@ -46,6 +46,7 @@ export default function BenefitsManagementScreen() {
     stock: '',
     merchantId: '',
     category: 'PRODUCTO',
+    cooldownDays: '0',
   });
   const [editBenefit, setEditBenefit] = useState({
     title: '',
@@ -54,6 +55,7 @@ export default function BenefitsManagementScreen() {
     stock: '',
     merchantId: '',
     category: 'PRODUCTO',
+    cooldownDays: '0',
   });
 
   useEffect(() => {
@@ -142,6 +144,7 @@ export default function BenefitsManagementScreen() {
       formData.append('stock', parseInt(newBenefit.stock));
       formData.append('merchantId', newBenefit.merchantId);
       formData.append('category', newBenefit.category);
+      formData.append('cooldownDays', parseInt(newBenefit.cooldownDays || 0));
 
       if (selectedImage) {
         const imageUri = selectedImage.uri;
@@ -183,6 +186,7 @@ export default function BenefitsManagementScreen() {
         stock: '',
         merchantId: '',
         category: 'PRODUCTO',
+        cooldownDays: '0',
       });
       fetchBenefits();
     } catch (error) {
@@ -207,6 +211,7 @@ export default function BenefitsManagementScreen() {
       stock: benefit.stock.toString(),
       merchantId: benefit.merchantId,
       category: benefit.category,
+      cooldownDays: (benefit.cooldownDays || 0).toString(),
     });
     setSelectedImage(null);
     setShowEditModal(true);
@@ -244,6 +249,7 @@ export default function BenefitsManagementScreen() {
       formData.append('stock', parseInt(editBenefit.stock));
       formData.append('merchantId', editBenefit.merchantId);
       formData.append('category', editBenefit.category);
+      formData.append('cooldownDays', parseInt(editBenefit.cooldownDays || 0));
 
       if (selectedImage) {
         const imageUri = selectedImage.uri;
@@ -401,6 +407,14 @@ export default function BenefitsManagementScreen() {
           <MaterialCommunityIcons name="store" size={16} color={COLORS.gray} />
           <Text style={styles.statText}>{item.merchant?.name || 'Sin asignar'}</Text>
         </View>
+        {item.cooldownDays > 0 && (
+          <View style={styles.stat}>
+            <MaterialCommunityIcons name="clock-alert" size={16} color={COLORS.warning} />
+            <Text style={[styles.statText, { color: COLORS.warning }]}>
+              Cooldown: {item.cooldownDays}d
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.actions}>
@@ -579,6 +593,21 @@ export default function BenefitsManagementScreen() {
                       keyboardType="numeric"
                     />
                   </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Cooldown (Días entre canjes)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
+                    placeholder="0 (sin cooldown)"
+                    placeholderTextColor={theme.textSecondary}
+                    value={newBenefit.cooldownDays}
+                    onChangeText={(text) => setNewBenefit({ ...newBenefit, cooldownDays: text })}
+                    keyboardType="numeric"
+                  />
+                  <Text style={[styles.helperText, { color: theme.textSecondary }]}>
+                    Días que debe esperar un usuario antes de poder canjear este beneficio nuevamente (0 = sin restricción)
+                  </Text>
                 </View>
 
                 <View style={styles.inputGroup}>
@@ -852,6 +881,21 @@ export default function BenefitsManagementScreen() {
                       keyboardType="numeric"
                     />
                   </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>Cooldown (Días entre canjes)</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
+                    placeholder="0 (sin cooldown)"
+                    placeholderTextColor={theme.textSecondary}
+                    value={editBenefit.cooldownDays}
+                    onChangeText={(text) => setEditBenefit({ ...editBenefit, cooldownDays: text })}
+                    keyboardType="numeric"
+                  />
+                  <Text style={[styles.helperText, { color: theme.textSecondary }]}>
+                    Días que debe esperar un usuario antes de poder canjear este beneficio nuevamente (0 = sin restricción)
+                  </Text>
                 </View>
 
                 <View style={styles.inputGroup}>
@@ -1397,5 +1441,10 @@ const styles = StyleSheet.create({
   },
   stockModalButtonConfirm: {
     backgroundColor: COLORS.primary,
+  },
+  helperText: {
+    fontSize: TYPOGRAPHY.caption,
+    marginTop: SPACING.xs,
+    fontStyle: 'italic',
   },
 });

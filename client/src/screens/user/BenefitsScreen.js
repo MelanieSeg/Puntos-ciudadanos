@@ -81,7 +81,14 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
   const renderBenefit = ({ item }) => {
     const canAfford = userBalance >= item.pointsCost;
     const hasStock = item.stock > 0;
-    const isAvailable = item.active && hasStock;
+    
+    // Verificar cooldown
+    const isCooldownActive = item.cooldownUntil && new Date(item.cooldownUntil) > new Date();
+    const daysRemaining = isCooldownActive 
+      ? Math.ceil((new Date(item.cooldownUntil) - new Date()) / (1000 * 60 * 60 * 24))
+      : 0;
+    
+    const isAvailable = item.active && hasStock && !isCooldownActive;
     const isLowStock = item.stock > 0 && item.stock <= 10;
     
     // Determinar el merchant name
@@ -178,13 +185,21 @@ export default function BenefitsScreen({ navigation: navigationProp }) {
           </View>
 
           {/* Advertencias */}
-          {!hasStock && (
+          {isCooldownActive && (
+            <View style={[styles.warningBadge, { backgroundColor: COLORS.warning + '20' }]}>
+              <MaterialCommunityIcons name="clock-alert" size={14} color={COLORS.warning} />
+              <Text style={[styles.warningText, { color: COLORS.warning }]}>
+                Disponible en {daysRemaining} día{daysRemaining !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          )}
+          {!isCooldownActive && !hasStock && (
             <View style={styles.warningBadge}>
               <MaterialCommunityIcons name="alert-circle" size={14} color={COLORS.error} />
               <Text style={styles.warningText}>Sin stock</Text>
             </View>
           )}
-          {hasStock && !canAfford && (
+          {!isCooldownActive && hasStock && !canAfford && (
             <View style={[styles.warningBadge, { backgroundColor: COLORS.warning + '20' }]}>
               <MaterialCommunityIcons name="alert" size={14} color={COLORS.warning} />
               <Text style={[styles.warningText, { color: COLORS.warning }]}>Saldo insuficiente</Text>

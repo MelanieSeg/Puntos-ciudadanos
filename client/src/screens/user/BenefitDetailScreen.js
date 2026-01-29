@@ -82,9 +82,18 @@ export default function BenefitDetailScreen({ route, navigation }) {
     pointsCost: 0,
     stock: 0,
     active: false,
+    cooldownUntil: null,
   };
 
-  const canRedeem = userBalance >= data.pointsCost && data.stock > 0 && data.active && !maintenanceMode;
+  // Verificar si el cooldown está activo
+  const isCooldownActive = data.cooldownUntil && new Date(data.cooldownUntil) > new Date();
+  
+  // Calcular días restantes de cooldown
+  const daysRemaining = isCooldownActive 
+    ? Math.ceil((new Date(data.cooldownUntil) - new Date()) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  const canRedeem = userBalance >= data.pointsCost && data.stock > 0 && data.active && !maintenanceMode && !isCooldownActive;
   const insufficientBalance = userBalance < data.pointsCost;
   const noStock = data.stock <= 0;
 
@@ -315,6 +324,21 @@ export default function BenefitDetailScreen({ route, navigation }) {
           </View>
         </View>
 
+        {/* Cooldown Info (if active) */}
+        {isCooldownActive && (
+          <View style={[styles.cooldownBanner, { backgroundColor: COLORS.warning + '20', borderColor: COLORS.warning }]}>
+            <MaterialCommunityIcons name="clock-alert" size={24} color={COLORS.warning} />
+            <View style={styles.cooldownTextContainer}>
+              <Text style={[styles.cooldownTitle, { color: COLORS.warning }]}>
+                Cooldown Activo
+              </Text>
+              <Text style={[styles.cooldownText, { color: theme.textSecondary }]}>
+                Podrás canjear este beneficio nuevamente en {daysRemaining} día{daysRemaining !== 1 ? 's' : ''}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Espaciado */}
         <View style={{ height: SPACING.lg }} />
       </ScrollView>
@@ -339,6 +363,7 @@ export default function BenefitDetailScreen({ route, navigation }) {
               <MaterialCommunityIcons name="gift" size={20} color={COLORS.white} />
               <Text style={styles.redeemButtonText}>
                 {maintenanceMode ? 'Mantenimiento' :
+                 isCooldownActive ? `Disponible en ${daysRemaining} día${daysRemaining !== 1 ? 's' : ''}` :
                  insufficientBalance ? `Faltan ${data.pointsCost - userBalance} pts` : 
                  noStock ? 'Sin Stock' :
                  'Canjear Ahora'}
@@ -611,5 +636,27 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: TYPOGRAPHY.body1,
     fontWeight: '600',
+  },
+  cooldownBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: LAYOUT.borderRadius.md,
+    borderWidth: 1,
+  },
+  cooldownTextContainer: {
+    flex: 1,
+  },
+  cooldownTitle: {
+    fontSize: TYPOGRAPHY.body1,
+    fontWeight: '700',
+    marginBottom: SPACING.xs,
+  },
+  cooldownText: {
+    fontSize: TYPOGRAPHY.body2,
+    lineHeight: 20,
   },
 });

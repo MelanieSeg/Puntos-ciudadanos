@@ -121,7 +121,7 @@ router.post(
   authorize('MASTER_ADMIN', 'SUPPORT_ADMIN'),
   upload.single('image'), // Middleware de multer para procesar la imagen
   asyncHandler(async (req, res) => {
-    const { title, description, pointsCost, stock, category, merchantId } = req.body;
+    const { title, description, pointsCost, stock, category, merchantId, cooldownDays } = req.body;
 
     // Debug: verificar si llega la imagen
     console.log('📦 req.file:', req.file ? 'Sí hay archivo' : 'No hay archivo');
@@ -134,6 +134,10 @@ router.post(
 
     if (pointsCost < 0 || stock < 0) {
       return errorResponse(res, 'Los puntos y stock deben ser valores positivos', 400);
+    }
+
+    if (cooldownDays && (parseInt(cooldownDays) < 0 || parseInt(cooldownDays) > 365)) {
+      return errorResponse(res, 'El cooldown debe estar entre 0 y 365 días', 400);
     }
 
     // Verificar que el merchantId corresponde a un usuario MERCHANT
@@ -173,6 +177,7 @@ router.post(
         merchantId,
         imageUrl,
         active: true,
+        cooldownDays: cooldownDays ? parseInt(cooldownDays) : 0,
       },
       include: {
         merchant: {
@@ -374,7 +379,7 @@ router.patch(
   upload.single('image'),
   asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const { title, description, pointsCost, stock, category, merchantId } = req.body;
+    const { title, description, pointsCost, stock, category, merchantId, cooldownDays } = req.body;
 
     // Verificar que el beneficio existe
     const benefit = await prisma.benefit.findUnique({
@@ -402,6 +407,7 @@ router.patch(
     if (stock !== undefined) updateData.stock = parseInt(stock);
     if (category) updateData.category = category;
     if (merchantId) updateData.merchantId = merchantId;
+    if (cooldownDays !== undefined) updateData.cooldownDays = parseInt(cooldownDays);
 
     // Manejar imagen si se subió una nueva
     if (req.file) {
