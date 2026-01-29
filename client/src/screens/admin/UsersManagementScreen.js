@@ -199,9 +199,13 @@ export default function UsersManagementScreen() {
     } else if (currentStatus === 'INACTIVE') {
       newStatus = 'ACTIVE';
       actionText = 'activar';
-    } else if (currentStatus === 'BANNED') {
+    } else if (currentStatus === 'BANNED' || currentStatus === 'SUSPENDED') {
       newStatus = 'ACTIVE';
-      actionText = 'desbanear';
+      actionText = 'reactivar';
+    } else {
+      // Caso por defecto - activar usuario
+      newStatus = 'ACTIVE';
+      actionText = 'activar';
     }
 
     setPendingAction({ userId, newStatus, userName, actionText });
