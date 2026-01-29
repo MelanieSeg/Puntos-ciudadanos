@@ -465,7 +465,7 @@ export default function BenefitsManagementScreen() {
 
   if (loading) {
     return (
-      <ScreenWrapper bgColor={theme.background}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={[styles.loadingText, { color: theme.text }]}>Cargando beneficios...</Text>
@@ -475,7 +475,7 @@ export default function BenefitsManagementScreen() {
   }
 
   return (
-    <ScreenWrapper bgColor={theme.background} padding={0}>
+    <ScreenWrapper bgColor={theme.background} safeArea={false} padding={0}>
       <View style={[styles.filters, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         {['ALL', 'AVAILABLE', 'OUT_OF_STOCK'].map(status => (
           <TouchableOpacity

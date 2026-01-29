@@ -43,6 +43,20 @@ const SIDEBAR_WIDTH_EXPANDED = 260;
 const SIDEBAR_WIDTH_COLLAPSED = 72;
 const HEADER_HEIGHT = 64;
 
+// Configuración común de header para Admin (Mobile)
+const ADMIN_HEADER_CONFIG = {
+  headerShown: true,
+  headerStyle: {
+    backgroundColor: COLORS.admin,
+    height: 56, // Altura fija para todos los headers
+  },
+  headerTintColor: COLORS.white,
+  headerTitleStyle: {
+    fontWeight: '600',
+    fontSize: 17, // Tamaño estándar de iOS
+  },
+};
+
 // ============================================
 // WEB SIDEBAR COMPONENT
 // ============================================
@@ -482,16 +496,7 @@ function MobileLayout() {
     return (
       <Stack.Navigator
         initialRouteName="MissionsMain"
-        screenOptions={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: COLORS.admin,
-          },
-          headerTintColor: COLORS.white,
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
-        }}
+        screenOptions={ADMIN_HEADER_CONFIG}
       >
         <Stack.Screen
           name="MissionsMain"
@@ -511,16 +516,7 @@ function MobileLayout() {
   function ApprovalsStack() {
     return (
       <Stack.Navigator
-        screenOptions={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: COLORS.admin,
-          },
-          headerTintColor: COLORS.white,
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
-        }}
+        screenOptions={ADMIN_HEADER_CONFIG}
       >
         <Stack.Screen
           name="ApprovalsMain"
@@ -549,21 +545,64 @@ function MobileLayout() {
   function SettingsStack() {
     return (
       <Stack.Navigator
-        screenOptions={{
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: COLORS.admin,
-          },
-          headerTintColor: COLORS.white,
-          headerTitleStyle: {
-            fontWeight: '600',
-          },
-        }}
+        screenOptions={ADMIN_HEADER_CONFIG}
       >
         <Stack.Screen
           name="SettingsMain"
           component={AdminSettingsScreen}
           options={{ title: 'Configuración del Sistema' }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  // Stack para Dashboard
+  function DashboardStack() {
+    return (
+      <Stack.Navigator screenOptions={ADMIN_HEADER_CONFIG}>
+        <Stack.Screen
+          name="DashboardMain"
+          component={AdminDashboardScreen}
+          options={{ title: 'Dashboard' }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  // Stack para Benefits
+  function BenefitsStack() {
+    return (
+      <Stack.Navigator screenOptions={ADMIN_HEADER_CONFIG}>
+        <Stack.Screen
+          name="BenefitsMain"
+          component={BenefitsManagementScreen}
+          options={{ title: 'Gestión de Beneficios' }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  // Stack para Users
+  function UsersStack() {
+    return (
+      <Stack.Navigator screenOptions={ADMIN_HEADER_CONFIG}>
+        <Stack.Screen
+          name="UsersMain"
+          component={UsersManagementScreen}
+          options={{ title: 'Gestión de Usuarios' }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  // Stack para Audit
+  function AuditStack() {
+    return (
+      <Stack.Navigator screenOptions={ADMIN_HEADER_CONFIG}>
+        <Stack.Screen
+          name="AuditMain"
+          component={AdminAuditScreen}
+          options={{ title: 'Auditoría del Sistema' }}
         />
       </Stack.Navigator>
     );
@@ -578,25 +617,7 @@ function MobileLayout() {
         const tabConfig = TAB_CONFIG.adminTabs.find((t) => t.name === route.name);
 
         return {
-          headerShown: true,
-          headerStyle: {
-            backgroundColor: theme.surface,
-            borderBottomWidth: 1,
-            borderBottomColor: theme.border,
-          },
-          headerTintColor: theme.text,
-          headerTitleStyle: {
-            fontWeight: '600',
-            fontSize: 18,
-          },
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={handleLogout}
-              style={styles.mobileLogoutButton}
-            >
-              <MaterialCommunityIcons name="logout" size={20} color={theme.text} />
-            </TouchableOpacity>
-          ),
+          headerShown: false, // Desactivar headers del Tab, cada Stack maneja el suyo
           tabBarIcon: ({ focused }) => {
             const iconMap = {
               AdminDashboard: 'view-dashboard',
@@ -630,8 +651,8 @@ function MobileLayout() {
     >
       <Tab.Screen
         name="AdminDashboard"
-        component={AdminDashboardScreen}
-        options={{ title: 'Dashboard' }}
+        component={DashboardStack}
+        options={{ headerShown: false, title: 'Dashboard' }}
       />
       <Tab.Screen
         name="Missions"
@@ -640,8 +661,8 @@ function MobileLayout() {
       />
       <Tab.Screen
         name="Benefits"
-        component={BenefitsManagementScreen}
-        options={{ title: 'Beneficios' }}
+        component={BenefitsStack}
+        options={{ headerShown: false, title: 'Beneficios' }}
       />
       <Tab.Screen
         name="Approvals"
@@ -650,14 +671,14 @@ function MobileLayout() {
       />
       <Tab.Screen
         name="Users"
-        component={UsersManagementScreen}
-        options={{ title: 'Usuarios' }}
+        component={UsersStack}
+        options={{ headerShown: false, title: 'Usuarios' }}
       />
       {isMasterAdmin && (
         <Tab.Screen
           name="Audit"
-          component={AdminAuditScreen}
-          options={{ title: 'Auditoría' }}
+          component={AuditStack}
+          options={{ headerShown: false, title: 'Auditoría' }}
         />
       )}
       <Tab.Screen

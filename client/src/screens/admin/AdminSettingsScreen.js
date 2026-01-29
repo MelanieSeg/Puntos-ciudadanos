@@ -148,10 +148,11 @@ export default function AdminSettingsScreen({ navigation }) {
   }
 
   return (
-    <ScrollView 
-      style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.contentContainer}
-    >
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <ScrollView 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
       {/* SECCIÓN: Configuración Operativa */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
@@ -454,7 +455,8 @@ export default function AdminSettingsScreen({ navigation }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 

@@ -59,6 +59,8 @@ const ScreenWrapper = ({
     };
   };
 
+  // En mobile, si NO se especifica safeArea (o es false), usar View simple
+  // porque React Navigation maneja el espacio del header automáticamente
   const Container = safeArea && !isWeb ? SafeAreaView : View;
 
   return (
