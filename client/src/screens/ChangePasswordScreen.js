@@ -19,11 +19,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { AuthContext } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import api from '../services/api';
 import * as validators from '../utils/validators';
 import { getErrorMessage } from '../utils/errorHandler';
 
 export default function ChangePasswordScreen({ navigation }) {
+  const { theme } = useTheme();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -142,22 +144,22 @@ export default function ChangePasswordScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
           <View style={styles.warningBox}>
             <Text style={styles.warningIcon}>⚠️</Text>
-            <Text style={styles.warningTitle}>Cambio de Contraseña Obligatorio</Text>
-            <Text style={styles.warningText}>
+            <Text style={[styles.warningTitle, { color: theme.text }]}>Cambio de Contraseña Obligatorio</Text>
+            <Text style={[styles.warningText, { color: theme.textSecondary }]}>
               Por seguridad, debes cambiar tu contraseña temporal antes de acceder al sistema.
             </Text>
           </View>
 
-          <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name}</Text>
-            <Text style={styles.userEmail}>{user?.email}</Text>
-            <Text style={styles.userRole}>
+          <View style={[styles.userInfo, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.userName, { color: theme.text }]}>{user?.name}</Text>
+            <Text style={[styles.userEmail, { color: theme.textSecondary }]}>{user?.email}</Text>
+            <Text style={[styles.userRole, { color: theme.textSecondary }]}>
               {user?.role === 'MERCHANT' ? 'Comerciante' : 
                user?.role === 'SUPPORT_ADMIN' ? 'Administrador de Soporte' : 'Usuario'}
             </Text>
@@ -166,10 +168,11 @@ export default function ChangePasswordScreen({ navigation }) {
           <View style={styles.form}>
             {/* Contraseña Actual */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.label}>Contraseña Actual</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Contraseña Actual</Text>
               <TextInput
                 style={[
                   styles.input,
+                  { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border },
                   touched.currentPassword && errors.currentPassword && styles.inputError,
                 ]}
                 placeholder="Tu contraseña temporal"
@@ -180,7 +183,7 @@ export default function ChangePasswordScreen({ navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!loading}
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textSecondary}
               />
               {touched.currentPassword && errors.currentPassword && (
                 <Text style={styles.errorText}>{errors.currentPassword}</Text>
@@ -189,10 +192,11 @@ export default function ChangePasswordScreen({ navigation }) {
 
             {/* Nueva Contraseña */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.label}>Nueva Contraseña</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Nueva Contraseña</Text>
               <TextInput
                 style={[
                   styles.input,
+                  { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border },
                   touched.newPassword && errors.newPassword && styles.inputError,
                 ]}
                 placeholder="Mínimo 8 caracteres (mayúsculas, números, símbolos)"
@@ -203,7 +207,7 @@ export default function ChangePasswordScreen({ navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!loading}
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textSecondary}
               />
               {touched.newPassword && errors.newPassword && (
                 <Text style={styles.errorText}>{errors.newPassword}</Text>
@@ -212,10 +216,11 @@ export default function ChangePasswordScreen({ navigation }) {
 
             {/* Confirmar Nueva Contraseña */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.label}>Confirmar Nueva Contraseña</Text>
+              <Text style={[styles.label, { color: theme.text }]}>Confirmar Nueva Contraseña</Text>
               <TextInput
                 style={[
                   styles.input,
+                  { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border },
                   touched.confirmPassword && errors.confirmPassword && styles.inputError,
                 ]}
                 placeholder="Repite la nueva contraseña"
@@ -226,7 +231,7 @@ export default function ChangePasswordScreen({ navigation }) {
                 autoCapitalize="none"
                 autoCorrect={false}
                 editable={!loading}
-                placeholderTextColor="#999"
+                placeholderTextColor={theme.textSecondary}
               />
               {touched.confirmPassword && errors.confirmPassword && (
                 <Text style={styles.errorText}>{errors.confirmPassword}</Text>
@@ -245,8 +250,8 @@ export default function ChangePasswordScreen({ navigation }) {
               )}
             </TouchableOpacity>
 
-            <View style={styles.infoBox}>
-              <Text style={styles.infoText}>
+            <View style={[styles.infoBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+              <Text style={[styles.infoText, { color: theme.textSecondary }]}>
                 ✓ Mínimo 8 caracteres{'\n'}
                 ✓ Al menos una mayúscula, minúscula, número y símbolo{'\n'}
                 ✓ No podrás usar tu contraseña temporal nuevamente{'\n'}

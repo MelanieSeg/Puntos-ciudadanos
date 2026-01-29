@@ -511,7 +511,7 @@ export default function AdminAuditScreen() {
             ) : (
               <View style={styles.emptyContainer}>
                 <MaterialCommunityIcons name="file-document-outline" size={64} color={COLORS.gray} />
-                <Text style={styles.emptyText}>
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
                   {searchQuery ? 'No se encontraron registros con ese criterio' : 'No hay logs de auditoría'}
                 </Text>
                 {searchQuery && (
@@ -532,18 +532,18 @@ export default function AdminAuditScreen() {
           onRequestClose={() => setModalVisible(false)}
         >
           <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+            <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
               {/* Header del modal */}
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Detalles del Registro</Text>
-                <Text style={styles.modalSubtitle}>
+              <View style={[styles.modalHeader, { backgroundColor: COLORS.primary, borderBottomColor: theme.border }]}>
+                <Text style={[styles.modalTitle, { color: COLORS.white }]}>Detalles del Registro</Text>
+                <Text style={[styles.modalSubtitle, { color: COLORS.white }]}>
                   {selectedLog && formatRelativeTime(selectedLog.createdAt)}
                 </Text>
               </View>
 
               {/* Contenido del modal */}
               {selectedLog && (
-                <ScrollView style={styles.modalBody}>
+                <ScrollView style={[styles.modalBody, { backgroundColor: theme.background }]}>
                   {/* Sección Administrador */}
                   <View style={styles.modalSection}>
                     <View style={styles.sectionHeader}>
@@ -618,10 +618,10 @@ export default function AdminAuditScreen() {
 
               {/* Botón de cerrar */}
               <TouchableOpacity
-                style={styles.closeButton}
+                style={[styles.closeButton, { backgroundColor: COLORS.primary }]}
                 onPress={() => setModalVisible(false)}
               >
-                <Text style={styles.closeButtonText}>Cerrar</Text>
+                <Text style={[styles.closeButtonText, { color: COLORS.white }]}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>

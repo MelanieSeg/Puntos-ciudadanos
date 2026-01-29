@@ -29,7 +29,7 @@ export default function SubmissionDetailScreen({ route, navigation, isWebModal =
 
     return (
       <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-        <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+        <View style={[styles.modalHeader, { borderBottomColor: theme.border, backgroundColor: theme.surface }]}>
           <Text style={[styles.title, { color: theme.text }]}>Detalles de la Solicitud</Text>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.headerCloseButton}>
             <MaterialCommunityIcons name="close" size={24} color={theme.textSecondary} />

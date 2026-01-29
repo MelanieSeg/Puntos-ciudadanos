@@ -12,11 +12,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { COLORS } from '../theme/theme';
 import api from '../services/api';
 import { getErrorMessage } from '../utils/errorHandler';
 
 export default function ForgotPasswordScreen({ navigation }) {
+  const { theme } = useTheme();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -46,7 +48,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
@@ -54,16 +56,17 @@ export default function ForgotPasswordScreen({ navigation }) {
             <MaterialCommunityIcons name="lock-reset" size={64} color={COLORS.primary} />
           </View>
           
-          <Text style={styles.title}>Recuperar Contraseña</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: theme.text }]}>Recuperar Contraseña</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
             Ingresa tu correo electrónico y te enviaremos un enlace que deberás abrir en tu navegador web para crear una nueva contraseña.
           </Text>
 
           <View style={styles.form}>
-            <Text style={styles.label}>Correo Electrónico</Text>
+            <Text style={[styles.label, { color: theme.text }]}>Correo Electrónico</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: theme.inputBg, color: theme.text, borderColor: theme.border }]}
               placeholder="tu@email.com"
+              placeholderTextColor={theme.textSecondary}
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
@@ -89,7 +92,7 @@ export default function ForgotPasswordScreen({ navigation }) {
               onPress={() => navigation.goBack()}
               disabled={loading}
             >
-              <Text style={styles.backButtonText}>Volver al inicio de sesión</Text>
+              <Text style={[styles.backButtonText, { color: theme.textSecondary }]}>Volver al inicio de sesión</Text>
             </TouchableOpacity>
           </View>
         </View>

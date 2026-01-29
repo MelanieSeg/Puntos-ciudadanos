@@ -249,7 +249,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
 
   if (isLoading && !submissions.length) {
     return (
-      <ScreenWrapper bgColor={COLORS.light} safeArea={false}>
+      <ScreenWrapper bgColor={theme.background} safeArea={false}>
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
@@ -296,8 +296,8 @@ export default function SubmissionsApprovalScreen({ navigation }) {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons name="inbox-multiple" size={48} color={COLORS.light} />
-            <Text style={styles.emptyText}>No hay envíos {filter === 'PENDING' ? 'pendientes' : filter === 'APPROVED' ? 'aprobados' : 'rechazados'}</Text>
+            <MaterialCommunityIcons name="inbox-multiple" size={48} color={theme.textSecondary} />
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No hay envíos {filter === 'PENDING' ? 'pendientes' : filter === 'APPROVED' ? 'aprobados' : 'rechazados'}</Text>
           </View>
         }
         removeClippedSubviews={true}
@@ -311,7 +311,7 @@ export default function SubmissionsApprovalScreen({ navigation }) {
           style={styles.modalOverlay}
         >
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <View style={styles.modalHeader}>
+            <View style={[styles.modalHeader, { backgroundColor: 'transparent' }]}>
               <MaterialCommunityIcons 
                 name={pendingAction?.type === 'approve' ? 'check-circle' : 'alert-circle'} 
                 size={48} 
