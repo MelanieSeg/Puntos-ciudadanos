@@ -152,6 +152,11 @@ export default function UsersManagementScreen() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingAction, setPendingAction] = useState(null); // { userId, newStatus, userName }
 
+  // Modal de baneo con motivo
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState('');
+  const [userToBan, setUserToBan] = useState(null);
+
   // Modal para crear nuevo usuario (admin o comercio)
   const [showAddModal, setShowAddModal] = useState(false);
   const [addModalType, setAddModalType] = useState('SUPPORT_ADMIN'); // 'SUPPORT_ADMIN' o 'MERCHANT'
@@ -203,9 +208,10 @@ export default function UsersManagementScreen() {
     setShowConfirmModal(true);
   };
 
-  const handleBanUser = (userId, userName) => {
-    setPendingAction({ userId, newStatus: 'BANNED', userName, actionText: 'banear' });
-    setShowConfirmModal(true);
+  const handleBanUser = (userId, userName, userEmail) => {
+    setUserToBan({ id: userId, name: userName, email: userEmail });
+    setBanReason('');
+    setShowBanModal(true);
   };
 
   const confirmAction = async () => {
@@ -214,7 +220,7 @@ export default function UsersManagementScreen() {
     setShowConfirmModal(false);
 
     try {
-      await adminAPI.updateUserStatus(pendingAction.userId, pendingAction.newStatus);
+      await adminAPI.updateUserStatus(pendingAction.userId, pendingAction.newStatus, 'Cambio manual desde panel de administración');
       Alert.alert('Éxito', `Usuario ${pendingAction.actionText}do correctamente`);
       await loadUsers();
     } catch (error) {
@@ -223,6 +229,32 @@ export default function UsersManagementScreen() {
     }
 
     setPendingAction(null);
+  };
+
+  const confirmBan = async () => {
+    if (!banReason.trim()) {
+      Alert.alert('Motivo Requerido', 'Debes especificar un motivo para el baneo');
+      return;
+    }
+
+    if (!userToBan || !userToBan.id) {
+      Alert.alert('Error', 'No se pudo identificar al usuario');
+      return;
+    }
+
+    setShowBanModal(false);
+
+    try {
+      await adminAPI.updateUserStatus(userToBan.id, 'SUSPENDED', banReason.trim());
+      Alert.alert('Éxito', 'Usuario baneado correctamente');
+      await loadUsers();
+    } catch (error) {
+      const errorMsg = error.response?.data?.data?.message || error.response?.data?.message || 'Error al banear usuario';
+      Alert.alert('Error', errorMsg);
+    }
+
+    setBanReason('');
+    setUserToBan(null);
   };
 
   const cancelAction = () => {
@@ -491,7 +523,7 @@ export default function UsersManagementScreen() {
             </TouchableOpacity>
           )}
           
-          {item.status === 'BANNED' ? (
+          {item.status === 'SUSPENDED' ? (
             <TouchableOpacity
               style={[styles.actionButton, styles.successActionButton]}
               onPress={() => handleChangeStatus(item.id, item.status, item.name)}
@@ -502,7 +534,7 @@ export default function UsersManagementScreen() {
           ) : (
             <TouchableOpacity
               style={[styles.actionButton, styles.dangerActionButton]}
-              onPress={() => handleBanUser(item.id, item.name)}
+              onPress={() => handleBanUser(item.id, item.name, item.email)}
             >
               <MaterialCommunityIcons name="gavel" size={18} color={COLORS.white} />
               <Text style={styles.actionButtonText}>Banear</Text>
@@ -629,10 +661,10 @@ export default function UsersManagementScreen() {
             <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterStatus === 'ACTIVE' && styles.miniFilterTextActive]}>Activos</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterStatus === 'BANNED' && styles.miniFilterButtonActive]}
-            onPress={() => setFilterStatus('BANNED')}
+            style={[styles.miniFilterButton, { backgroundColor: theme.inputBg, borderColor: theme.border }, filterStatus === 'SUSPENDED' && styles.miniFilterButtonActive]}
+            onPress={() => setFilterStatus('SUSPENDED')}
           >
-            <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterStatus === 'BANNED' && styles.miniFilterTextActive]}>Baneados</Text>
+            <Text style={[styles.miniFilterText, { color: theme.textSecondary }, filterStatus === 'SUSPENDED' && styles.miniFilterTextActive]}>Baneados</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -895,6 +927,76 @@ export default function UsersManagementScreen() {
             >
               <Text style={styles.passwordModalButtonText}>Entendido</Text>
             </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de Baneo con Input de Motivo */}
+      <Modal
+        visible={showBanModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBanModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.banModalContent, { backgroundColor: theme.surface }]}>
+            <View style={styles.banModalHeader}>
+              <MaterialCommunityIcons name="alert-octagon" size={48} color={COLORS.error} />
+              <Text style={[styles.banModalTitle, { color: theme.text }]}>
+                Confirmar Baneo
+              </Text>
+            </View>
+
+            {userToBan && (
+              <View style={styles.banModalBody}>
+                <Text style={[styles.banModalText, { color: theme.text }]}>
+                  ¿Estás seguro de banear a este usuario?
+                </Text>
+                <View style={[styles.userInfoBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Nombre:</Text>
+                  <Text style={[styles.userInfoValue, { color: theme.text }]}>{userToBan.name}</Text>
+                  <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Email:</Text>
+                  <Text style={[styles.userInfoValue, { color: theme.text }]}>{userToBan.email}</Text>
+                </View>
+
+                <Text style={[styles.inputLabel, { color: theme.text }]}>
+                  Motivo del baneo *
+                </Text>
+                <TextInput
+                  style={[styles.reasonInput, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
+                  placeholder="Ej: Violación de términos y condiciones..."
+                  placeholderTextColor={theme.textSecondary}
+                  value={banReason}
+                  onChangeText={setBanReason}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={500}
+                />
+                <Text style={[styles.charCount, { color: theme.textSecondary }]}>
+                  {banReason.length}/500 caracteres
+                </Text>
+
+                <View style={styles.banModalButtons}>
+                  <TouchableOpacity
+                    style={[styles.banModalButton, styles.cancelButton, { borderColor: theme.border }]}
+                    onPress={() => {
+                      setShowBanModal(false);
+                      setBanReason('');
+                      setUserToBan(null);
+                    }}
+                  >
+                    <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.banModalButton, styles.confirmBanButton]}
+                    onPress={confirmBan}
+                  >
+                    <MaterialCommunityIcons name="gavel" size={18} color={COLORS.white} />
+                    <Text style={styles.confirmBanButtonText}>Banear Ahora</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -1437,5 +1539,95 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.body1,
     fontWeight: '700',
     color: COLORS.white,
+  },
+  // Ban Modal Styles
+  banModalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 500,
+    width: '90%',
+  },
+  banModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  banModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  banModalBody: {
+    width: '100%',
+  },
+  banModalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  userInfoBox: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  userInfoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  userInfoValue: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  reasonInput: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontSize: 12,
+    textAlign: 'right',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  banModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  banModalButton: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmBanButton: {
+    backgroundColor: COLORS.error,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  confirmBanButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

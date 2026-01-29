@@ -78,6 +78,14 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status, reason } = req.body;
 
+  console.log('🔍 updateUserStatus - Datos recibidos:', { 
+    userId: id, 
+    status, 
+    statusType: typeof status,
+    reason,
+    body: req.body 
+  });
+
   // Validaciones
   if (!status) {
     throw new ValidationError('El campo status es requerido');

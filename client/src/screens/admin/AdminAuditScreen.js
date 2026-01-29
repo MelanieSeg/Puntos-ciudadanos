@@ -37,6 +37,12 @@ const ACTION_ICONS = {
   USER_CREATED: 'account-plus',
   PASSWORD_RESET: 'lock-reset',
   CHANGE_PASSWORD: 'key-change',
+  MISSION_STATUS_UPDATED: 'format-list-checks',
+  MISSION_CREATED: 'plus-box',
+  MISSION_UPDATED: 'pencil-box',
+  MISSION_DELETED: 'delete-variant',
+  UPDATE_SYSTEM_CONFIG: 'cog',
+  POINTS_ADDED: 'database-plus',
   DEFAULT: 'clipboard-text',
 };
 
@@ -51,6 +57,12 @@ const ACTION_LABELS = {
   USER_CREATED: 'Usuario creado',
   PASSWORD_RESET: 'Contraseña restablecida',
   CHANGE_PASSWORD: 'Cambio de contraseña inicial',
+  MISSION_STATUS_UPDATED: 'Estado de misión cambiado',
+  MISSION_CREATED: 'Nueva misión creada',
+  MISSION_UPDATED: 'Misión editada',
+  MISSION_DELETED: 'Misión eliminada',
+  UPDATE_SYSTEM_CONFIG: 'Ajustes del sistema cambiados',
+  POINTS_ADDED: 'Carga manual de puntos',
 };
 
 // Obtener ícono según la acción
@@ -87,6 +99,9 @@ export default function AdminAuditScreen() {
   const { theme } = useTheme();
   const [selectedLog, setSelectedLog] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState('');
+  const [userToBan, setUserToBan] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [filterAction, setFilterAction] = useState(null); // Filtro por tipo de acción
@@ -107,7 +122,7 @@ export default function AdminAuditScreen() {
 
   // Mutation para banear usuario
   const suspendMutation = useMutation({
-    mutationFn: ({ userId, reason }) => adminAPI.suspendUser(userId, reason),
+    mutationFn: ({ userId, reason }) => adminAPI.updateUserStatus(userId, 'SUSPENDED', reason),
     onSuccess: () => {
       Alert.alert(
         'Usuario Baneado',
@@ -173,24 +188,33 @@ export default function AdminAuditScreen() {
       return;
     }
 
-    // Confirmación crítica
-    Alert.alert(
-      'Confirmar Baneo Inmediato',
-      `¿Confirmar baneo del administrador?\n\nNombre: ${targetAdmin.name}\nEmail: ${targetAdmin.email}\n\nEl administrador perderá acceso al sistema de forma instantánea por actividad sospechosa.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Banear',
-          style: 'destructive',
-          onPress: () => {
-            suspendMutation.mutate({
-              userId: targetAdmin.id,
-              reason: 'Actividad sospechosa detectada por MASTER_ADMIN',
-            });
-          },
-        },
-      ]
-    );
+    // Abrir modal para ingresar motivo
+    setUserToBan(targetAdmin);
+    setBanReason('');
+    setShowBanModal(true);
+  };
+
+  const confirmBan = () => {
+    if (!banReason.trim()) {
+      Alert.alert('Motivo Requerido', 'Debes especificar un motivo para el baneo');
+      return;
+    }
+
+    if (!userToBan || !userToBan.id) {
+      Alert.alert('Error', 'No se pudo identificar al usuario');
+      return;
+    }
+
+    console.log('🔨 Baneando usuario:', { userId: userToBan.id, reason: banReason.trim() });
+    
+    suspendMutation.mutate({
+      userId: userToBan.id,
+      reason: banReason.trim(),
+    });
+
+    setShowBanModal(false);
+    setBanReason('');
+    setUserToBan(null);
   };
 
   const renderLogCard = ({ item }) => {
@@ -251,47 +275,86 @@ export default function AdminAuditScreen() {
   };
 
   const renderMetadata = (metadata) => {
-    if (!metadata) return <Text style={[styles.noMetadata, { color: theme.textSecondary }]}>Sin metadatos</Text>;
+    if (!metadata) return <Text style={[styles.noMetadata, { color: theme.textSecondary }]}>Sin detalles adicionales</Text>;
 
     try {
-      // Renderizar campos específicos de forma estructurada
-      const renderField = (label, value) => {
-        if (!value) return null;
-        return (
-          <View key={label} style={styles.metadataField}>
-            <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>{label}:</Text>
-            <Text style={[styles.metadataFieldValue, { color: theme.text }]}>{value}</Text>
-          </View>
-        );
-      };
-
       return (
         <View style={styles.metadataFields}>
-          {metadata.previousStatus && renderField('Estado anterior', metadata.previousStatus)}
-          {metadata.newStatus && renderField('Nuevo estado', metadata.newStatus)}
-          {metadata.reason && renderField('Motivo', metadata.reason)}
+          {/* Mostrar cambios de valores (Antes → Después) */}
+          {metadata.previousStatus && metadata.newStatus && (
+            <View style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Cambio de Estado:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
+                {metadata.previousStatus} ➔ {metadata.newStatus}
+              </Text>
+            </View>
+          )}
+          
+          {/* Mostrar cambios en Configuración (Modo mantenimiento, etc) */}
+          {metadata.changes && Object.entries(metadata.changes).map(([key, value]) => (
+            <View key={key} style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Ajuste "{key}":</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>{String(value)}</Text>
+            </View>
+          ))}
+
+          {/* Mostrar campos de misiones editadas */}
+          {metadata.updatedFields && (
+            <View style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Campos modificados:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
+                {metadata.updatedFields.join(', ')}
+              </Text>
+            </View>
+          )}
+
+          {/* Mostrar ID de la misión o beneficio afectado */}
+          {(metadata.missionName || metadata.benefitName || metadata.benefitTitle) && (
+            <View style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Elemento afectado:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
+                {metadata.missionName || metadata.benefitName || metadata.benefitTitle}
+              </Text>
+            </View>
+          )}
+
+          {/* Usuario afectado */}
           {metadata.targetUser && (
             <View style={styles.metadataField}>
               <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Usuario afectado:</Text>
               <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
                 {metadata.targetUser.name} ({metadata.targetUser.email})
               </Text>
-              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
+              <Text style={[styles.metadataFieldValue, { color: theme.textSecondary }]}>
                 Rol: {metadata.targetUser.role}
               </Text>
             </View>
           )}
-          {metadata.timestamp && renderField(
-            'Timestamp',
-            new Date(metadata.timestamp).toLocaleString('es-ES', {
-              dateStyle: 'medium',
-              timeStyle: 'medium'
-            })
+
+          {/* Motivo siempre presente si existe */}
+          {metadata.reason && (
+            <View style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Motivo:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>{metadata.reason}</Text>
+            </View>
+          )}
+
+          {/* Timestamp */}
+          {metadata.timestamp && (
+            <View style={styles.metadataField}>
+              <Text style={[styles.metadataFieldLabel, { color: theme.textSecondary }]}>Timestamp:</Text>
+              <Text style={[styles.metadataFieldValue, { color: theme.text }]}>
+                {new Date(metadata.timestamp).toLocaleString('es-ES', {
+                  dateStyle: 'medium',
+                  timeStyle: 'medium'
+                })}
+              </Text>
+            </View>
           )}
         </View>
       );
     } catch (error) {
-      return <Text style={styles.noMetadata}>Metadatos inválidos</Text>;
+      return <Text style={[styles.noMetadata, { color: theme.textSecondary }]}>Metadatos inválidos</Text>;
     }
   };
 
@@ -560,6 +623,83 @@ export default function AdminAuditScreen() {
               >
                 <Text style={styles.closeButtonText}>Cerrar</Text>
               </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal de Baneo con Input de Motivo */}
+        <Modal
+          visible={showBanModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowBanModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.banModalContent, { backgroundColor: theme.surface }]}>
+              <View style={styles.banModalHeader}>
+                <MaterialCommunityIcons name="alert-octagon" size={48} color={COLORS.error} />
+                <Text style={[styles.banModalTitle, { color: theme.text }]}>
+                  Confirmar Baneo
+                </Text>
+              </View>
+
+              {userToBan && (
+                <View style={styles.banModalBody}>
+                  <Text style={[styles.banModalText, { color: theme.text }]}>
+                    ¿Estás seguro de banear a este administrador?
+                  </Text>
+                  <View style={[styles.userInfoBox, { backgroundColor: theme.inputBg, borderColor: theme.border }]}>
+                    <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Nombre:</Text>
+                    <Text style={[styles.userInfoValue, { color: theme.text }]}>{userToBan.name}</Text>
+                    <Text style={[styles.userInfoLabel, { color: theme.textSecondary }]}>Email:</Text>
+                    <Text style={[styles.userInfoValue, { color: theme.text }]}>{userToBan.email}</Text>
+                  </View>
+
+                  <Text style={[styles.inputLabel, { color: theme.text }]}>
+                    Motivo del baneo *
+                  </Text>
+                  <TextInput
+                    style={[styles.reasonInput, { backgroundColor: theme.inputBg, borderColor: theme.border, color: theme.text }]}
+                    placeholder="Ej: Actividad sospechosa detectada..."
+                    placeholderTextColor={theme.textSecondary}
+                    value={banReason}
+                    onChangeText={setBanReason}
+                    multiline
+                    numberOfLines={3}
+                    maxLength={500}
+                  />
+                  <Text style={[styles.charCount, { color: theme.textSecondary }]}>
+                    {banReason.length}/500 caracteres
+                  </Text>
+
+                  <View style={styles.banModalButtons}>
+                    <TouchableOpacity
+                      style={[styles.banModalButton, styles.cancelButton, { borderColor: theme.border }]}
+                      onPress={() => {
+                        setShowBanModal(false);
+                        setBanReason('');
+                        setUserToBan(null);
+                      }}
+                    >
+                      <Text style={[styles.cancelButtonText, { color: theme.text }]}>Cancelar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.banModalButton, styles.confirmBanButton]}
+                      onPress={confirmBan}
+                      disabled={suspendMutation.isLoading}
+                    >
+                      {suspendMutation.isLoading ? (
+                        <ActivityIndicator color={COLORS.white} size="small" />
+                      ) : (
+                        <>
+                          <MaterialCommunityIcons name="gavel" size={18} color={COLORS.white} />
+                          <Text style={styles.confirmBanButtonText}>Banear Ahora</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
             </View>
           </View>
         </Modal>
@@ -980,5 +1120,95 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.button,
     color: COLORS.white,
     fontWeight: '700',
+  },
+  // Ban Modal Styles
+  banModalContent: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 500,
+    width: '90%',
+  },
+  banModalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  banModalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  banModalBody: {
+    width: '100%',
+  },
+  banModalText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  userInfoBox: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  userInfoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  userInfoValue: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  reasonInput: {
+    backgroundColor: COLORS.lightGray,
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 12,
+    fontSize: 14,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    fontSize: 12,
+    textAlign: 'right',
+    marginTop: 4,
+    marginBottom: 16,
+  },
+  banModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  banModalButton: {
+    flex: 1,
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmBanButton: {
+    backgroundColor: COLORS.error,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  confirmBanButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

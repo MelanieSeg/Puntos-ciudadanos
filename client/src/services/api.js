@@ -197,7 +197,7 @@ export const adminAPI = {
     params.append('offset', offset);
     return api.get(`/admin/users${params.toString() ? '?' + params.toString() : ''}`);
   },
-  updateUserStatus: (userId, status) => api.patch(`/admin/users/${userId}/status`, { status }),
+  updateUserStatus: (userId, status, reason) => api.patch(`/admin/users/${userId}/status`, { status, reason }),
   createSupportAdmin: (data) => api.post('/admin/support-admins', data),
   createMerchant: (data) => api.post('/admin/merchants', data),
   
