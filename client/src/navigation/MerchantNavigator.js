@@ -5,7 +5,7 @@
  * - WEB: Layout con Sidebar (izquierda 20%) + Contenido (derecha 80%)
  */
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -27,12 +27,15 @@ const Stack = createNativeStackNavigator();
 const isWeb = Platform.OS === 'web';
 
 // ============================================================================
-// COMPONENTE: Sidebar para WEB
+// COMPONENTE: Sidebar para WEB (recibe props del WebLayout)
 // ============================================================================
-function WebSidebar({ activeTab, onNavigate }) {
+function WebSidebar({ onNavigate, activeRoute }) {
   const { logout } = useContext(AuthContext);
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Usar la ruta activa pasada como prop
+  const activeRouteName = activeRoute || 'Dashboard';
 
   const handleLogoutConfirm = async () => {
     try {
@@ -44,12 +47,18 @@ function WebSidebar({ activeTab, onNavigate }) {
   };
 
   const tabs = [
-    { id: 'Dashboard', label: 'Dashboard', icon: 'chart-box' },
+    { id: 'Dashboard', label: 'Panel', icon: 'chart-box' },
     { id: 'Benefits', label: 'Mis Beneficios', icon: 'gift' },
     { id: 'Scanner', label: 'Validar Cupones', icon: 'qrcode-scan' },
     { id: 'History', label: 'Historial', icon: 'history' },
     { id: 'Profile', label: 'Configuración', icon: 'cog' },
   ];
+
+  const handleNavigate = (tabId) => {
+    if (onNavigate) {
+      onNavigate(tabId);
+    }
+  };
 
   return (
     <View style={[styles.webSidebar, { backgroundColor: theme.sidebarBg || '#1a1f36' }]}>
@@ -69,21 +78,21 @@ function WebSidebar({ activeTab, onNavigate }) {
             key={tab.id}
             style={[
               styles.sidebarItem,
-              activeTab === tab.id && styles.sidebarItemActive,
+              activeRouteName === tab.id && styles.sidebarItemActive,
             ]}
-            onPress={() => onNavigate(tab.id)}
+            onPress={() => handleNavigate(tab.id)}
             activeOpacity={0.7}
           >
             <MaterialCommunityIcons
               name={tab.icon}
               size={20}
-              color={activeTab === tab.id ? COLORS.merchant : (theme.sidebarText || COLORS.white)}
+              color={activeRouteName === tab.id ? COLORS.merchant : (theme.sidebarText || COLORS.white)}
             />
             <Text
               style={[
                 styles.sidebarLabel,
                 { color: theme.sidebarText || COLORS.white },
-                activeTab === tab.id && styles.sidebarLabelActive,
+                activeRouteName === tab.id && styles.sidebarLabelActive,
               ]}
             >
               {tab.label}
@@ -159,44 +168,13 @@ function WebSidebar({ activeTab, onNavigate }) {
 }
 
 // ============================================================================
-// COMPONENTE: Web Layout (Sidebar + Content)
+// COMPONENTE: Web Layout (Sidebar + Content con Tab.Navigator real)
 // ============================================================================
 function WebLayout() {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [activeRoute, setActiveRoute] = useState('Dashboard');
+  const navigationRef = useRef(null);
 
-  const navigationMock = {
-    navigate: (screen) => {
-      if (screen === 'QRScanner') {
-        setActiveTab('Scanner');
-      } else {
-        setActiveTab(screen);
-      }
-    }
-  };
-
-  const renderContent = () => {
-    return (
-      <>
-        <View style={activeTab === 'Dashboard' ? styles.activeScreen : styles.hiddenScreen}>
-          <MerchantDashboardScreen navigation={navigationMock} />
-        </View>
-        <View style={activeTab === 'Benefits' ? styles.activeScreen : styles.hiddenScreen}>
-          <MerchantBenefitsScreen navigation={navigationMock} />
-        </View>
-        <View style={activeTab === 'Scanner' ? styles.activeScreen : styles.hiddenScreen}>
-          <ScannerScreen navigation={navigationMock} />
-        </View>
-        <View style={activeTab === 'History' ? styles.activeScreen : styles.hiddenScreen}>
-          <HistoryScreen navigation={navigationMock} />
-        </View>
-        <View style={activeTab === 'Profile' ? styles.activeScreen : styles.hiddenScreen}>
-          <MerchantProfileScreen navigation={navigationMock} />
-        </View>
-      </>
-    );
-  };
-
-  const getPageTitle = () => {
+  const getPageTitle = (routeName) => {
     const titles = {
       'Dashboard': 'Panel de Control',
       'Benefits': 'Mis Beneficios',
@@ -204,15 +182,48 @@ function WebLayout() {
       'History': 'Historial de Validaciones',
       'Profile': 'Configuración',
     };
-    return titles[activeTab] || 'Mi Comercio';
+    return titles[routeName] || 'Mi Comercio';
+  };
+
+  // Handler para navegación desde el sidebar
+  const handleSidebarNavigate = (routeName) => {
+    if (navigationRef.current) {
+      navigationRef.current.navigate(routeName);
+    }
   };
 
   return (
     <View style={styles.webContainer}>
-      <WebSidebar activeTab={activeTab} onNavigate={setActiveTab} />
+      <WebSidebar onNavigate={handleSidebarNavigate} activeRoute={activeRoute} />
       <View style={styles.webContent}>
-        <WebHeader title={getPageTitle()} hideBalance={true} />
-        {renderContent()}
+        <Tab.Navigator
+          screenListeners={{
+            state: (e) => {
+              const state = e.data.state;
+              if (state) {
+                const currentRoute = state.routes[state.index];
+                setActiveRoute(currentRoute?.name || 'Dashboard');
+              }
+            },
+          }}
+          screenOptions={({ navigation: tabNavigation }) => {
+            // Guardar referencia a la navegación del tab
+            if (!navigationRef.current) {
+              navigationRef.current = tabNavigation;
+            }
+            return {
+              headerShown: true,
+              header: ({ route }) => <WebHeader title={getPageTitle(route.name)} hideBalance={true} />,
+              tabBarStyle: { display: 'none' },
+            };
+          }}
+        >
+          <Tab.Screen name="Dashboard" component={MerchantDashboardScreen} options={{ title: 'Panel - Comercio' }} />
+          <Tab.Screen name="Benefits" component={MerchantBenefitsScreen} options={{ title: 'Beneficios - Comercio' }} />
+          <Tab.Screen name="Scanner" component={ScannerScreen} options={{ title: 'Validar - Comercio' }} />
+          <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'Historial - Comercio' }} />
+          <Tab.Screen name="Profile" component={MerchantProfileScreen} options={{ title: 'Perfil - Comercio' }} />
+        </Tab.Navigator>
       </View>
     </View>
   );
@@ -296,7 +307,7 @@ function MobileLayout() {
       <Tab.Screen
         name="Dashboard"
         component={MerchantDashboardScreen}
-        options={{ title: 'Dashboard' }}
+        options={{ title: 'Panel' }}
       />
       <Tab.Screen
         name="Benefits"
@@ -306,7 +317,7 @@ function MobileLayout() {
       <Tab.Screen
         name="Scanner"
         component={ScannerStack}
-        options={{ title: 'Validar Cupón' }} // Activamos el header del Tab (quitando headerShown: false)
+        options={{ title: 'Validar' }} // Activamos el header del Tab (quitando headerShown: false)
       />
       <Tab.Screen
         name="History"

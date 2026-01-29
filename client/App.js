@@ -14,6 +14,7 @@ import { ThemeProvider } from './src/context/ThemeContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import SplashScreen from './src/screens/SplashScreen';
 import ChangePasswordScreen from './src/screens/ChangePasswordScreen';
+import linking from './src/navigation/linking';
 import AuthNavigator from './src/navigation/AuthNavigator';
 import UserNavigator from './src/navigation/UserNavigator';
 import MerchantNavigator from './src/navigation/MerchantNavigator';
@@ -75,7 +76,7 @@ function RootNavigator() {
         <RootStack.Screen
           name="Auth"
           component={AuthNavigator}
-          options={{ animationEnabled: false }}
+          options={{ animationEnabled: false, title: 'Ingreso' }}
         />
       </RootStack.Navigator>
     );
@@ -114,7 +115,7 @@ function RootNavigator() {
         <RootStack.Screen
           name="MerchantApp"
           component={MerchantNavigator}
-          options={{ animationEnabled: false }}
+          options={{ animationEnabled: false, title: 'Panel de Comercio' }}
         />
       </RootStack.Navigator>
     );
@@ -131,7 +132,7 @@ function RootNavigator() {
         <RootStack.Screen
           name="AdminApp"
           component={AdminNavigator}
-          options={{ animationEnabled: false }}
+          options={{ animationEnabled: false, title: 'Panel Administrativo' }}
         />
       </RootStack.Navigator>
     );
@@ -148,7 +149,7 @@ function RootNavigator() {
       <RootStack.Screen
         name="UserApp"
         component={UserNavigator}
-        options={{ animationEnabled: false }}
+        options={{ animationEnabled: false, title: 'Panel Ciudadano' }}
       />
     </RootStack.Navigator>
   );
@@ -173,6 +174,7 @@ function AppContent() {
   return (
     <NavigationContainer 
       key={`nav-${authState.authenticated}-${authState.mustChangePassword}`}
+      linking={linking}
     >
       <RootNavigator />
     </NavigationContainer>

@@ -4,7 +4,7 @@
  * Pestañas: Dashboard, Misiones, Beneficios, Aprobaciones, Usuarios, Auditoría, Configuración
  */
 
-import React, { useContext, useState, useRef, useEffect } from 'react';
+import React, { useContext, useState, useRef, useEffect, createContext } from 'react';
 import { 
   View, 
   Text, 
@@ -20,6 +20,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import UsersManagementScreen from '../screens/admin/UsersManagementScreen';
@@ -60,12 +61,15 @@ const ADMIN_HEADER_CONFIG = {
 // ============================================
 // WEB SIDEBAR COMPONENT
 // ============================================
-function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMasterAdmin, onLogout }) {
+function WebSidebar({ isCollapsed, setIsCollapsed, isMasterAdmin, onLogout, onNavigate, activeRoute }) {
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const sidebarWidth = useRef(new Animated.Value(isCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED)).current;
   const [hoveredItem, setHoveredItem] = useState(null);
   const [showTooltip, setShowTooltip] = useState(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Usar la ruta activa pasada como prop
+  const activeRouteName = activeRoute || 'AdminDashboard';
 
   useEffect(() => {
     Animated.timing(sidebarWidth, {
@@ -84,7 +88,7 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
   };
 
   const menuItems = [
-    { id: 'AdminDashboard', label: 'Dashboard', icon: 'view-dashboard' },
+    { id: 'AdminDashboard', label: 'Panel', icon: 'view-dashboard' },
     { id: 'Missions', label: 'Misiones', icon: 'target' },
     { id: 'Benefits', label: 'Beneficios', icon: 'gift' },
     { id: 'Approvals', label: 'Solicitudes', icon: 'check-circle' },
@@ -92,6 +96,12 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
     ...(isMasterAdmin ? [{ id: 'Audit', label: 'Auditoría', icon: 'shield-lock' }] : []),
     { id: 'Settings', label: 'Configuración', icon: 'cog' },
   ];
+
+  const handleNavigate = (tabId) => {
+    if (onNavigate) {
+      onNavigate(tabId);
+    }
+  };
 
   return (
     <Animated.View style={[styles.webSidebar, { width: sidebarWidth, backgroundColor: theme.sidebarBg, borderRightColor: theme.border }]}>
@@ -122,7 +132,7 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
       {/* Menu Items */}
       <ScrollView style={styles.sidebarNav}>
         {menuItems.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive = activeRouteName === item.id;
 
           return (
             <View key={item.id} style={styles.menuItemWrapper}>
@@ -131,7 +141,7 @@ function WebSidebar({ activeTab, onNavigate, isCollapsed, setIsCollapsed, isMast
                   styles.sidebarItem,
                   isActive && styles.sidebarItemActive,
                 ]}
-                onPress={() => onNavigate(item.id)}
+                onPress={() => handleNavigate(item.id)}
                 activeOpacity={0.7}
                 onMouseEnter={() => {
                   setHoveredItem(item.id);
@@ -311,8 +321,9 @@ function AdminWebHeader({ title, userName, userEmail, userRole }) {
 function WebLayout() {
   const { logout, authState } = useContext(AuthContext);
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState('AdminDashboard');
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [activeRoute, setActiveRoute] = useState('AdminDashboard');
+  const navigationRef = useRef(null);
   
   // Modal para SubmissionDetail en web
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -327,6 +338,21 @@ function WebLayout() {
   const userEmail = authState?.user?.email || '';
   const userRole = authState?.user?.role || 'ADMIN';
 
+  // Handler para navegación desde el sidebar
+  const handleSidebarNavigate = (routeName) => {
+    if (navigationRef.current) {
+      navigationRef.current.navigate(routeName);
+    }
+  };
+
+  // Handler para cambios de estado de navegación
+  const handleNavigationStateChange = (state) => {
+    if (state) {
+      const currentRoute = state.routes[state.index];
+      setActiveRoute(currentRoute?.name || 'AdminDashboard');
+    }
+  };
+
   const handleLogout = () => {
     logout().then(() => {
       console.log('Logout exitoso');
@@ -335,12 +361,8 @@ function WebLayout() {
     });
   };
 
-  const handleNavigate = (tabId) => {
-    setActiveTab(tabId);
-  };
-
-  // Navegación mock para pasar a las pantallas
-  const mockNavigation = {
+  // Navegación mock para pasar a las pantallas (manejo de modales)
+  const createMockNavigation = (navigation) => ({
     navigate: (screen, params) => {
       if (screen === 'SubmissionDetail') {
         setSelectedSubmission(params?.submission);
@@ -348,6 +370,8 @@ function WebLayout() {
       } else if (screen === 'MissionForm') {
         setSelectedMission(params?.mission || null);
         setShowMissionFormModal(true);
+      } else {
+        navigation.navigate(screen, params);
       }
     },
     goBack: () => {
@@ -359,11 +383,11 @@ function WebLayout() {
         setSelectedSubmission(null);
       }
     },
-  };
+  });
 
-  const getScreenTitle = () => {
+  const getScreenTitle = (routeName) => {
     const titles = {
-      AdminDashboard: 'Dashboard',
+      AdminDashboard: 'Panel de Control',
       Missions: 'Gestión de Misiones',
       Benefits: 'Gestión de Beneficios',
       Approvals: 'Solicitudes Pendientes',
@@ -371,55 +395,64 @@ function WebLayout() {
       Audit: 'Auditoría del Sistema',
       Settings: 'Configuración',
     };
-    return titles[activeTab] || 'Admin';
-  };
-
-  const renderScreen = () => {
-    switch (activeTab) {
-      case 'AdminDashboard':
-        return <AdminDashboardScreen />;
-      case 'Missions':
-        return <MissionsManagementScreen navigation={mockNavigation} />;
-      case 'Benefits':
-        return <BenefitsManagementScreen />;
-      case 'Approvals':
-        return <SubmissionsApprovalScreen navigation={mockNavigation} />;
-      case 'Users':
-        return <UsersManagementScreen />;
-      case 'Audit':
-        return isMasterAdmin ? <AdminAuditScreen /> : null;
-      case 'Settings':
-        return <AdminSettingsScreen />;
-      default:
-        return <AdminDashboardScreen />;
-    }
+    return titles[routeName] || 'Admin';
   };
 
   return (
-    <View style={[styles.webLayoutContainer, { backgroundColor: theme.background }]}>
-      {/* Sidebar */}
-      <WebSidebar
-        activeTab={activeTab}
-        onNavigate={handleNavigate}
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-        isMasterAdmin={isMasterAdmin}
-        onLogout={handleLogout}
-      />
-
-      {/* Main Content Area */}
-      <View style={styles.mainContent}>
-        {/* Header */}
-        <AdminWebHeader 
-          title={getScreenTitle()} 
-          userName={userName}
-          userEmail={userEmail}
-          userRole={userRole}
+    <>
+      <View style={[styles.webLayoutContainer, { backgroundColor: theme.background }]}>
+        <WebSidebar 
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+          isMasterAdmin={isMasterAdmin}
+          onLogout={handleLogout}
+          onNavigate={handleSidebarNavigate}
+          activeRoute={activeRoute}
         />
-
-        {/* Screen Content */}
-        <View style={styles.screenContainer}>
-          {renderScreen()}
+        <View style={styles.mainContent}>
+          <Tab.Navigator
+            screenListeners={{
+              state: (e) => {
+                const state = e.data.state;
+                if (state) {
+                  const currentRoute = state.routes[state.index];
+                  setActiveRoute(currentRoute?.name || 'AdminDashboard');
+                }
+              },
+            }}
+            screenOptions={({ navigation: tabNavigation }) => {
+              // Guardar referencia a la navegación del tab
+              if (!navigationRef.current) {
+                navigationRef.current = tabNavigation;
+              }
+              return {
+                headerShown: true,
+                header: ({ route }) => (
+                  <AdminWebHeader 
+                    title={getScreenTitle(route.name)} 
+                    userName={userName}
+                    userEmail={userEmail}
+                    userRole={userRole}
+                  />
+                ),
+                tabBarStyle: { display: 'none' },
+              };
+            }}
+          >
+            <Tab.Screen name="AdminDashboard" component={AdminDashboardScreen} options={{ title: 'Panel - Admin' }} />
+            <Tab.Screen name="Missions" options={{ title: 'Misiones - Admin' }}>
+              {(props) => <MissionsManagementScreen {...props} navigation={createMockNavigation(props.navigation)} />}
+            </Tab.Screen>
+            <Tab.Screen name="Benefits" component={BenefitsManagementScreen} options={{ title: 'Beneficios - Admin' }} />
+            <Tab.Screen name="Approvals" options={{ title: 'Solicitudes - Admin' }}>
+              {(props) => <SubmissionsApprovalScreen {...props} navigation={createMockNavigation(props.navigation)} />}
+            </Tab.Screen>
+            <Tab.Screen name="Users" component={UsersManagementScreen} options={{ title: 'Usuarios - Admin' }} />
+            {isMasterAdmin && (
+              <Tab.Screen name="Audit" component={AdminAuditScreen} options={{ title: 'Auditoría - Admin' }} />
+            )}
+            <Tab.Screen name="Settings" component={AdminSettingsScreen} options={{ title: 'Configuración - Admin' }} />
+          </Tab.Navigator>
         </View>
       </View>
 
@@ -439,7 +472,12 @@ function WebLayout() {
             {selectedSubmission && (
               <SubmissionDetailScreen
                 route={{ params: { submission: selectedSubmission } }}
-                navigation={mockNavigation}
+                navigation={{
+                  goBack: () => {
+                    setShowDetailModal(false);
+                    setSelectedSubmission(null);
+                  }
+                }}
               />
             )}
           </View>
@@ -467,12 +505,17 @@ function WebLayout() {
           <View style={styles.modalContainer}>
             <MissionFormScreen
               route={{ params: { mission: selectedMission } }}
-              navigation={mockNavigation}
+              navigation={{
+                goBack: () => {
+                  setShowMissionFormModal(false);
+                  setSelectedMission(null);
+                }
+              }}
             />
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
@@ -563,7 +606,7 @@ function MobileLayout() {
         <Stack.Screen
           name="DashboardMain"
           component={AdminDashboardScreen}
-          options={{ title: 'Dashboard' }}
+          options={{ title: 'Panel de Control' }}
         />
       </Stack.Navigator>
     );
@@ -652,7 +695,7 @@ function MobileLayout() {
       <Tab.Screen
         name="AdminDashboard"
         component={DashboardStack}
-        options={{ headerShown: false, title: 'Dashboard' }}
+        options={{ headerShown: false, title: 'Panel' }}
       />
       <Tab.Screen
         name="Missions"

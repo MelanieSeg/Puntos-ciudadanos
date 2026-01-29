@@ -5,7 +5,7 @@
  * - WEB: Layout con Sidebar (izquierda 20%) + Contenido (derecha 80%)
  */
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useRef } from 'react';
 import { View, StyleSheet, Platform, TouchableOpacity, Text, ScrollView, Modal, Alert, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -32,12 +32,15 @@ const Tab = createBottomTabNavigator();
 const isWeb = Platform.OS === 'web';
 
 // ============================================================================
-// COMPONENTE: Sidebar para WEB
+// COMPONENTE: Sidebar para WEB (recibe props del WebLayout)
 // ============================================================================
-function WebSidebar({ activeTab, onNavigate }) {
+function WebSidebar({ onNavigate, activeRoute }) {
   const { logout } = useContext(AuthContext);
   const { isDarkMode, toggleTheme, theme } = useTheme();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  // Usar la ruta activa pasada como prop
+  const activeRouteName = activeRoute || 'Home';
 
   const handleLogoutConfirm = async () => {
     try {
@@ -56,6 +59,12 @@ function WebSidebar({ activeTab, onNavigate }) {
     { id: 'Profile', label: 'Configuración', icon: 'cog' },
   ];
 
+  const handleNavigate = (tabId) => {
+    if (onNavigate) {
+      onNavigate(tabId);
+    }
+  };
+
   return (
     <View style={[styles.webSidebar, { backgroundColor: theme.sidebarBg }]}>
       {/* Logo */}
@@ -73,21 +82,21 @@ function WebSidebar({ activeTab, onNavigate }) {
             key={tab.id}
             style={[
               styles.sidebarItem,
-              activeTab === tab.id && styles.sidebarItemActive,
+              activeRouteName === tab.id && styles.sidebarItemActive,
             ]}
-            onPress={() => onNavigate(tab.id)}
+            onPress={() => handleNavigate(tab.id)}
             activeOpacity={0.7}
           >
             <MaterialCommunityIcons
               name={tab.icon}
               size={20}
-              color={activeTab === tab.id ? COLORS.primary : theme.sidebarText}
+              color={activeRouteName === tab.id ? COLORS.primary : theme.sidebarText}
             />
             <Text
               style={[
                 styles.sidebarLabel,
                 { color: theme.sidebarText },
-                activeTab === tab.id && styles.sidebarLabelActive,
+                activeRouteName === tab.id && styles.sidebarLabelActive,
               ]}
             >
               {tab.label}
@@ -164,11 +173,13 @@ function WebSidebar({ activeTab, onNavigate }) {
 }
 
 // ============================================================================
-// COMPONENTE: Web Layout (Sidebar + Content)
+// COMPONENTE: Web Layout (Sidebar + Content con Tab.Navigator real)
 // ============================================================================
 function WebLayout() {
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState('Home');
+  const [activeRoute, setActiveRoute] = useState('Home');
+  const navigationRef = useRef(null);
+  
   const [missionSubmissionVisible, setMissionSubmissionVisible] = useState(false);
   const [missionSubmissionParams, setMissionSubmissionParams] = useState(null);
   const [benefitDetailVisible, setBenefitDetailVisible] = useState(false);
@@ -176,6 +187,13 @@ function WebLayout() {
   const [qrCodeVisible, setQrCodeVisible] = useState(false);
   const [qrCodeParams, setQrCodeParams] = useState(null);
   const [associatesVisible, setAssociatesVisible] = useState(false);
+
+  // Handler para navegación desde el sidebar
+  const handleSidebarNavigate = (routeName) => {
+    if (navigationRef.current) {
+      navigationRef.current.navigate(routeName);
+    }
+  };
 
   const handleMissionPress = (params) => {
     setMissionSubmissionParams(params);
@@ -218,38 +236,26 @@ function WebLayout() {
     setAssociatesVisible(true);
   };
 
-  const earnNavigationMock = {
+  // Navegación mock para componentes que abren modales
+  const createNavigationMock = (navigation) => ({
     navigate: (screen, params) => {
       if (screen === 'MissionSubmission') {
         handleMissionPress(params);
       } else if (screen === 'BenefitDetail') {
         handleBenefitPress(params);
+      } else if (screen === 'QRCode') {
+        handleQRCodePress(params);
+      } else if (screen === 'Associates') {
+        handleAssociatesPress();
+      } else {
+        // Usar navegación real para tabs
+        navigation.navigate(screen, params);
       }
     },
     push: (screen, params) => {
       if (screen === 'MissionSubmission') {
         handleMissionPress(params);
       } else if (screen === 'BenefitDetail') {
-        handleBenefitPress(params);
-      }
-    }
-  };
-
-  const homeNavigationMock = {
-    navigate: (screen, params) => {
-      if (screen === 'Associates') {
-        handleAssociatesPress();
-      } else if (screen === 'MissionSubmission') {
-        handleMissionPress(params);
-      } else {
-        setActiveTab(screen);
-      }
-    }
-  };
-
-  const benefitsNavigationMock = {
-    navigate: (screen, params) => {
-      if (screen === 'BenefitDetail') {
         handleBenefitPress(params);
       } else if (screen === 'QRCode') {
         handleQRCodePress(params);
@@ -260,35 +266,14 @@ function WebLayout() {
         handleCloseQRCode();
       } else if (benefitDetailVisible) {
         handleCloseBenefitDetail();
+      } else if (missionSubmissionVisible) {
+        handleCloseMissionSubmission();
       }
     }
-  };
+  });
 
-  const renderContent = () => {
-    // Renderizar todas las pantallas pero solo mostrar la activa
-    // Esto evita montar/desmontar componentes y llamadas API repetidas
-    return (
-      <>
-        <View style={activeTab === 'Home' ? styles.activeScreen : styles.hiddenScreen}>
-          <UserHomeScreen navigation={homeNavigationMock} />
-        </View>
-        <View style={activeTab === 'Benefits' ? styles.activeScreen : styles.hiddenScreen}>
-          <BenefitsScreen navigation={benefitsNavigationMock} />
-        </View>
-        <View style={activeTab === 'Earn' ? styles.activeScreen : styles.hiddenScreen}>
-          <EarnScreen navigation={earnNavigationMock} />
-        </View>
-        <View style={activeTab === 'Historial' ? styles.activeScreen : styles.hiddenScreen}>
-          <HistorialStack />
-        </View>
-        <View style={activeTab === 'Profile' ? styles.activeScreen : styles.hiddenScreen}>
-          <ProfileScreen />
-        </View>
-      </>
-    );
-  };
-
-  const getPageTitle = () => {
+  // Obtener título según la ruta activa
+  const getPageTitle = (routeName) => {
     const titles = {
       'Home': 'Tus Estadísticas',
       'Earn': 'Gana Puntos',
@@ -296,17 +281,53 @@ function WebLayout() {
       'Historial': 'Mi Historial',
       'Profile': 'Configuración',
     };
-    return titles[activeTab] || 'Puntos Ciudadanos';
+    return titles[routeName] || 'Puntos Ciudadanos';
   };
 
   return (
-    <View style={styles.webContainer}>
-      <WebSidebar activeTab={activeTab} onNavigate={setActiveTab} />
-      <View style={styles.webContent}>
-        <WebHeader title={getPageTitle()} />
-        {renderContent()}
+    <>
+      <View style={styles.webContainer}>
+        <WebSidebar onNavigate={handleSidebarNavigate} activeRoute={activeRoute} />
+        <View style={styles.webContent}>
+          <Tab.Navigator
+            screenListeners={{
+              state: (e) => {
+                const state = e.data.state;
+                if (state) {
+                  const currentRoute = state.routes[state.index];
+                  setActiveRoute(currentRoute?.name || 'Home');
+                }
+              },
+            }}
+            screenOptions={({ navigation: tabNavigation }) => {
+              // Guardar referencia a la navegación del tab
+              if (!navigationRef.current) {
+                navigationRef.current = tabNavigation;
+              }
+              return {
+                headerShown: true,
+                header: ({ route }) => <WebHeader title={getPageTitle(route.name)} />,
+                tabBarStyle: { display: 'none' },
+              };
+            }}
+          >
+            <Tab.Screen name="Home" options={{ title: 'Inicio - Puntos Ciudadanos' }}>
+              {(props) => <UserHomeScreen {...props} navigation={createNavigationMock(props.navigation)} />}
+            </Tab.Screen>
+            <Tab.Screen name="Earn" options={{ title: 'Gana Puntos - Puntos Ciudadanos' }}>
+              {(props) => <EarnScreen {...props} navigation={createNavigationMock(props.navigation)} />}
+            </Tab.Screen>
+            <Tab.Screen name="Benefits" options={{ title: 'Beneficios - Puntos Ciudadanos' }}>
+              {(props) => <BenefitsScreen {...props} navigation={createNavigationMock(props.navigation)} />}
+            </Tab.Screen>
+            <Tab.Screen name="Historial" options={{ title: 'Historial - Puntos Ciudadanos' }}>
+              {(props) => <HistorialStack />}
+            </Tab.Screen>
+            <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Configuración - Puntos Ciudadanos' }} />
+          </Tab.Navigator>
+        </View>
       </View>
-      
+
       {/* Modal para MissionSubmission */}
       <Modal
         visible={missionSubmissionVisible}
@@ -411,7 +432,7 @@ function WebLayout() {
           </View>
         </View>
       </Modal>
-    </View>
+    </>
   );
 }
 
