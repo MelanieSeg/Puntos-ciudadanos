@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { successResponse } from '../utils/response.js';
+import * as cacheService from '../services/cache.service.js';
 
 /**
  * GET /admin/settings
@@ -28,8 +29,17 @@ export const getSettings = asyncHandler(async (req, res) => {
  * GET /config (público)
  * Obtiene configuración pública del sistema sin autenticación
  * Para mostrar mensajes de bienvenida y verificar modo mantenimiento
+ * CON CACHÉ: 5 minutos para reducir carga
  */
 export const getPublicConfig = asyncHandler(async (req, res) => {
+  const cacheKey = 'public_config';
+  
+  // Intentar obtener del caché
+  const cachedConfig = cacheService.get(cacheKey);
+  if (cachedConfig) {
+    return successResponse(res, { config: cachedConfig, cached: true }, 'Configuración pública obtenida');
+  }
+  
   let config = await prisma.systemConfig.findFirst({
     select: {
       maintenanceMode: true,
@@ -41,7 +51,10 @@ export const getPublicConfig = asyncHandler(async (req, res) => {
     config = { maintenanceMode: false, homeBannerMessage: null };
   }
   
-  successResponse(res, { config }, 'Configuración pública obtenida');
+  // Guardar en caché por 5 minutos (300 segundos)
+  cacheService.set(cacheKey, config, 300);
+  
+  successResponse(res, { config, cached: false }, 'Configuración pública obtenida');
 });
 
 /**
@@ -101,6 +114,10 @@ export const updateSettings = asyncHandler(async (req, res) => {
       },
     },
   });
+  
+  // Invalidar caché de configuración pública para que los cambios sean inmediatos
+  cacheService.del('public_config');
+  console.log('[Settings Updated] Caché de configuración pública invalidado');
   
   successResponse(res, { settings: config }, 'Configuración actualizada exitosamente');
 });

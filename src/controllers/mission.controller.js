@@ -215,6 +215,11 @@ export const createMission = asyncHandler(async (req, res) => {
     },
   });
 
+  // Invalidar caché de misiones para que todos los usuarios vean la nueva misión
+  const cacheService = await import('../services/cache.service.js');
+  cacheService.delPattern('available_missions');
+  console.log('[Mission Created] Caché de misiones invalidado');
+
   successResponse(
     res,
     { mission: newMission },
@@ -357,6 +362,11 @@ export const updateMission = asyncHandler(async (req, res) => {
     },
   });
 
+  // Invalidar caché de misiones
+  const cacheService = await import('../services/cache.service.js');
+  cacheService.delPattern('available_missions');
+  console.log('[Mission Updated] Caché de misiones invalidado');
+
   successResponse(
     res,
     { mission: updatedMission },
@@ -409,6 +419,11 @@ export const updateMissionStatus = asyncHandler(async (req, res) => {
     },
   });
 
+  // Invalidar caché de misiones
+  const cacheService = await import('../services/cache.service.js');
+  cacheService.delPattern('available_missions');
+  console.log('[Mission Status Updated] Caché de misiones invalidado');
+
   successResponse(
     res,
     { mission: updatedMission },
@@ -459,6 +474,11 @@ export const deleteMission = asyncHandler(async (req, res) => {
       },
     },
   });
+
+  // Invalidar caché de misiones
+  const cacheService = await import('../services/cache.service.js');
+  cacheService.delPattern('available_missions');
+  console.log('[Mission Deleted] Caché de misiones invalidado');
 
   successResponse(
     res,
