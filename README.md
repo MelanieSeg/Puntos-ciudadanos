@@ -21,20 +21,105 @@ Plataforma de fidelización cívica y ecológica desarrollada con Node.js, Expre
 
 ## Instalación
 
-### 1. Clonar el repositorio
+### Opción 1: Docker (Recomendado) - Todo en uno
+
+La forma más rápida de levantar todo el stack (PostgreSQL + API + Cliente Web):
 
 ```bash
+# 1. Copiar variables de entorno
+cp .env.example .env
+# Edita .env con tus credenciales
+
+# 2. Levantar todos los servicios
+docker-compose up --build -d
+
+# 3. Ejecutar migraciones
+docker-compose exec app npx prisma migrate deploy
+
+# 4. Poblar base de datos (opcional)
+docker-compose exec app npx prisma db seed
+```
+
+Servicios disponibles:
+- **API Backend**: http://localhost:3000
+- **Cliente Web**: http://localhost:8081
+- **PostgreSQL**: localhost:5432
+
+Ver [DOCKER_COMMANDS.md](./DOCKER_COMMANDS.md) para más comandos útiles.
+
+### Opción 2: Instalación local (Desarrollo)
+
+#### Backend:
+
+```bash
+# 1. Clonar el repositorio
 git clone <repository-url>
 cd puntos-ciudadanos
+
+# 2. Configurar variables de entorno
+cp .env.example .env
+# Edita el archivo .env con tus valores
+
+# 3. Instalar dependencias
+npm install
+
+# 4. Generar Prisma Client
+npm run prisma:generate
+
+# 5. Ejecutar migraciones
+npm run prisma:migrate
+
+# 6. (Opcional) Poblar base de datos
+npm run prisma:seed
+
+# 7. Iniciar servidor
+npm run dev
+```
+
+#### Cliente (Expo):
+
+```bash
+# 1. Ir a la carpeta del cliente
+cd client
+
+# 2. Instalar dependencias
+npm install --legacy-peer-deps
+
+# 3. Iniciar Expo en modo web
+npx expo start --web
 ```
 
 ### 2. Configurar variables de entorno
+
+Archivo `.env` en la raíz del proyecto:
 
 ```bash
 cp .env.example .env
 ```
 
-Edita el archivo `.env` con tus valores de configuración.
+Variables importantes:
+
+```env
+# PostgreSQL
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=tu_password
+POSTGRES_DB=puntos_ciudadanos
+
+# API
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://postgres:tu_password@localhost:5432/puntos_ciudadanos
+JWT_SECRET=tu_jwt_secret_seguro
+JWT_EXPIRES_IN=7d
+
+# CORS (incluye ambos puertos)
+CORS_ORIGIN=http://localhost:3000,http://localhost:8081,http://localhost:19000
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
+```
 
 ### 3. Levantar con Docker
 
@@ -135,25 +220,50 @@ await updateWalletBalance(walletId, -100, currentVersion);
 
 ## Comandos Docker
 
+### Gestión de servicios completos
+
 ```bash
-# Levantar servicios
-docker-compose up
+# Levantar todos los servicios (Postgres + API + Cliente)
+docker-compose up -d
 
-# Detener servicios
-docker-compose down
-
-# Ver logs
+# Ver logs de todos los servicios
 docker-compose logs -f
 
-# Reconstruir contenedores
-docker-compose up --build
+# Ver logs de un servicio específico
+docker-compose logs -f client
+docker-compose logs -f app
+docker-compose logs -f postgres
 
-# Acceder al contenedor de la app
-docker exec -it puntos_ciudadanos_app sh
+# Detener todos los servicios
+docker-compose down
+
+# Reiniciar un servicio específico
+docker-compose restart client
+
+# Reconstruir y levantar
+docker-compose up --build -d
+```
+
+### Comandos útiles dentro de contenedores
+
+```bash
+# Acceder al contenedor de la API
+docker-compose exec app sh
+
+# Acceder al contenedor del cliente
+docker-compose exec client sh
+
+# Ejecutar migraciones de Prisma
+docker-compose exec app npx prisma migrate deploy
 
 # Acceder a PostgreSQL
-docker exec -it puntos_ciudadanos_db psql -U puntos_user -d puntos_ciudadanos
+docker-compose exec postgres psql -U postgres -d puntos_ciudadanos
+
+# Ver estado de contenedores
+docker-compose ps
 ```
+
+Ver más comandos en [DOCKER_COMMANDS.md](./DOCKER_COMMANDS.md)
 
 ## Scripts NPM
 

@@ -1,0 +1,33 @@
+# Ignorar node_modules
+node_modules/
+
+# Ignorar caché de Expo
+.expo/
+.expo-shared/
+
+# Ignorar archivos de build
+dist/
+build/
+web-build/
+
+# Ignorar archivos de entorno
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

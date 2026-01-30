@@ -56,6 +56,32 @@ services:
         condition: service_healthy
     command: npm run dev
 
+  # Cliente Expo Web
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: puntos_ciudadanos_client
+    restart: unless-stopped
+    environment:
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+      REACT_NATIVE_PACKAGER_HOSTNAME: 0.0.0.0
+    volumes:
+      - ./client/src:/app/src
+      - ./client/assets:/app/assets
+      - ./client/App.js:/app/App.js
+      - ./client/app.json:/app/app.json
+      - /app/node_modules
+      - /app/.expo
+    ports:
+      - "8081:8081"
+    networks:
+      - puntos_network
+    depends_on:
+      - app
+    stdin_open: true
+    tty: true
+
 volumes:
   postgres_data:
     driver: local
