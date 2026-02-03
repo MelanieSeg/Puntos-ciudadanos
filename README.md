@@ -1,376 +1,224 @@
-# Puntos Ciudadanos - Backend
+# Puntos Ciudadanos
 
-Plataforma de fidelización cívica y ecológica desarrollada con Node.js, Express y PostgreSQL.
+Permite a los ciudadanos ganar puntos al completar misiones civicas y canjearlos por beneficios en comercios locales asociados.
 
-## Tecnologías
+## Descripcion del Proyecto
 
-- **Node.js** (v20+)
-- **Express.js** - Framework web
-- **PostgreSQL 15** - Base de datos
-- **Prisma** - ORM
-- **Docker & Docker Compose** - Contenedores
-- **Helmet** - Seguridad HTTP
-- **bcrypt** - Hash de contraseñas
-- **JWT** - Autenticación
+Puntos Ciudadanos es una aplicacion web y movil que incentiva la participacion ciudadana mediante un sistema de recompensas. Los usuarios pueden:
 
-## Prerrequisitos
+- Registrarse y crear una cuenta
+- Completar misiones civicas (reciclaje, participacion en votaciones, etc.)
+- Enviar evidencia fotografica de las misiones completadas
+- Acumular puntos en su billetera virtual
+- Canjear puntos por beneficios en comercios asociados
 
-- Node.js v20 o superior
+## Tecnologias Utilizadas
+
+### Backend
+- Node.js v20
+- Express.js (framework web)
+- PostgreSQL 15 (base de datos)
+- Prisma (ORM para manejar la base de datos)
+- JWT (autenticacion de usuarios)
+- bcrypt (encriptacion de contrasenas)
+
+### Frontend
+- React Native con Expo
+- Compatible con Android, iOS y Web
+
+### Infraestructura
+- Docker y Docker Compose (contenedores)
+- Cloudinary (almacenamiento de imagenes)
+
+## Requisitos Previos
+
+Antes de instalar el proyecto, asegurate de tener instalado:
+
+- Node.js version 20 o superior
 - Docker y Docker Compose
 - Git
 
-## Instalación
+## Instalacion
 
-### Opción 1: Docker (Recomendado) - Todo en uno
+### Opcion 1: Usando Docker (Recomendado)
 
-La forma más rápida de levantar todo el stack (PostgreSQL + API + Cliente Web):
+Esta es la forma mas sencilla de ejecutar todo el proyecto:
 
 ```bash
-# 1. Copiar variables de entorno
-cp .env.example .env
-# Edita .env con tus credenciales
+# Clonar el repositorio
+git clone <url-del-repositorio>
+cd puntos-ciudadanos
 
-# 2. Levantar todos los servicios
+# Copiar el archivo de variables de entorno
+cp .env.example .env
+
+# Editar el archivo .env con tus datos
+
+# Levantar todos los servicios
 docker-compose up --build -d
 
-# 3. Ejecutar migraciones
+# Ejecutar las migraciones de la base de datos
 docker-compose exec app npx prisma migrate deploy
 
-# 4. Poblar base de datos (opcional)
+# Opcional: cargar datos de prueba
 docker-compose exec app npx prisma db seed
 ```
 
-Servicios disponibles:
-- **API Backend**: http://localhost:3000
-- **Cliente Web**: http://localhost:8081
-- **PostgreSQL**: localhost:5432
+Una vez ejecutados estos comandos, los servicios estaran disponibles en:
 
-Ver [DOCKER_COMMANDS.md](./DOCKER_COMMANDS.md) para más comandos útiles.
+- Backend (API): http://localhost:3000
+- Frontend Web: http://localhost:8081
+- Base de datos PostgreSQL: localhost:5432
 
-### Opción 2: Instalación local (Desarrollo)
+### Opcion 2: Instalacion Local
 
-#### Backend:
+Si prefieres ejecutar el proyecto sin Docker:
 
-```bash
-# 1. Clonar el repositorio
-git clone <repository-url>
-cd puntos-ciudadanos
-
-# 2. Configurar variables de entorno
-cp .env.example .env
-# Edita el archivo .env con tus valores
-
-# 3. Instalar dependencias
-npm install
-
-# 4. Generar Prisma Client
-npm run prisma:generate
-
-# 5. Ejecutar migraciones
-npm run prisma:migrate
-
-# 6. (Opcional) Poblar base de datos
-npm run prisma:seed
-
-# 7. Iniciar servidor
-npm run dev
-```
-
-#### Cliente (Expo):
-
-```bash
-# 1. Ir a la carpeta del cliente
-cd client
-
-# 2. Instalar dependencias
-npm install --legacy-peer-deps
-
-# 3. Iniciar Expo en modo web
-npx expo start --web
-```
-
-### 2. Configurar variables de entorno
-
-Archivo `.env` en la raíz del proyecto:
-
-```bash
-cp .env.example .env
-```
-
-Variables importantes:
-
-```env
-# PostgreSQL
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=tu_password
-POSTGRES_DB=puntos_ciudadanos
-
-# API
-NODE_ENV=development
-PORT=3000
-DATABASE_URL=postgresql://postgres:tu_password@localhost:5432/puntos_ciudadanos
-JWT_SECRET=tu_jwt_secret_seguro
-JWT_EXPIRES_IN=7d
-
-# CORS (incluye ambos puertos)
-CORS_ORIGIN=http://localhost:3000,http://localhost:8081,http://localhost:19000
-
-# Cloudinary
-CLOUDINARY_CLOUD_NAME=tu_cloud_name
-CLOUDINARY_API_KEY=tu_api_key
-CLOUDINARY_API_SECRET=tu_api_secret
-```
-
-### 3. Levantar con Docker
-
-```bash
-# Construir y levantar los contenedores
-docker-compose up --build
-
-# O en segundo plano
-docker-compose up -d
-```
-
-El servidor estará disponible en `http://localhost:3000`
-
-### 4. (Alternativa) Instalación local
+**Para el Backend:**
 
 ```bash
 # Instalar dependencias
 npm install
 
-# Generar Prisma Client
+# Generar el cliente de Prisma
 npm run prisma:generate
 
 # Ejecutar migraciones
 npm run prisma:migrate
 
-# (Opcional) Poblar base de datos con datos de prueba
+# Opcional: cargar datos de prueba
 npm run prisma:seed
 
-# Iniciar servidor en modo desarrollo
+# Iniciar el servidor en modo desarrollo
 npm run dev
 ```
 
-## Estructura de la Base de Datos
-
-### Modelos principales:
-
-- **Users** - Usuarios (ciudadanos y administradores)
-- **Wallets** - Billeteras de puntos (1:1 con Users)
-- **PointTransactions** - Historial de transacciones (inmutable)
-- **Benefits** - Catálogo de beneficios canjeables
-- **News** - Noticias y comunicados
-
-### Relaciones:
-
-```
-User (1:1) Wallet (1:N) PointTransactions
-User (1:N) News
-Benefit (1:N) PointTransactions
-```
-
-## API Endpoints
-
-### Autenticación
-```
-POST   /api/v1/auth/register        - Registrar usuario
-POST   /api/v1/auth/login           - Iniciar sesión
-GET    /api/v1/auth/me              - Obtener usuario autenticado (requiere auth)
-PUT    /api/v1/auth/profile         - Actualizar perfil (requiere auth)
-PUT    /api/v1/auth/change-password - Cambiar contraseña (requiere auth)
-POST   /api/v1/auth/logout          - Cerrar sesión (requiere auth)
-```
-
-Ver documentación completa en [AUTENTICACION.md](./AUTENTICACION.md)
-
-### Health Check
-```
-GET /health                         - Estado del servidor
-GET /api/v1                         - Info de la API
-```
-
-## Seguridad
-
-### Protecciones Implementadas
-
-- **Helmet**: Protección de headers HTTP (CSP, HSTS, etc.)
-- **CORS**: Control de acceso entre orígenes con múltiples origins configurables
-- **Rate Limiting**: Prevención de ataques por fuerza bruta (100 req/15min por IP)
-- **bcrypt**: Hash de contraseñas con 12 rounds
-- **JWT**: Tokens de autenticación seguros (preparado)
-- **Body Size Limit**: Límite de 1MB en JSON para prevenir DoS
-- **express-validator**: Validación de entrada (preparado)
-- **Variables de entorno**: Secretos nunca en código
-
-### Control de Concurrencia Optimista
-
-Los modelos `Wallet` y `Benefit` incluyen un campo `version` que previene:
-- Race conditions en canjes simultáneos
-- Modificaciones concurrentes de saldo
-- Problemas de stock negativo
-
-Uso en servicios:
-```javascript
-import { updateWalletBalance, updateBenefitStock } from './services/database.service.js';
-
-// Actualizar saldo con control de versión
-await updateWalletBalance(walletId, -100, currentVersion);
-```
-
-## Comandos Docker
-
-### Gestión de servicios completos
+**Para el Frontend:**
 
 ```bash
-# Levantar todos los servicios (Postgres + API + Cliente)
-docker-compose up -d
+# Ir a la carpeta del cliente
+cd client
 
-# Ver logs de todos los servicios
+# Instalar dependencias
+npm install --legacy-peer-deps
+
+# Iniciar la aplicacion web
+npx expo start --web
+```
+
+## Variables de Entorno
+
+Crea un archivo `.env` en la raiz del proyecto con las siguientes variables:
+
+```env
+# Base de datos
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=tu_password
+POSTGRES_DB=puntos_ciudadanos
+DATABASE_URL=postgresql://postgres:tu_password@localhost:5432/puntos_ciudadanos
+
+# Configuracion del servidor
+NODE_ENV=development
+PORT=3000
+
+# Autenticacion
+JWT_SECRET=una_clave_secreta_segura
+JWT_EXPIRES_IN=7d
+
+# CORS (origenes permitidos)
+CORS_ORIGIN=http://localhost:3000,http://localhost:8081
+
+# Cloudinary (para subir imagenes)
+CLOUDINARY_CLOUD_NAME=tu_cloud_name
+CLOUDINARY_API_KEY=tu_api_key
+CLOUDINARY_API_SECRET=tu_api_secret
+```
+
+## Endpoints Principales de la API
+
+### Autenticacion
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| POST | /api/v1/auth/register | Registrar nuevo usuario |
+| POST | /api/v1/auth/login | Iniciar sesion |
+| GET | /api/v1/auth/me | Obtener datos del usuario actual |
+| PUT | /api/v1/auth/change-password | Cambiar contrasena |
+
+### Misiones
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | /api/v1/missions | Listar misiones disponibles |
+| POST | /api/v1/missions/:id/submit | Enviar evidencia de mision |
+
+### Beneficios
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | /api/v1/benefits | Listar beneficios disponibles |
+| POST | /api/v1/benefits/:id/redeem | Canjear un beneficio |
+
+### Puntos
+
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | /api/v1/points/balance | Consultar saldo de puntos |
+| GET | /api/v1/points/transactions | Historial de transacciones |
+
+## Usuarios de Prueba
+
+Despues de ejecutar el seed, puedes usar estas cuentas:
+
+**Administrador Master:**
+- Email: master@puntos-ciudadanos.com
+- Password: Master@2025
+
+**Comerciante:**
+- Email: mati@mechada.com
+- Password: merchant123
+
+**Usuarios ciudadanos:**
+- Email: maria@example.com / Password: user123
+- Email: juan@example.com / Password: user123
+
+## Comandos Utiles
+
+```bash
+# Iniciar en modo desarrollo
+npm run dev
+
+# Ver la base de datos con interfaz grafica
+npm run prisma:studio
+
+# Ejecutar migraciones pendientes
+npm run prisma:migrate
+
+# Ver logs de Docker
 docker-compose logs -f
 
-# Ver logs de un servicio específico
-docker-compose logs -f client
-docker-compose logs -f app
-docker-compose logs -f postgres
-
-# Detener todos los servicios
+# Detener todos los contenedores
 docker-compose down
-
-# Reiniciar un servicio específico
-docker-compose restart client
-
-# Reconstruir y levantar
-docker-compose up --build -d
 ```
 
-### Comandos útiles dentro de contenedores
+## Roles de Usuario
 
-```bash
-# Acceder al contenedor de la API
-docker-compose exec app sh
+El sistema maneja cuatro tipos de usuarios:
 
-# Acceder al contenedor del cliente
-docker-compose exec client sh
+1. **USER (Ciudadano)**: Usuario comun que completa misiones y canjea beneficios
+2. **MERCHANT (Comerciante)**: Dueno de comercio que valida canjes con codigo QR
+3. **SUPPORT_ADMIN (Admin de Soporte)**: Aprueba misiones y gestiona contenido
+4. **MASTER_ADMIN (Admin Master)**: Acceso total al sistema, incluida auditoria
 
-# Ejecutar migraciones de Prisma
-docker-compose exec app npx prisma migrate deploy
+## Documentacion Adicional
 
-# Acceder a PostgreSQL
-docker-compose exec postgres psql -U postgres -d puntos_ciudadanos
+En la carpeta `docs/` encontraras documentacion mas detallada:
 
-# Ver estado de contenedores
-docker-compose ps
-```
+- Diagramas UML del sistema
+- Informe tecnico
+- Roles del sistema
 
-Ver más comandos en [DOCKER_COMMANDS.md](./DOCKER_COMMANDS.md)
+## Autora
 
-## Scripts NPM
+Proyecto desarrollado como parte del trabajo academico Practica 1.
 
-```bash
-npm run dev              # Modo desarrollo con watch
-npm start                # Iniciar servidor en producción
-npm run prisma:generate  # Generar Prisma Client
-npm run prisma:migrate   # Ejecutar migraciones
-npm run prisma:studio    # Abrir Prisma Studio (GUI)
-npm run prisma:seed      # Poblar BD con datos de prueba
-```
-
-## Prisma Studio
-
-Para explorar la base de datos visualmente:
-
-```bash
-npm run prisma:studio
-```
-
-Se abrirá en `http://localhost:5555`
-
-## Datos de Prueba (Seed)
-
-Después de ejecutar `npm run prisma:seed`:
-
-**Administrador:**
-- Email: `admin@energiaco2.com`
-- Password: `admin123`
-
-**Usuarios:**
-- Email: `maria@example.com` / Password: `user123`
-- Email: `juan@example.com` / Password: `user123`
-
-## Próximos Pasos (Semana 3+)
-
-- [x] Implementar módulo de autenticación (registro, login, JWT)
-- [ ] CRUD de usuarios (admin)
-- [ ] Sistema de gestión de puntos y transacciones
-- [ ] CRUD de beneficios (admin)
-- [ ] Sistema de canje de beneficios
-- [ ] Sistema de noticias (admin)
-- [ ] Tests unitarios e integración
-- [ ] Documentación API (Swagger)
-
-## Documentación
-
-- [README.md](./README.md) - Este archivo
-- [DESPLIEGUE.md](./DESPLIEGUE.md) - Instrucciones de instalación
-- [MEJORAS_SEGURIDAD.md](./MEJORAS_SEGURIDAD.md) - Mejoras de seguridad implementadas
-- [AUTENTICACION.md](./AUTENTICACION.md) - Documentación de autenticación
-- [TESTS_AUTH.md](./TESTS_AUTH.md) - Guía de testing de autenticación
-- [REGISTRO_CAMBIOS.md](./REGISTRO_CAMBIOS.md) - Historial de cambios
-
-## Arquitectura
-
-```
-src/
-├── config/              # Configuración (DB, env)
-├── controllers/         # Controladores (lógica de negocio)
-├── middlewares/         # Middlewares personalizados
-│   ├── auth.js         # Autenticación JWT
-│   ├── authorize.js    # Autorización por roles
-│   └── validateRequest.js # Validación de entrada
-├── models/              # Modelos (Prisma)
-├── routes/              # Definición de rutas
-├── services/            # Servicios/lógica de negocio
-│   └── database.service.js # Operaciones con control de concurrencia
-├── utils/               # Utilidades y helpers
-│   ├── errors.js       # Clases de error personalizadas
-│   ├── asyncHandler.js # Wrapper para async/await
-│   └── response.js     # Respuestas estandarizadas
-├── validators/          # Validaciones de entrada
-└── server.js            # Punto de entrada
-```
-
-### Utilidades Clave
-
-**Manejo de Errores**:
-```javascript
-import { NotFoundError, ValidationError } from './utils/errors.js';
-throw new NotFoundError('Usuario');
-```
-
-**Async Handler**:
-```javascript
-import { asyncHandler } from './utils/asyncHandler.js';
-
-export const getUser = asyncHandler(async (req, res) => {
-  // No necesitas try-catch, se maneja automáticamente
-  const user = await prisma.user.findUnique(...);
-  res.json(user);
-});
-```
-
-**Respuestas Estandarizadas**:
-```javascript
-import { successResponse, paginatedResponse } from './utils/response.js';
-
-successResponse(res, user, 'Usuario obtenido', 200);
-paginatedResponse(res, users, { page: 1, limit: 10, total: 100 });
-```
-
-## Licencia
-
-ISC
-
-## Autor
-
-Energía CO2 - Backend Team
